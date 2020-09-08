@@ -1,2 +1,2 @@
-# Hyy2001X-AutoBuild-Actions
+# AutoBuild-Actions
 Actions for Building OpenWRT
