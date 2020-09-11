@@ -26,12 +26,12 @@ env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: main
   CONFIG_FILE: .config
-  FEEDS_CONF_DEFAULT: feeds.conf.default
-  MAC80211: mac80211.sh
-  MWAN3: mwan3
-  CUSTOM_SCRIPT_1: diy-part1.sh
-  CUSTOM_SCRIPT_2: diy-part2.sh
-  CUSTOM_SCRIPT_3: diy-part3.sh
+  FEEDS_CONF_DEFAULT: ./Customize/feeds.conf.default
+  MAC80211: ./Customize/mac80211.sh
+  MWAN3: ./Customize/mwan3
+  CUSTOM_SCRIPT_1: ./Script/diy-part1.sh
+  CUSTOM_SCRIPT_2: ./Script/diy-part2.sh
+  CUSTOM_SCRIPT_3: ./Script/diy-part3.sh
   TZ: Asia/Shanghai
 
 jobs:
