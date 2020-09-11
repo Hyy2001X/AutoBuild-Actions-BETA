@@ -78,14 +78,14 @@ jobs:
 
     - name: Download package
       run: |
-      	cd openwrt
+        cd openwrt
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
     - name: Compile the firmware
       run: |
-      	cd openwrt
+        cd openwrt
         make -j$(nproc) V=s
 
     - name: Run After-Compile-OpenWRT Script
@@ -94,7 +94,7 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_3
 
-    - name : Upload Firmware to Artifact
+    - name: Upload Firmware to Artifact
       uses: actions/upload-artifact@main
       with:
         name: OpenWrt
