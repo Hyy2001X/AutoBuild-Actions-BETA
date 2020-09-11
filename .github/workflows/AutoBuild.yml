@@ -1,84 +1,100 @@
 #=================================================
 # Description: Build OpenWrt using GitHub Actions
 # Lisence: MIT
-# Author: P3TERX,eSirPlayground
+# Author: P3TERX
 # Modify: Hyy2001
 #=================================================
 
-name: AutoBuild
+name: AutoBuild OpenWrt
 
 on: 
-  release:
-    types: [published]
+#  release:
+#    types: [published]
 
-  #push:
-  #  branches: 
-  #    - master
+#  push:
+#    branches: 
+#      - main
 
-  #schedule:
-  #  - cron: 0 8 * * 5
+#  schedule:
+#    - cron: 0 8 * * 5
   
   watch:
     types: [started]
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
+  REPO_BRANCH: main
   CONFIG_FILE: .config
+  FEEDS_CONF_DEFAULT: feeds.conf.default
+  MAC80211: mac80211.sh
+  MWAN3: mwan3
+  CUSTOM_SCRIPT_1: diy-part1.sh
+  CUSTOM_SCRIPT_2: diy-part2.sh
+  CUSTOM_SCRIPT_3: diy-part3.sh
+  TZ: Asia/Shanghai
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
     - name: Checkout
-      uses: actions/checkout@master
+      uses: actions/checkout@main
 
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
+        sudo -E apt-get update
+        sudo -E apt-get install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget swig rsync
 
-    - name: Clone source code
+    - name: Clone OpenWRT source code
       run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
-        cd openwrt
-	sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
+        git clone -b $REPO_BRANCH $REPO_URL openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 	
-    - name: Update & Install feeds
+    - name: Run Before-Update-Feeds Script
+      run: |
+        [ -e $FEEDS_CONF_DEFAULT ] && mv $FEEDS_CONF_DEFAULT openwrt/feeds.conf.default
+        chmod +x $CUSTOM_SCRIPT_1
+        cd openwrt
+        $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_1
+        
+    - name: Update & Install Feeds
       run: |
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
-        ./scripts/feeds install -a
 
-    - name: Configuration Customization - AutoBuild
+    - name: Run After-Update-Feeds Script
       run: |
+        [ -e $MAC80211 ] && mv $MAC80211 openwrt/package/kernel/mac80211/files/lib/wifi/mac80211.sh
+        [ -e $MWAN3 ] && mv $MWAN3 openwrt/package/feeds/packages/mwan3/files/etc/config/mwan3
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x ./customize.sh && ./customize.sh
+        chmod +x $CUSTOM_SCRIPT_2
         cd openwrt
+        $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_2
         
     - name: Download package
       run: |
       	cd openwrt
-      	make defconfig
-        make download -j8
+        make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: Build firmware
-      working-directory: ./openwrt
+    - name: Compile the firmware
       run: |
-        echo -e "$(nproc) thread build."
+      	cd openwrt
         make -j$(nproc) V=s
 
-    - name : Upload artifact
-      uses: actions/upload-artifact@master
+    - name: Run After-Compile-OpenWRT Script
+      run: |
+        chmod +x $CUSTOM_SCRIPT_3
+        cd openwrt
+        $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_3
+
+    - name : Upload Firmware to Artifact
+      uses: actions/upload-artifact@main
       with:
         name: OpenWrt
-        path: openwrt/bin
+        path: openwrt/bin/Firmware
