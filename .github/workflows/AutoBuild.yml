@@ -1,10 +1,10 @@
-#=================================================
+#=======================================================
 # Description: Build OpenWrt using GitHub Actions
 # Github: https://github.com/Hyy2001X/AutoBuild-Actions
 # Lisence: MIT
 # Author: P3TERX
 # Modify: Hyy2001
-#=================================================
+#=======================================================
 
 name: AutoBuild OpenWrt
 
