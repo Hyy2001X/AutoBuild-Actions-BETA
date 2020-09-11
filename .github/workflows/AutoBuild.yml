@@ -29,9 +29,9 @@ env:
   FEEDS_CONF_DEFAULT: ./Customize/feeds.conf.default
   MAC80211: ./Customize/mac80211.sh
   MWAN3: ./Customize/mwan3
-  CUSTOM_SCRIPT_1: ./Script/diy-part1.sh
-  CUSTOM_SCRIPT_2: ./Script/diy-part2.sh
-  CUSTOM_SCRIPT_3: ./Script/diy-part3.sh
+  CUSTOM_SCRIPT_1: ./Scripts/diy-part1.sh
+  CUSTOM_SCRIPT_2: ./Scripts/diy-part2.sh
+  CUSTOM_SCRIPT_3: ./Scripts/diy-part3.sh
   TZ: Asia/Shanghai
 
 jobs:
