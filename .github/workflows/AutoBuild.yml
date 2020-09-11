@@ -24,7 +24,7 @@ on:
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: main
+  REPO_BRANCH: master
   CONFIG_FILE: .config
   FEEDS_CONF_DEFAULT: ./Customize/feeds.conf.default
   MAC80211: ./Customize/mac80211.sh
