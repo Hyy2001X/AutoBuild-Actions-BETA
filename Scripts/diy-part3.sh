@@ -1,12 +1,17 @@
 #!/bin/bash
 
-mkdir -p ./bin/Firmware
+TARGET_BOARD=ramips
+TARGET_SUBTARGET=mt7621
+TARGET_PROFILE=d-team_newifi-d2
+
 Compile_Time=`date +'%Y-%m-%d %H:%M:%S'`
 Version=`egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ./package/lean/default-settings/files/zzz-default-settings`
-Default_Firmware=openwrt-ramips-mt7621-d-team_newifi-d2-squashfs-sysupgrade.bin
-AutoBuild_Firmware=AutoBuild-d-team_newifi-d2-Lede-$Version`(date +-%Y%m%d.bin)`
-AutoBuild_Detail=AutoBuild-d-team_newifi-d2-Lede-$Version`(date +-%Y%m%d.detail)`
-mv ./bin/targets/ramips/mt7621/$Default_Firmware ./bin/Firmware/$AutoBuild_Firmware
+Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-squashfs-sysupgrade.bin
+AutoBuild_Firmware=AutoBuild-$TARGET_PROFILE-Lede-$Version`(date +-%Y%m%d.bin)`
+AutoBuild_Detail=AutoBuild-$TARGET_PROFILE-Lede-$Version`(date +-%Y%m%d.detail)`
+
+mkdir -p ./bin/Firmware
+mv ./bin/targets/$TARGET_BOARD/$TARGET_SUBTARGET/$Default_Firmware ./bin/Firmware/$AutoBuild_Firmware
 cd ./bin/Firmware
 Firmware_Size=`ls -l $AutoBuild_Firmware | awk '{print $5}'`
 Firmware_Size_MB=`awk 'BEGIN{printf "固件大小:%.2fMB\n",'$((Firmware_Size))'/1000000}'`
