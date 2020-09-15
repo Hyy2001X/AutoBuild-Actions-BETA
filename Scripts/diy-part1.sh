@@ -1,5 +1,7 @@
 #!/bin/bash
 
+Github=https://github.com/Hyy2001X/Openwrt-AutoUpdate
+
 ExtraPackages_GIT() {
 [ -d ./package/lean/$1 ] && rm -rf ./package/lean/$1
 while [ ! -f $1/Makefile ]
@@ -27,5 +29,5 @@ ExtraPackages_SVN luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/p
 ExtraPackages_SVN luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages_SVN smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 [ -d ./Openwrt-AutoUpdate ] && rm -rf ./Openwrt-AutoUpdate
-git clone https://github.com/Hyy2001X/Openwrt-AutoUpdate
+git clone $Github
 mv Openwrt-AutoUpdate/AutoUpdate.sh ./package/base-files/files/bin
