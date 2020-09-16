@@ -29,9 +29,7 @@ env:
   FEEDS_CONF_DEFAULT: ./Customize/feeds.conf.default
   MAC80211: ./Customize/mac80211.sh
   MWAN3: ./Customize/mwan3
-  CUSTOM_SCRIPT_1: ./Scripts/diy-part1.sh
-  CUSTOM_SCRIPT_2: ./Scripts/diy-part2.sh
-  CUSTOM_SCRIPT_3: ./Scripts/diy-part3.sh
+  CUSTOM_SCRIPT: ./Scripts/diy-script.sh
   TZ: Asia/Shanghai
 
 jobs:
@@ -57,9 +55,9 @@ jobs:
     - name: Run Before-Update-Feeds Script
       run: |
         [ -e $FEEDS_CONF_DEFAULT ] && mv $FEEDS_CONF_DEFAULT openwrt/feeds.conf.default
-        chmod +x $CUSTOM_SCRIPT_1
+        chmod +x $CUSTOM_SCRIPT
         cd openwrt
-        $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_1
+        source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy_Core && Diy-Part1
 
     - name: Update & Install Feeds
       run: |
@@ -72,9 +70,8 @@ jobs:
         [ -e $MAC80211 ] && mv $MAC80211 openwrt/package/kernel/mac80211/files/lib/wifi/mac80211.sh
         [ -e $MWAN3 ] && mv $MWAN3 openwrt/package/feeds/packages/mwan3/files/etc/config/mwan3
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $CUSTOM_SCRIPT_2
         cd openwrt
-        $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_2
+        source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy_Core && Diy-Part2
 
     - name: Download package
       run: |
@@ -90,9 +87,8 @@ jobs:
 
     - name: Run After-Compile-OpenWRT Script
       run: |
-        chmod +x $CUSTOM_SCRIPT_3
         cd openwrt
-        $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_3
+        source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy_Core && Diy-Part3
 
     - name: Upload Firmware to Artifact
       uses: actions/upload-artifact@main
