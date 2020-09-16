@@ -6,8 +6,11 @@ ExtraPackages_GIT() {
 [ -d ./package/lean/$1 ] && rm -rf ./package/lean/$1
 while [ ! -f $1/Makefile ]
 do
+	echo "Checking out $1 from $2 ..." > /dev/null 2>&1
 	git clone -b $3 $2/$1 $1
+	[ ! -f $1/Makefile ] && echo "Checkout failed,retry in 3s." && sleep 3
 done
+echo "Package $1 detected!"
 mv $1 ./package/lean
 }
 
@@ -17,6 +20,7 @@ while [ ! -f $1/Makefile ]
 do
 	echo "Checking out $1 from $2 ..."
 	svn checkout $2/$1 $1 > /dev/null 2>&1
+	[ ! -f $1/Makefile ] && echo "Checkout failed,retry in 3s." && sleep 3
 done
 echo "Package $1 detected!"
 mv $1 ./package/lean
