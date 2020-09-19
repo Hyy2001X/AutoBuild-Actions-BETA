@@ -60,9 +60,7 @@ ExtraPackages git OpenClash https://github.com/vernesong master
 Diy-Part2() {
 echo "Current Openwrt version: $Lede_Version-`date +%Y%m%d`"
 echo "Current Device: $TARGET_PROFILE"
-echo "[$(date "+%H:%M:%S")] Writing $Lede_Version-`date +%Y%m%d` to /package/base-files/files/etc/openwrt_date ..."
 sed -i "s?$Lede_Version?$Lede_Version Compiled by $Author [$Compile_Date]?g" $Default_File
-echo "[$(date "+%H:%M:%S")] Writing $TARGET_PROFILE to /package/base-files/files/etc/openwrt_device ..."
 echo "$Lede_Version-`date +%Y%m%d`" > ./package/base-files/files/etc/openwrt_date
 }
 
@@ -72,14 +70,13 @@ Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-$FIRMWA
 AutoBuild_Firmware=AutoBuild-$TARGET_PROFILE-Lede-$Lede_Version`(date +-%Y%m%d.bin)`
 AutoBuild_Detail=AutoBuild-$TARGET_PROFILE-Lede-$Lede_Version`(date +-%Y%m%d.detail)`
 mkdir -p ./bin/Firmware
+echo "[$(date "+%H:%M:%S")] Moving $Default_Firmware to /bin/Firmware/$AutoBuild_Firmware ..."
 mv ./bin/targets/$TARGET_BOARD/$TARGET_SUBTARGET/$Default_Firmware ./bin/Firmware/$AutoBuild_Firmware
 cd ./bin/Firmware
-Firmware_Size=`ls -l $AutoBuild_Firmware | awk '{print $5}'`
-Firmware_Size_MB=`awk 'BEGIN{printf "固件大小:%.2fMB\n",'$((Firmware_Size))'/1000000}'`
+echo "[$(date "+%H:%M:%S")] Calculating MD5 and SHA256 ..."
 Firmware_MD5=`md5sum $AutoBuild_Firmware | cut -d ' ' -f1`
 Firmware_SHA256=`sha256sum $AutoBuild_Firmware | cut -d ' ' -f1`
-echo "$Firmware_Size_MB" > ./$AutoBuild_Detail
-echo -e "编译日期:$Compile_Time\n" >> ./$AutoBuild_Detail
+echo -e "编译日期:$Compile_Time\n" > ./$AutoBuild_Detail
 echo -e "MD5:$Firmware_MD5\nSHA256:$Firmware_SHA256" >> ./$AutoBuild_Detail
 cd ../..
 }
