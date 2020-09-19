@@ -11,12 +11,12 @@ FIRMWARE_SUFFIX=squashfs-sysupgrade.bin
 Lede_Version=`egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File`
 Compile_Date=`date +'%Y/%m/%d'`
 Compile_Time=`date +'%Y-%m-%d %H:%M:%S'`
+TARGET_PROFILE=`grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
 }
 
 GET_TARGET_INFO() {
 TARGET_BOARD=`awk -F'[="]+' '/TARGET_BOARD/{print $2}' .config`
 TARGET_SUBTARGET=`awk -F'[="]+' '/TARGET_SUBTARGET/{print $2}' .config`
-TARGET_PROFILE=`grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
 }
 
 ExtraPackages() {
