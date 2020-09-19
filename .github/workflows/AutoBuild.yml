@@ -28,9 +28,11 @@ env:
   CONFIG_FILE: .config
   FEEDS_CONF_DEFAULT: ./Customize/feeds.conf.default
   MAC80211: ./Customize/mac80211.sh
+  AUTOUPDATE: ./Customize/AutoUpdate.sh
   MWAN3: ./Customize/mwan3
   CUSTOM_SCRIPT: ./Scripts/diy-script.sh
   TZ: Asia/Shanghai
+  UPLOAD_RELEASE: true
 
 jobs:
   build:
@@ -40,14 +42,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
-    - name: Initialization environment
+    - name: Initialization Environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
         sudo -E apt-get update
         sudo -E apt-get install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync
 
-    - name: Clone OpenWRT source code
+    - name: Clone Openwrt source code
       run: |
         git clone -b $REPO_BRANCH $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
@@ -69,18 +71,20 @@ jobs:
       run: |
         [ -e $MAC80211 ] && mv $MAC80211 openwrt/package/kernel/mac80211/files/lib/wifi/mac80211.sh
         [ -e $MWAN3 ] && mv $MWAN3 openwrt/package/feeds/packages/mwan3/files/etc/config/mwan3
+        [ -e $AUTOUPDATE ] && mv $AUTOUPDATE openwrt/package/base-files/files/bin/AutoUpdate.sh
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy_Core && Diy-Part2
 
-    - name: Download package
+    - name: Download Package
       run: |
         cd openwrt
+        make defconfig
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: Compile the firmware
+    - name: Compile the Firmware
       run: |
         cd openwrt
         make -j$(nproc) V=s
@@ -90,8 +94,26 @@ jobs:
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy_Core && Diy-Part3
 
-    - name: Upload Firmware to Artifact
+    - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
       with:
         name: OpenWrt
         path: openwrt/bin/Firmware
+
+    - name: Generate Tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo " - $(date +"%Y%m%d")-AutoUpdate" > update_log.txt
+        echo "::set-env name=FIRMWARE::openwrt/bin/Firmware"
+        echo "::set-output name=status::success"
+
+    - name: Upload Firmware to Github Release
+      uses: softprops/action-gh-release@v1
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      with:
+        tag_name: AutoUpdate
+        body_path: update_log.txt
+        files: ${{ env.FIRMWARE }}/*
