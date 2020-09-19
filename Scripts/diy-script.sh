@@ -60,7 +60,7 @@ ExtraPackages git OpenClash https://github.com/vernesong master
 Diy-Part2() {
 echo "[$(date "+%H:%M:%S")] Current Openwrt version: $Lede_Version-`date +%Y%m%d`"
 echo "[$(date "+%H:%M:%S")] Current Device: $TARGET_PROFILE"
-if [ ! $(grep -o "Compiled by $Author" $Default_File | wc -l) = "1" ];then
+if [ ! $(grep -o "Compiled by $Author" $Default_File | wc -l) == 1 ];then
 	sed -i "s?$Lede_Version?$Lede_Version Compiled by $Author [$Compile_Date]?g" $Default_File
 fi
 echo "$Lede_Version-`date +%Y%m%d`" > ./package/base-files/files/etc/openwrt_date
