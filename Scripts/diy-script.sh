@@ -55,6 +55,9 @@ ExtraPackages svn luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/p
 ExtraPackages svn luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages svn smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages git OpenClash https://github.com/vernesong master
+ExtraPackages git luci-app-serverchan https://github.com/tty228 master
+ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
+
 }
 
 Diy-Part2() {
