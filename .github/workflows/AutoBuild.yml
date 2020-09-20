@@ -33,7 +33,8 @@ env:
   CUSTOM_SCRIPT: ./Scripts/diy-script.sh
   TZ: Asia/Shanghai
   UPLOAD_RELEASE: true
-  UPLOAD_ARTIFACT: true
+  UPLOAD_FIRMWARE: true
+  UPLOAD_BIN_DIR: false
 
 jobs:
   build:
@@ -97,10 +98,17 @@ jobs:
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_ARTIFACT == 'true' && !cancelled()
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       with:
-        name: OpenWrt
+        name: OpenWrt_Firmware
         path: openwrt/bin/Firmware
+        
+    - name: Upload Firmware Directory to Artifacts
+      uses: actions/upload-artifact@main
+      if: env.UPLOAD_BIN_DIR == 'true' && !cancelled()
+      with:
+        name: OpenWrt_Bin
+        path: openwrt/bin
 
     - name: Generate Tag
       id: tag
