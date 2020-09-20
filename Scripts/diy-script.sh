@@ -62,6 +62,7 @@ echo "Current Openwrt version: $Lede_Version-`date +%Y%m%d`"
 echo "Current Device: $TARGET_PROFILE"
 sed -i "s?$Lede_Version?$Lede_Version Compiled by $Author [$Compile_Date]?g" $Default_File
 echo "$Lede_Version-`date +%Y%m%d`" > ./package/base-files/files/etc/openwrt_date
+echo "$TARGET_PROFILE" > ./package/base-files/files/etc/openwrt_device
 }
 
 Diy-Part3() {
