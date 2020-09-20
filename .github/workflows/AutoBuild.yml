@@ -33,6 +33,7 @@ env:
   CUSTOM_SCRIPT: ./Scripts/diy-script.sh
   TZ: Asia/Shanghai
   UPLOAD_RELEASE: true
+  UPLOAD_ARTIFACT: true
 
 jobs:
   build:
@@ -96,6 +97,7 @@ jobs:
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
+      if: env.UPLOAD_ARTIFACT == 'true' && !cancelled()
       with:
         name: OpenWrt
         path: openwrt/bin/Firmware
