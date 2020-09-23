@@ -61,9 +61,11 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 }
 
 Diy-Part2() {
+echo "Author: $Author"
 echo "Current Openwrt version: $Lede_Version-`date +%Y%m%d`"
 echo "Current Device: $TARGET_PROFILE"
 sed -i "s?$Lede_Version?$Lede_Version Compiled by $Author [$Compile_Date]?g" $Default_File
+echo "$Author" > ./package/base-files/files/etc/openwrt_author
 echo "$Lede_Version-`date +%Y%m%d`" > ./package/base-files/files/etc/openwrt_date
 echo "$TARGET_PROFILE" > ./package/base-files/files/etc/openwrt_device
 }
@@ -76,11 +78,9 @@ AutoBuild_Detail=AutoBuild-$TARGET_PROFILE-Lede-$Lede_Version`(date +-%Y%m%d.det
 mkdir -p ./bin/Firmware
 echo "[$(date "+%H:%M:%S")] Moving $Default_Firmware to /bin/Firmware/$AutoBuild_Firmware ..."
 mv ./bin/targets/$TARGET_BOARD/$TARGET_SUBTARGET/$Default_Firmware ./bin/Firmware/$AutoBuild_Firmware
-cd ./bin/Firmware
 echo "[$(date "+%H:%M:%S")] Calculating MD5 and SHA256 ..."
-Firmware_MD5=`md5sum $AutoBuild_Firmware | cut -d ' ' -f1`
-Firmware_SHA256=`sha256sum $AutoBuild_Firmware | cut -d ' ' -f1`
-echo -e "编译日期:$Compile_Time\n" > ./$AutoBuild_Detail
-echo -e "MD5:$Firmware_MD5\nSHA256:$Firmware_SHA256" >> ./$AutoBuild_Detail
-cd ../..
+Firmware_MD5=`md5sum ./bin/Firmware/$AutoBuild_Firmware | cut -d ' ' -f1`
+Firmware_SHA256=`sha256sum ./bin/Firmware/$AutoBuild_Firmware | cut -d ' ' -f1`
+echo "编译日期:$Compile_Time" > ./bin/Firmware/$AutoBuild_Detail
+echo -e "\nMD5:$Firmware_MD5\nSHA256:$Firmware_SHA256" >> ./bin/Firmware/$AutoBuild_Detail
 }
