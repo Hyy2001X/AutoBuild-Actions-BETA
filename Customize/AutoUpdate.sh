@@ -4,14 +4,13 @@
 # AutoUpdate
 
 Author=Hyy2001
-Version=V2.7-BETA
-Updated=2020.09.19
-
+Version=V2.7
+Updated=2020.09.23
+TARGET_PROFILE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
+
 Github_Tags=$Github/releases/tag/AutoUpdate
 Github_Download=$Github/releases/download/AutoUpdate
-TARGET_PROFILE=d-team_newifi-d2
-
 clear
 echo -e "Auto-Update Script $Version by $Author\n"
 cd /etc
