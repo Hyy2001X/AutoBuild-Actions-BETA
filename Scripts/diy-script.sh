@@ -58,6 +58,8 @@ ExtraPackages git OpenClash https://github.com/vernesong master
 ExtraPackages git luci-app-serverchan https://github.com/tty228 master
 ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
 
+mkdir -p dl
+wget -q https://codeload.github.com/v2fly/v2ray-core/tar.gz/v4.28.2 -O ./dl/v2ray-core-4.28.2.tar.gz
 }
 
 Diy-Part2() {
