@@ -7,11 +7,10 @@ Diy_Core() {
 Author=Hyy2001
 
 Default_File=./package/lean/default-settings/files/zzz-default-settings
-FIRMWARE_SUFFIX=squashfs-sysupgrade.bin
 Lede_Version=`egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File`
 Compile_Date=`date +'%Y/%m/%d'`
 Compile_Time=`date +'%Y-%m-%d %H:%M:%S'`
-TARGET_PROFILE=`grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
+TARGET_PROFILE=`grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' | awk 'NR==1'`
 }
 
 GET_TARGET_INFO() {
@@ -47,9 +46,27 @@ do
 done
 }
 
+mv2() {
+if [ -f $GITHUB_WORKSPACE/Customize/$1 ];then
+	if [ ! -d ./$2 ];then
+		echo "[$(date "+%H:%M:%S")] Creating new folder $2 ..."
+		mkdir ./$2
+	fi
+	echo "[$(date "+%H:%M:%S")] Moving Customize/$1 to $2 ..."
+	mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$1
+else
+	echo "[$(date "+%H:%M:%S")] No $1 file detected!"
+fi
+}
+
 Diy-Part1() {
 sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 [ ! -d ./package/lean ] && mkdir ./package/lean
+
+mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
+mv2 system package/base-files/files/etc/config
+mv2 AutoUpdate.sh package/base-files/files/bin
+
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
 ExtraPackages svn luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/package/diy
 ExtraPackages svn luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
@@ -57,9 +74,6 @@ ExtraPackages svn smartdns https://github.com/project-openwrt/openwrt/trunk/pack
 ExtraPackages git OpenClash https://github.com/vernesong master
 ExtraPackages git luci-app-serverchan https://github.com/tty228 master
 ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
-
-mkdir -p dl
-wget -q https://codeload.github.com/v2fly/v2ray-core/tar.gz/v4.28.2 -O ./dl/v2ray-core-4.28.2.tar.gz
 }
 
 Diy-Part2() {
@@ -74,7 +88,7 @@ echo "$TARGET_PROFILE" > ./package/base-files/files/etc/openwrt_device
 
 Diy-Part3() {
 GET_TARGET_INFO
-Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-$FIRMWARE_SUFFIX
+Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-squashfs-sysupgrade.bin
 AutoBuild_Firmware=AutoBuild-$TARGET_PROFILE-Lede-$Lede_Version`(date +-%Y%m%d.bin)`
 AutoBuild_Detail=AutoBuild-$TARGET_PROFILE-Lede-$Lede_Version`(date +-%Y%m%d.detail)`
 mkdir -p ./bin/Firmware
