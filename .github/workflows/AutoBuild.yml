@@ -3,7 +3,7 @@
 # Github: https://github.com/Hyy2001X/AutoBuild-Actions
 # Lisence: MIT
 # Author: P3TERX
-# Modify: Hyy2001
+# Modify: Hyy2001X
 #=======================================================
 
 name: AutoBuild OpenWrt
@@ -13,8 +13,10 @@ on:
 #    types: [published]
 
 #  push:
-#    branches: 
+#    branches:
 #      - main
+#    paths:
+#      - '.config'
 
 #  schedule:
 #    - cron: 0 8 * * 5
@@ -26,10 +28,7 @@ env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
   CONFIG_FILE: .config
-  FEEDS_CONF_DEFAULT: ./Customize/feeds.conf.default
-  MAC80211: ./Customize/mac80211.sh
-  AUTOUPDATE: ./Customize/AutoUpdate.sh
-  MWAN3: ./Customize/mwan3
+  FEEDS_CONF_DEFAULT: feeds.conf.default
   CUSTOM_SCRIPT: ./Scripts/diy-script.sh
   TZ: Asia/Shanghai
   UPLOAD_RELEASE: true
@@ -48,8 +47,8 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo -E apt-get update
-        sudo -E apt-get install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync
 
     - name: Clone Openwrt source code
       run: |
@@ -72,9 +71,6 @@ jobs:
     - name: Run After-Update-Feeds Script
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        [ -e $MAC80211 ] && mv $MAC80211 openwrt/package/kernel/mac80211/files/lib/wifi/mac80211.sh
-        [ -e $MWAN3 ] && mv $MWAN3 openwrt/package/feeds/packages/mwan3/files/etc/config/mwan3
-        [ -e $AUTOUPDATE ] && mv $AUTOUPDATE openwrt/package/base-files/files/bin/AutoUpdate.sh
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy_Core && Diy-Part2
 
@@ -82,14 +78,14 @@ jobs:
       run: |
         cd openwrt
         make defconfig
-        make download -j$(nproc)
+        make download -j4
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
     - name: Compile the Firmware
       run: |
         cd openwrt
-        make -j$(nproc) V=s
+        make -j$(nproc) || make -j1 V=s
 
     - name: Run After-Compile-OpenWRT Script
       run: |
@@ -127,3 +123,9 @@ jobs:
         tag_name: AutoUpdate
         body_path: update_log.txt
         files: ${{ env.FIRMWARE }}/*
+
+    - name: Remove Old Artifacts
+      uses: c-hive/gha-remove-artifacts@v1
+      with:
+        age: '1 day'
+        skip-recent: 3
