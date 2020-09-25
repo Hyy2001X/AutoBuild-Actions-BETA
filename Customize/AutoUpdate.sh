@@ -4,7 +4,7 @@
 # AutoUpdate
 
 Author=Hyy2001
-Version=V2.9
+Version=V3.0
 Updated=2020.09.25
 TARGET_PROFILE=d-team_newifi-d2
 FIRMWARE_SUFFIX=bin
@@ -23,7 +23,7 @@ if [ "$CURRENT_VERSION" == "" ]; then
 	echo -e "\n警告:当前固件版本获取失败!"
 	CURRENT_VERSION=未知
 fi
-CURRENT_DEVICE=`cat ./openwrt_device 2> /dev/null`
+CURRENT_DEVICE=`cat ./openwrt_device 2> /dev/null | awk 'NR==1'`
 if [ "$CURRENT_DEVICE" == "" ]; then
 	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$TARGET_PROFILE]"
 	CURRENT_DEVICE=$TARGET_PROFILE
@@ -56,7 +56,7 @@ Firmware_Info="AutoBuild-${CURRENT_DEVICE}-Lede-${GET_Version}"
 Firmware="${Firmware_Info}.${FIRMWARE_SUFFIX}"
 Firmware_Detail="${Firmware_Info}.detail"
 echo "云端固件名称:$Firmware"
-Google_Check=`curl -I -s --connect-timeout 5 www.google.com -w %{http_code} |  tail -n1`
+Google_Check=`curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1`
 if [ ! "$Google_Check" == 200 ];then
 	TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
 fi
