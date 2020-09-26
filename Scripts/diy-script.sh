@@ -52,6 +52,7 @@ if [ -f $GITHUB_WORKSPACE/Customize/$1 ];then
 		echo "[$(date "+%H:%M:%S")] Creating new folder $2 ..."
 		mkdir ./$2
 	fi
+	[ -f ./$2/$1 ] && rm -f ./$2/$1
 	echo "[$(date "+%H:%M:%S")] Moving Customize/$1 to $2 ..."
 	mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$1
 else
@@ -66,6 +67,7 @@ sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
 mv2 system package/base-files/files/etc/config
 mv2 AutoUpdate.sh package/base-files/files/bin
+mv2 firewall.config package/network/config/firewall/files
 
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
 ExtraPackages svn luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/package/diy
