@@ -3,8 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate
 
-Author=Hyy2001
-Version=V3.1
+Version=V3.2-b
 TARGET_PROFILE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -14,12 +13,17 @@ echo -ne "\n[$(date "+%H:%M:%S")] "
 
 Github_Tags=$Github/releases/tag/AutoUpdate
 Github_Download=$Github/releases/download/AutoUpdate
-clear && echo "Auto-Update Script $Version by $Author"
+clear && echo "Openwrt-AutoUpdate Script $Version"
 cd /etc
-CURRENT_VERSION=`awk 'NR==1' ./openwrt_date`
+CURRENT_VERSION=`awk 'NR==1' ./openwrt_info > /dev/null 2>&1`
 if [ "$CURRENT_VERSION" == "" ]; then
 	echo -e "\n警告:当前固件版本获取失败!"
 	CURRENT_VERSION=未知
+fi
+CURRENT_DEVICE=`awk 'NR==2' ./openwrt_info > /dev/null 2>&1`
+if [ "$CURRENT_DEVICE" == "" ]; then
+	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$TARGET_PROFILE]"
+	CURRENT_DEVICE=$TARGET_PROFILE
 fi
 cd /tmp
 TIME && echo "正在获取云端固件版本..."
@@ -45,7 +49,7 @@ if [ $CURRENT_VERSION == $GET_Version ];then
 		exit
 	esac
 fi
-Firmware_Info="AutoBuild-${TARGET_PROFILE}-Lede-${GET_Version}"
+Firmware_Info="AutoBuild-${CURRENT_DEVICE}-Lede-${GET_Version}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
 echo "云端固件名称:$Firmware"
