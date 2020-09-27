@@ -22,7 +22,7 @@ if [ "$CURRENT_VERSION" == "" ]; then
 fi
 CURRENT_DEVICE=`jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_'`
 if [ "$CURRENT_DEVICE" == "" ]; then
-	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$TARGET_PROFILE]"
+	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
 	CURRENT_DEVICE=$DEFAULT_DEVICE
 fi
 cd /tmp
