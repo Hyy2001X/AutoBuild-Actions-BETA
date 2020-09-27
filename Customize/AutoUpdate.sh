@@ -4,7 +4,7 @@
 # AutoUpdate
 
 Version=V3.2-b
-TARGET_PROFILE=d-team_newifi-d2
+DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
 function TIME() {
@@ -15,15 +15,15 @@ Github_Tags=$Github/releases/tag/AutoUpdate
 Github_Download=$Github/releases/download/AutoUpdate
 clear && echo "Openwrt-AutoUpdate Script $Version"
 cd /etc
-CURRENT_VERSION=`awk 'NR==1' ./openwrt_info > /dev/null 2>&1`
+CURRENT_VERSION=`awk 'NR==1' ./openwrt_info`
 if [ "$CURRENT_VERSION" == "" ]; then
 	echo -e "\n警告:当前固件版本获取失败!"
 	CURRENT_VERSION=未知
 fi
-CURRENT_DEVICE=`awk 'NR==2' ./openwrt_info > /dev/null 2>&1`
+CURRENT_DEVICE=`jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_'`
 if [ "$CURRENT_DEVICE" == "" ]; then
 	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$TARGET_PROFILE]"
-	CURRENT_DEVICE=$TARGET_PROFILE
+	CURRENT_DEVICE=$DEFAULT_DEVICE
 fi
 cd /tmp
 TIME && echo "正在获取云端固件版本..."
