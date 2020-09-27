@@ -110,7 +110,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo " - $(date +"%Y%m%d")-AutoUpdate" > update_log.txt
+        echo "$(date +"%Y%m%d")-AutoUpdate" > update_log.txt
         echo "::set-env name=FIRMWARE::openwrt/bin/Firmware"
         echo "::set-output name=status::success"
 
@@ -127,5 +127,5 @@ jobs:
     - name: Remove Old Artifacts
       uses: c-hive/gha-remove-artifacts@v1
       with:
-        age: '1 day'
+        age: '1 month'
         skip-recent: 3
