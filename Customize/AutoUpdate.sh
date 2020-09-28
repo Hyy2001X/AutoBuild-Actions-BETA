@@ -3,51 +3,52 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate
 
-Version=V3.2-b
+Version=V3.3-BETA
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
-function TIME() {
+TIME() {
 echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
 Github_Tags=$Github/releases/tag/AutoUpdate
 Github_Download=$Github/releases/download/AutoUpdate
-clear && echo "Openwrt-AutoUpdate Script $Version"
 cd /etc
 CURRENT_VERSION=`awk 'NR==1' ./openwrt_info`
+CURRENT_DEVICE=`jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_'`
+clear && echo "Openwrt-AutoUpdate Script $Version"
+if [[ ! $1 == "" ]];then
+	Upgrade_Option="$1"
+	[ "$Upgrade_Option" == "-n" ] && TIME && echo "不保留配置升级."
+else
+	Upgrade_Option="-q"
+fi
 if [ "$CURRENT_VERSION" == "" ]; then
 	echo -e "\n警告:当前固件版本获取失败!"
 	CURRENT_VERSION=未知
 fi
-CURRENT_DEVICE=`jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_'`
 if [ "$CURRENT_DEVICE" == "" ]; then
 	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
 	CURRENT_DEVICE=$DEFAULT_DEVICE
 fi
 cd /tmp
 TIME && echo "正在获取云端固件版本..."
-GET_Version=`wget --no-check-certificate -q $Github_Tags -O - | egrep -o 'R[0-9]+.[0-9]+.[0-9]+.[0-9]+' | awk 'NR==1'`
+GET_Version=`wget -q $Github_Tags -O - | egrep -o 'R[0-9]+.[0-9]+.[0-9]+.[0-9]+' | awk 'NR==1'`
 if [ "$GET_Version" == "" ]; then
-	TIME && echo "云端固件版本获取失败!"
+	TIME && echo "云端固件版本获取失败,请稍后重试!"
 	exit
 fi
 echo -e "\n当前固件版本:$CURRENT_VERSION"
 echo -e "云端固件版本:$GET_Version\n"
 if [ $CURRENT_VERSION == $GET_Version ];then
-	read -p "已是最新版本,是否强制更新固件?[Y/N]:" Choose
-	case $Choose in
-	Y)
+	read -p "已是最新版本,是否强制更新固件?[Y/n]:" Choose
+	if [ $Choose == Y ] || [ $Choose == y ];then
 		TIME && echo -e "开始强制更新固件...\n"
-	;;
-	y)
-		TIME && echo -e "开始强制更新固件...\n"
-	;;
-	*)
+	else
 		TIME &&  echo "用户已取消强制更新,即将退出更新程序..."
 		sleep 2
 		exit
-	esac
+	fi
 fi
 Firmware_Info="AutoBuild-${CURRENT_DEVICE}-Lede-${GET_Version}"
 Firmware="${Firmware_Info}.bin"
@@ -85,4 +86,4 @@ fi
 TIME && echo "MD5对比通过,准备升级固件..."
 sleep 3
 TIME && echo -e "开始升级固件,请耐心等待...\n"
-sysupgrade $Firmware
+sysupgrade ${Upgrade_Option} $Firmware
