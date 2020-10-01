@@ -33,11 +33,16 @@ do
 	fi
 	if [ -f $2/Makefile ] || [ -f $2/README* ];then
 		echo "[$(date "+%H:%M:%S")] Package $2 detected!"
-		if [ $2 == OpenClash ];then
-			mv $2/luci-app-openclash ./package/lean
-		else
-			mv $2 ./package/lean
-		fi
+		case $2 in
+		OpenClash)
+			mv ./$2/luci-app-openclash ./package/lean
+		;;
+		openwrt-OpenAppFilter)
+			mv ./$2 ./package/lean
+		;;
+		*)
+			mv ./$2 ./package/lean
+		esac
 		rm -rf ./$2 > /dev/null 2>&1
 		break
 	else
@@ -79,6 +84,7 @@ ExtraPackages git luci-app-adguardhome https://github.com/Hyy2001X master
 ExtraPackages svn luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages svn smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages git OpenClash https://github.com/vernesong master
+ExtraPackages git openwrt-OpenAppFilter https://github.com/Lienol master
 ExtraPackages git luci-app-serverchan https://github.com/tty228 master
 ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
 }
