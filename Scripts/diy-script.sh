@@ -12,7 +12,7 @@ Openwrt_Version="$Lede_Version-`date +%Y%m%d`"
 AutoUpdate_Version=`awk 'NR==6' ./package/base-files/files/bin/AutoUpdate.sh | awk -F'[="]+' '/Version/{print $2}'`
 Compile_Date=`date +'%Y/%m/%d'`
 Compile_Time=`date +'%Y-%m-%d %H:%M:%S'`
-TARGET_PROFILE=`grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' | awk 'NR==1'`
+TARGET_PROFILE=`egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
 }
 
 GET_TARGET_INFO() {
@@ -23,6 +23,7 @@ TARGET_SUBTARGET=`awk -F'[="]+' '/TARGET_SUBTARGET/{print $2}' .config`
 ExtraPackages() {
 [ -d ./package/lean/$2 ] && rm -rf ./package/lean/$2
 [ -d ./$2 ] && rm -rf ./$2
+Retry_Times=3
 while [ ! -f $2/Makefile ]
 do
 	echo "[$(date "+%H:%M:%S")] Checking out $2 from $3 ..."
@@ -35,18 +36,20 @@ do
 		echo "[$(date "+%H:%M:%S")] Package $2 detected!"
 		case $2 in
 		OpenClash)
-			mv ./$2/luci-app-openclash ./package/lean
+			mv -f ./$2/luci-app-openclash ./package/lean
 		;;
 		openwrt-OpenAppFilter)
-			mv ./$2 ./package/lean
+			mv -f ./$2 ./package/lean
 		;;
 		*)
-			mv ./$2 ./package/lean
+			mv -f ./$2 ./package/lean
 		esac
 		rm -rf ./$2 > /dev/null 2>&1
 		break
 	else
-		echo "[$(date "+%H:%M:%S")] Checkout failed,retry in 3s."
+		[ $Retry_Times -lt 1 ] && echo "[$(date "+%H:%M:%S")] Skip check out package $1 ..." && break
+		echo "[$(date "+%H:%M:%S")] [$Retry_Times]Checkout failed,retry in 3s ..."
+		Retry_Times=$(($Retry_Times - 1))
 		rm -rf ./$2 > /dev/null 2>&1
 		sleep 3
 	fi
@@ -79,21 +82,23 @@ mv2 firewall.config package/network/config/firewall/files
 mv2 banner package/base-files/files/etc
 
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
+#ExtraPackages svn luci-theme-opentomato https://github.com/kenzok8/openwrt-packages/trunk
+#ExtraPackages svn luci-theme-opentomcat https://github.com/kenzok8/openwrt-packages/trunk
 #ExtraPackages svn luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/package/diy
 ExtraPackages git luci-app-adguardhome https://github.com/Hyy2001X master
 ExtraPackages svn luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages svn smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages git OpenClash https://github.com/vernesong master
-ExtraPackages git openwrt-OpenAppFilter https://github.com/Lienol master
+#ExtraPackages git openwrt-OpenAppFilter https://github.com/Lienol master
 ExtraPackages git luci-app-serverchan https://github.com/tty228 master
 ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
 }
 
 Diy-Part2() {
 echo "Author: $Author"
-echo "Current Openwrt Version: $Openwrt_Version"
-echo "Current AutoUpdate Version: $AutoUpdate_Version"
-echo "Current Device: $TARGET_PROFILE"
+echo "Openwrt Version: $Openwrt_Version"
+echo "AutoUpdate Version: $AutoUpdate_Version"
+echo "Device: $TARGET_PROFILE"
 sed -i "s?$Lede_Version?$Lede_Version Compiled by $Author [$Compile_Date]?g" $Default_File
 echo "$Openwrt_Version" > ./package/base-files/files/etc/openwrt_info
 sed -i "s?Openwrt?Openwrt $Openwrt_Version / AutoUpdate $AutoUpdate_Version?g" ./package/base-files/files/etc/banner
