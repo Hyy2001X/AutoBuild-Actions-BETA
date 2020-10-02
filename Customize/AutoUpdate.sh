@@ -24,11 +24,18 @@ else
 	[ "$Upgrade_Option" == "-n" ] && TIME && echo "执行: 不保留配置升级"
 	if [ "$Upgrade_Option" == "-x" ];then
 		Upgrade_Option="-q"
-		Force_Update=1
+		local Force_Update=1
 		TIME && echo "执行: 保留配置强制升级"
 	fi
 fi
-
+opkg list | awk  '{print $1}' > /tmp/Package_list
+grep "curl" /tmp/Package_list > /dev/null 2>&1
+if [ ! $? -ne 0 ];then
+	Google_Check=`curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1`
+	[ ! "$Google_Check" == 200 ] && TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
+fi
+grep "wget" /tmp/Package_list > /dev/null 2>&1
+[ $? -ne 0 ] && TIME && echo "未安装 wget!请先执行[opkg update && opkg install wget]" && exit
 if [ "$CURRENT_VERSION" == "" ];then
 	echo -e "\n警告:当前固件版本获取失败!"
 	CURRENT_VERSION=未知
@@ -57,7 +64,7 @@ if [[ ! $Force_Update == 1 ]];then
 			exit
 		fi
 	fi
-fi
+#fi
 Firmware_Info="AutoBuild-${CURRENT_DEVICE}-Lede-${GET_Version}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
