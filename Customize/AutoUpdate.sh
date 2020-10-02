@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate
 
-Version=V3.4
+Version=V3.5
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -41,7 +41,7 @@ if [ "$CURRENT_DEVICE" == "" ];then
 fi
 cd /tmp
 TIME && echo "正在获取云端固件版本..."
-GET_Version=`wget -q $Github_Tags -O - | egrep -o 'R[0-9]+.[0-9]+.[0-9]+.[0-9]+' | awk 'NR==1'`
+GET_Version=`wget -q $Github_Tags -O - | egrep -o 'R[0-9]+.[0-9]+.[0-9]+.[0-9]+' | awk 'END {print}'
 if [ "$GET_Version" == "" ];then
 	TIME && echo "云端固件版本获取失败,请稍后重试!"
 	exit

@@ -81,6 +81,7 @@ mv2 AutoUpdate.sh package/base-files/files/bin
 mv2 firewall.config package/network/config/firewall/files
 mv2 banner package/base-files/files/etc
 
+ExtraPackages git luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
 #ExtraPackages svn luci-theme-opentomato https://github.com/kenzok8/openwrt-packages/trunk
 #ExtraPackages svn luci-theme-opentomcat https://github.com/kenzok8/openwrt-packages/trunk
