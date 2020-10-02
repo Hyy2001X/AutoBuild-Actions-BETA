@@ -24,7 +24,7 @@ else
 	[ "$Upgrade_Option" == "-n" ] && TIME && echo "执行: 不保留配置升级"
 	if [ "$Upgrade_Option" == "-x" ];then
 		Upgrade_Option="-q"
-		local Force_Update=1
+		Force_Update=1
 		TIME && echo "执行: 保留配置强制升级"
 	fi
 fi
@@ -64,7 +64,7 @@ if [[ ! $Force_Update == 1 ]];then
 			exit
 		fi
 	fi
-#fi
+fi
 Firmware_Info="AutoBuild-${CURRENT_DEVICE}-Lede-${GET_Version}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
