@@ -76,7 +76,6 @@ sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 
 mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
 mv2 system package/base-files/files/etc/config
-mv2 mwan3 package/base-files/files/etc/config
 mv2 AutoUpdate.sh package/base-files/files/bin
 mv2 firewall.config package/network/config/firewall/files
 mv2 banner package/base-files/files/etc
@@ -96,6 +95,7 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 }
 
 Diy-Part2() {
+mv2 mwan3 package/feeds/packages/mwan3/files/etc
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
 echo "AutoUpdate Version: $AutoUpdate_Version"
