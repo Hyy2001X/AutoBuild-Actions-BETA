@@ -95,7 +95,7 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 }
 
 Diy-Part2() {
-mv2 mwan3 package/feeds/packages/mwan3/files/etc
+mv2 mwan3 package/feeds/packages/mwan3/files/etc/config
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
 echo "AutoUpdate Version: $AutoUpdate_Version"
