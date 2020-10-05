@@ -3,21 +3,22 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate
 
-Version=V3.6
+Version=V3.7
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
 TIME() {
-echo -ne "\n[$(date "+%H:%M:%S")] "
+	echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
 Github_Tags=$Github/releases/tag/AutoUpdate
 Github_Download=$Github/releases/download/AutoUpdate
+Author=${Github##*com/}
 cd /etc
 CURRENT_VERSION=`awk 'NR==1' ./openwrt_info`
 CURRENT_DEVICE=`jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_'`
 clear && echo "Openwrt-AutoUpdate Script $Version"
-if [[ $1 == "" ]];then
+if [ -z "$1" ];then
 	Upgrade_Option="-q" && TIME && echo "执行: 保留配置升级"
 else
 	Upgrade_Option="$1"
@@ -36,21 +37,22 @@ if [ ! $? -ne 0 ];then
 fi
 grep "wget" /tmp/Package_list > /dev/null 2>&1
 [ $? -ne 0 ] && TIME && echo "未安装 wget!请先执行[opkg update && opkg install wget]" && exit
-if [ "$CURRENT_VERSION" == "" ];then
+if [ -z "$CURRENT_VERSION" ];then
 	echo -e "\n警告:当前固件版本获取失败!"
 	CURRENT_VERSION=未知
 fi
-if [ "$CURRENT_DEVICE" == "" ];then
+if [ -z "$CURRENT_DEVICE" ];then
 	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
 	CURRENT_DEVICE=$DEFAULT_DEVICE
 fi
-cd /tmp
-TIME && echo "正在获取云端固件版本..."
+TIME && echo "正在检查更新..."
 GET_Version=`wget -q $Github_Tags -O - | egrep -o 'R[0-9]+.[0-9]+.[0-9]+.[0-9]+' | awk 'END {print}'`
-if [ "$GET_Version" == "" ];then
-	TIME && echo "云端固件版本获取失败,请稍后重试!"
+if [ -z "$GET_Version" ];then
+	TIME && echo "检查更新失败,请稍后重试!"
 	exit
 fi
+echo -e "\n固件作者: ${Author%/*}"
+echo "设备名称: $DEFAULT_DEVICE"
 echo -e "\n当前固件版本:$CURRENT_VERSION"
 echo -e "云端固件版本:$GET_Version\n"
 if [[ ! $Force_Update == 1 ]];then
@@ -69,16 +71,17 @@ Firmware_Info="AutoBuild-${CURRENT_DEVICE}-Lede-${GET_Version}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
 echo "云端固件名称:$Firmware"
+cd /tmp
 TIME && echo "正在下载固件,请耐心等待..."
 wget -q $Github_Download/$Firmware -O $Firmware
-if [ ! "$?" == 0 ]; then
+if [ ! $? == 0 ]; then
 	TIME && echo "下载失败,请检查网络后重试!"
 	exit
 fi
 TIME && echo "下载成功!固件大小:$(du -h $Firmware | awk '{print $1}')B"
 TIME && echo "正在下载固件详细信息..."
 wget -q $Github_Download/$Firmware_Detail -O $Firmware_Detail
-if [ ! "$?" == 0 ]; then
+if [ ! $? == 0 ]; then
 	TIME && echo "下载失败,请检查网络后重试!"
 	exit
 fi
@@ -86,7 +89,7 @@ GET_MD5=`awk -F'[ :]' '/MD5/ {print $2;exit}' $Firmware_Detail`
 CURRENT_MD5=`md5sum $Firmware | cut -d ' ' -f1`
 echo -e "\n当前固件MD5:$CURRENT_MD5"
 echo "云端固件MD5:$GET_MD5"
-if [ "$GET_MD5" == "" ] || [ "$CURRENT_MD5" == "" ];then
+if [ -z "$GET_MD5" ] || [ -z "$CURRENT_MD5" ];then
 	echo -e "\nMD5获取失败!"
 	exit
 fi
@@ -94,7 +97,6 @@ if [ ! "$GET_MD5" == "$CURRENT_MD5" ];then
 	echo -e "\nMD5对比失败,请检查网络后重试!"
 	exit
 fi
-TIME && echo "MD5对比通过!"
-sleep 3
 TIME && echo -e "开始升级固件,请耐心等待...\n"
+sleep 3
 sysupgrade ${Upgrade_Option} $Firmware
