@@ -58,15 +58,17 @@ done
 
 mv2() {
 if [ -f $GITHUB_WORKSPACE/Customize/$1 ];then
-	if [ ! -d ./$2 ];then
-		echo "[$(date "+%H:%M:%S")] Creating new folder $2 ..."
-		mkdir ./$2
-	fi
-	[ -f ./$2/$1 ] && rm -f ./$2/$1
 	echo "[$(date "+%H:%M:%S")] Moving Customize/$1 to $2 ..."
-	mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$1
+	[ ! -d ./$2 ] && mkdir -p ./$2
+	if [ -z $3 ];then
+		[ -f ./$2/$1 ] && rm -f ./$2/$1 > /dev/null 2>&1
+		mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$1
+	else
+		[ -f ./$2/$1 ] && rm -f ./$2/$3 > /dev/null 2>&1
+		mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$3
+	fi
 else
-	echo "[$(date "+%H:%M:%S")] No $1 file detected!"
+	echo "[$(date "+%H:%M:%S")] File [$1] is not detected!"
 fi
 }
 
@@ -79,11 +81,12 @@ mv2 system package/base-files/files/etc/config
 mv2 AutoUpdate.sh package/base-files/files/bin
 mv2 firewall.config package/network/config/firewall/files
 mv2 banner package/base-files/files/etc
+mv2 mt76.mk package/kernel/mt76 Makefile
 
 ExtraPackages git luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
 #ExtraPackages svn luci-theme-opentomato https://github.com/kenzok8/openwrt-packages/trunk
-#ExtraPackages svn luci-theme-opentomcat https://github.com/kenzok8/openwrt-packages/trunk
+ExtraPackages svn luci-theme-opentomcat https://github.com/kenzok8/openwrt-packages/trunk
 #ExtraPackages svn luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/package/diy
 ExtraPackages git luci-app-adguardhome https://github.com/Hyy2001X master
 ExtraPackages svn luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
