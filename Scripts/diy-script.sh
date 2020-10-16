@@ -12,10 +12,10 @@ Openwrt_Version="$Lede_Version-`date +%Y%m%d`"
 AutoUpdate_Version=`awk 'NR==6' ./package/base-files/files/bin/AutoUpdate.sh | awk -F'[="]+' '/Version/{print $2}'`
 Compile_Date=`date +'%Y/%m/%d'`
 Compile_Time=`date +'%Y-%m-%d %H:%M:%S'`
-TARGET_PROFILE=`egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
 }
 
 GET_TARGET_INFO() {
+TARGET_PROFILE=`egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
 TARGET_BOARD=`awk -F'[="]+' '/TARGET_BOARD/{print $2}' .config`
 TARGET_SUBTARGET=`awk -F'[="]+' '/TARGET_SUBTARGET/{print $2}' .config`
 }
@@ -27,11 +27,13 @@ Retry_Times=3
 while [ ! -f $2/Makefile ]
 do
 	echo "[$(date "+%H:%M:%S")] Checking out $2 from $3 ..."
-	if [ $1 == git ];then
+	case $1 in
+	git)
 		git clone -b $4 $3/$2 $2 > /dev/null 2>&1
-	else
+	;;
+	svn)
 		svn checkout $3/$2 $2 > /dev/null 2>&1
-	fi
+	esac
 	if [ -f $2/Makefile ] || [ -f $2/README* ];then
 		echo "[$(date "+%H:%M:%S")] Package $2 detected!"
 		case $2 in
@@ -58,14 +60,19 @@ done
 
 mv2() {
 if [ -f $GITHUB_WORKSPACE/Customize/$1 ];then
-	echo "[$(date "+%H:%M:%S")] Moving Customize/$1 to $2 ..."
-	[ ! -d ./$2 ] && mkdir -p ./$2
-	if [ -z $3 ];then
-		[ -f ./$2/$1 ] && rm -f ./$2/$1 > /dev/null 2>&1
-		mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$1
+	if [ -z $2 ];then
+		Patch_Dir=$GITHUB_WORKSPACE/openwrt
 	else
-		[ -f ./$2/$1 ] && rm -f ./$2/$3 > /dev/null 2>&1
-		mv -f $GITHUB_WORKSPACE/Customize/$1 ./$2/$3
+		Patch_Dir=$GITHUB_WORKSPACE/openwrt/$2
+	fi
+	echo "[$(date "+%H:%M:%S")] Moving Customize/$1 to $Patch_Dir ..."
+	[ ! -d $Patch_Dir ] && mkdir -p $Patch_Dir
+	if [ -z $3 ];then
+		[ -f $Patch_Dir/$1 ] && rm -f $Patch_Dir/$1 > /dev/null 2>&1
+		mv -f $GITHUB_WORKSPACE/Customize/$1 $Patch_Dir/$1
+	else
+		[ -f $Patch_Dir/$1 ] && rm -f $Patch_Dir/$3 > /dev/null 2>&1
+		mv -f $GITHUB_WORKSPACE/Customize/$1 $Patch_Dir/$3
 	fi
 else
 	echo "[$(date "+%H:%M:%S")] File [$1] is not detected!"
@@ -76,6 +83,7 @@ Diy-Part1() {
 sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 [ ! -d ./package/lean ] && mkdir ./package/lean
 
+#mv2 feeds.conf.default
 mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
 mv2 system package/base-files/files/etc/config
 mv2 AutoUpdate.sh package/base-files/files/bin
@@ -101,6 +109,7 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 }
 
 Diy-Part2() {
+Diy_Core
 mv2 mwan3 package/feeds/packages/mwan3/files/etc/config
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
