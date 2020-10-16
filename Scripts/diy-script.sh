@@ -65,6 +65,7 @@ if [ -f $GITHUB_WORKSPACE/Customize/$1 ];then
 		Patch_Dir=$GITHUB_WORKSPACE/openwrt
 	else
 		Patch_Dir=$GITHUB_WORKSPACE/openwrt/$2
+	fi
 	[ ! -d $Patch_Dir ] && mkdir -p $Patch_Dir
 	if [ -z $3 ];then
 		[ -f $Patch_Dir/$1 ] && rm -f $Patch_Dir/$1 > /dev/null 2>&1
@@ -82,7 +83,7 @@ Diy-Part1() {
 sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 [ ! -d ./package/lean ] && mkdir ./package/lean
 
-#mv2 feeds.conf.default
+# mv2 feeds.conf.default
 mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
 mv2 system package/base-files/files/etc/config
 mv2 AutoUpdate.sh package/base-files/files/bin
