@@ -79,7 +79,6 @@ sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 mv2 mac80211.sh package/kernel/mac80211/files/lib/wifi
 mv2 system package/base-files/files/etc/config
 mv2 AutoUpdate.sh package/base-files/files/bin
-mv2 firewall.config package/network/config/firewall/files
 mv2 banner package/base-files/files/etc
 mv2 mt76.mk package/kernel/mt76 Makefile
 
