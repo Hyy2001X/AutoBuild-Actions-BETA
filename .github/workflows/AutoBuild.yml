@@ -61,7 +61,6 @@ jobs:
 
     - name: Run Diy-Part1 Scripts
       run: |
-        [ -e $FEEDS_CONF_DEFAULT ] && mv $FEEDS_CONF_DEFAULT openwrt/feeds.conf.default
         chmod +x $CUSTOM_SCRIPT
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part1
