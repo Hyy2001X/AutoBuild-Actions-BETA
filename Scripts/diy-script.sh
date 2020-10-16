@@ -60,12 +60,11 @@ done
 
 mv2() {
 if [ -f $GITHUB_WORKSPACE/Customize/$1 ];then
+	echo "[$(date "+%H:%M:%S")] File [$1] is detected!"
 	if [ -z $2 ];then
 		Patch_Dir=$GITHUB_WORKSPACE/openwrt
 	else
 		Patch_Dir=$GITHUB_WORKSPACE/openwrt/$2
-	fi
-	echo "[$(date "+%H:%M:%S")] Moving Customize/$1 to $Patch_Dir ..."
 	[ ! -d $Patch_Dir ] && mkdir -p $Patch_Dir
 	if [ -z $3 ];then
 		[ -f $Patch_Dir/$1 ] && rm -f $Patch_Dir/$1 > /dev/null 2>&1
@@ -110,6 +109,7 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 
 Diy-Part2() {
 Diy_Core
+GET_TARGET_INFO
 mv2 mwan3 package/feeds/packages/mwan3/files/etc/config
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
