@@ -2,7 +2,9 @@
 
 Actions for Building OpenWRT
 
-测试通过的设备: **!x86**、`d-team_newifi-d2`、`phicomm_k2p`
+测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`
+
+测试通过的源码: [lede](https://github.com/coolsnowwolf/lede)
 
 ## Github Actions 部署指南:
 
