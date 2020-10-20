@@ -49,6 +49,8 @@ Actions for Building OpenWRT
 
 ## 使用指令升级固件:
 
+   一键升级 [Openwrt-AutoUpdate](https://github.com/Hyy2001X/Openwrt-AutoUpdate)
+   
    在终端输入: `bash /bin/AutoUpdate.sh`
 
    不保留配置升级: `bash /bin/AutoUpdate.sh -n`
