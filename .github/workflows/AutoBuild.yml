@@ -93,41 +93,35 @@ jobs:
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part3
+        echo "## $(date +"%Y%m%d")-AutoBuild" > update_log.txt
+        echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       with:
-        name: OpenWrt_Firmware
+        name: OpenWrt_Firmware_${{ env.Artifacts_DATE }}
         path: openwrt/bin/Firmware
         
     - name: Upload Firmware directory to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_DIR == 'true' && !cancelled()
       with:
-        name: OpenWrt_bin
+        name: OpenWrt_bin_${{ env.Artifacts_DATE }}
         path: openwrt/bin
-
-    - name: Generate Tag
-      id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        echo "$(date +"%Y%m%d")-AutoUpdate" > update_log.txt
-        echo "::set-env name=FIRMWARE::openwrt/bin/Firmware"
-        echo "::set-output name=status::success"
 
     - name: Upload Firmware to Releases
       uses: softprops/action-gh-release@v1
-      if: steps.tag.outputs.status == 'success' && !cancelled()
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
         tag_name: AutoUpdate
         body_path: update_log.txt
-        files: ${{ env.FIRMWARE }}/*
+        files: openwrt/bin/Firmware/*
 
     - name: Remove old Artifacts
       uses: c-hive/gha-remove-artifacts@v1
       with:
-        age: '1 month'
+        age: '1 day'
         skip-recent: 3
