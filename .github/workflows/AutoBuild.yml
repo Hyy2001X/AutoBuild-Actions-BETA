@@ -81,19 +81,19 @@ jobs:
       run: |
         cd openwrt
         make defconfig
-        make download -j8
+        make download -j$(nproc) V=s
         find dl -size -1024c -exec rm -f {} \;
 
     - name: Compile the Openwrt
       run: |
         cd openwrt
-        make -j$(nproc) || make -j1 || make -j1 V=s
+        make -j$(nproc) || make -j1 V=s
 
     - name: Run Diy-Part3 Scripts
       run: |
+        echo "## $(date +"%Y%m%d")-AutoBuild" > update_log.txt
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part3
-        echo "## $(date +"%Y%m%d")-AutoBuild" > $GITHUB_WORKSPACE/update_log.txt
         echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Upload Firmware to Artifacts
