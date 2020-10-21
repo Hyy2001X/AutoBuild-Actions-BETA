@@ -101,8 +101,8 @@ ExtraPackages svn luci-app-socat https://github.com/xiaorouji/openwrt-package/tr
 # ExtraPackages git openwrt-upx https://github.com/Hyy2001X master
 # ExtraPackages svn luci-app-mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
 # ExtraPackages svn mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
-# ExtraPackages svn luci-theme-opentomato https://github.com/kenzok8/openwrt-packages/trunk
-# ExtraPackages svn luci-theme-opentomcat https://github.com/kenzok8/openwrt-packages/trunk
+ExtraPackages svn luci-theme-opentomato https://github.com/kenzok8/openwrt-packages/trunk
+ExtraPackages svn luci-theme-opentomcat https://github.com/kenzok8/openwrt-packages/trunk
 # ExtraPackages svn luci-app-adguardhome https://github.com/Lienol/openwrt/trunk/package/diy
 # ExtraPackages git luci-app-adguardhome https://github.com/rufengsuixing master
 # ExtraPackages git openwrt-OpenAppFilter https://github.com/Lienol master
@@ -128,11 +128,12 @@ Default_Firmware=openwrt-$TARGET_BOARD-$TARGET_SUBTARGET-$TARGET_PROFILE-squashf
 AutoBuild_Firmware=AutoBuild-$TARGET_PROFILE-Lede-${Openwrt_Version}.bin
 AutoBuild_Detail=AutoBuild-$TARGET_PROFILE-Lede-${Openwrt_Version}.detail
 mkdir -p ./bin/Firmware
-echo "[$(date "+%H:%M:%S")] Moving $Default_Firmware to /bin/Firmware/$AutoBuild_Firmware ..."
+echo "Firmware: $AutoBuild_Firmware"
 mv ./bin/targets/$TARGET_BOARD/$TARGET_SUBTARGET/$Default_Firmware ./bin/Firmware/$AutoBuild_Firmware
 echo "[$(date "+%H:%M:%S")] Calculating MD5 and SHA256 ..."
 Firmware_MD5=`md5sum ./bin/Firmware/$AutoBuild_Firmware | cut -d ' ' -f1`
 Firmware_SHA256=`sha256sum ./bin/Firmware/$AutoBuild_Firmware | cut -d ' ' -f1`
+echo -e "MD5: $Firmware_MD5\nSHA256: $Firmware_SHA256"
 echo "编译日期:$Compile_Time" > ./bin/Firmware/$AutoBuild_Detail
 echo -e "\nMD5:$Firmware_MD5\nSHA256:$Firmware_SHA256" >> ./bin/Firmware/$AutoBuild_Detail
 }
