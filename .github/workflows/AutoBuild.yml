@@ -93,7 +93,7 @@ jobs:
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/$CUSTOM_SCRIPT && Diy-Part3
-        echo "## $(date +"%Y%m%d")-AutoBuild" > update_log.txt
+        echo "## $(date +"%Y%m%d")-AutoBuild" > $GITHUB_WORKSPACE/update_log.txt
         echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Upload Firmware to Artifacts
