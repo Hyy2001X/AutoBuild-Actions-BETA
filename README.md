@@ -61,3 +61,16 @@
    不保留配置升级: `bash /bin/AutoUpdate.sh -n`
 
    使用最新脚本升级: `curl -s https://raw.githubusercontent.com/Hyy2001X/Openwrt-AutoUpdate/master/AutoUpdate.sh | bash`
+   
+## 鸣谢
+
+   - [Lean's OpenWrt](https://github.com/coolsnowwolf/lede)
+
+   - [P3TERX](https://github.com/P3TERX/Actions-OpenWrt)
+   
+   - [CurssedCoffin](https://github.com/CurssedCoffin)
+   
+   - [Licsber](https://github.com/Licsber)
+   
+   - [mab-wien](https://github.com/mab-wien/openwrt-autoupdate)
+   
