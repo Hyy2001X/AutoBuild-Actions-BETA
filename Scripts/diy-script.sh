@@ -7,12 +7,12 @@ Diy_Core() {
 Author=Hyy2001
 Default_Device=d-team_newifi-d2
 
-Openwrt_Version="$Lede_Version-`date +%Y%m%d`"
 AutoUpdate_Version=`awk 'NR==6' ./package/base-files/files/bin/AutoUpdate.sh | awk -F'[="]+' '/Version/{print $2}'`
 Compile_Date=`date +'%Y/%m/%d'`
 Compile_Time=`date +'%Y-%m-%d %H:%M:%S'`
 Default_File=./package/lean/default-settings/files/zzz-default-settings
 Lede_Version=`egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File`
+Openwrt_Version="$Lede_Version-`date +%Y%m%d`"
 }
 
 GET_TARGET_INFO() {
