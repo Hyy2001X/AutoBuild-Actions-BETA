@@ -93,8 +93,8 @@ mv2 AutoUpdate.sh package/base-files/files/bin
 mv2 banner package/base-files/files/etc
 mv2 mt76.mk package/kernel/mt76 Makefile
 
-ExtraPackages svn mac80211 https://github.com/openwrt/openwrt/trunk/package/kernel
-rm -rf package/kernel/mac80211 && mv -f package/lean/mac80211 package/kernel
+# ExtraPackages svn mac80211 https://github.com/openwrt/openwrt/trunk/package/kernel
+# rm -rf package/kernel/mac80211 && mv -f package/lean/mac80211 package/kernel
 
 ExtraPackages git luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git luci-theme-argon https://github.com/jerrykuku 18.06
