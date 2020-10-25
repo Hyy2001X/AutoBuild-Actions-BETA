@@ -9,11 +9,11 @@
 
 测试通过的源码: [Lede](https://github.com/coolsnowwolf/lede)
 
-## Github Actions 部署指南:
+## Github Actions 部署指南(STEP 1):
 
 1. 首先需要获取[Github Token](https://github.com/settings/tokens/new),`Note`项随意填写,`Select scopes`项如果不懂就**全部打勾**,完成后点击`Generate token`
 
-2. 复制获取到的 **Token**
+2. 复制页面中显示的 **Token**
 
    **注意: 一定要保存到本地, Token 值只会显示一次!**
 
@@ -23,26 +23,26 @@
 
    **注意: 以上操作只需操作一次!**
 
-## 客制化固件:
+## 客制化固件(STEP 2):
 
 1. 进入你的`AutoBuild-Actions`仓库
 
-2. 编辑`/Customize/AutoUpdate.sh`文件,修改`第 7 行`为你的 **设备名称**,修改`第 8 行`为你的**个人 Github 地址**
+2. 编辑`/Customize/AutoUpdate.sh`文件,修改`第 7 行`为你的 **设备名称**,修改`第 8 行`为你的 **Github 地址**
 
 3. 编辑`/Sctipts/diy-script.sh`文件,修改`第 7 行`为作者,作者将在 OpenWrt 主页显示
 
-4. 添加额外的软件包: 编辑`Scrips/diy-script.sh`中的 `Diy-Part1()` 函数,参照下方语法添加第三方包到源码
+4. **启动编译**: 点击右上方 ***Star*** 即可开始编译,编译详细信息在 `Actions` 中显示
+
+   **二次编译**: 双击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
+
+   **添加额外的软件包:** 编辑`Scrips/diy-script.sh`中的 `Diy-Part1()` 函数,参照下方语法添加第三方包到源码
 ```
    [git clone -b]  ExtraPackages git Github仓库 分支
     
    [svn checkout]  ExtraPackages svn Github仓库/trunk
 ```
 
-5. 添加自定义文件: 首先上传文件到`/Customize`,然后编辑`Scrips/diy-script.sh`,参照参照现有 `mv2` 语法添加 ***Customize 文件*** 到源码
-
-6. **首次编译**: 点击右上方 ***Star*** 即可开始编译,详细信息在`菜单-Actions`中显示
-
-   **二次编译**: 双击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
+   **添加自定义文件:** 首先将文件上传到`/Customize`,然后编辑`Scrips/diy-script.sh`,参照参照现有 `mv2` 语法添加文件到源码中
 
 ## 自动编译&&自动升级:
 
