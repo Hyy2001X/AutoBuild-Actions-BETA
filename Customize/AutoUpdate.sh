@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate
 
-Version=V3.8
+Version=V3.9
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -11,9 +11,9 @@ TIME() {
 	echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
-Github_Tags=$Github/releases/tag/AutoUpdate
 Github_Download=$Github/releases/download/AutoUpdate
 Author=${Github##*com/}
+Github_Tags=https://api.github.com/repos/$Author/releases/latest
 cd /etc
 CURRENT_VERSION=$(awk 'NR==1' ./openwrt_info)
 CURRENT_DEVICE=$(jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_')
