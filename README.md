@@ -35,7 +35,7 @@
 
    **二次编译**: 双击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
 
-   **添加额外的软件包:** 编辑`Scrips/diy-script.sh`中的 `Diy-Part1()` 函数,参照下方语法添加第三方包到源码
+   **添加额外的软件包:** 编辑`Scripts/diy-script.sh`中的 `Diy-Part1()` 函数,参照下方语法添加第三方包到源码
 ```
    [git clone -b]  ExtraPackages git Github仓库 分支
     
