@@ -42,7 +42,7 @@
    [svn checkout]  ExtraPackages svn Github仓库/trunk
 ```
 
-   **添加自定义文件:** 首先将文件上传到`/Customize`,然后编辑`Scrips/diy-script.sh`,参照参照现有 `mv2` 语法添加文件到源码中
+   **添加自定义文件:** 首先将文件上传到`/Customize`,然后编辑`Scripts/diy-script.sh`,参照参照现有 `mv2` 语法添加文件到源码中
 
 ## 自动编译&&自动升级:
 
