@@ -9,7 +9,7 @@ Default_Device=d-team_newifi-d2
 }
 
 Diy-Part1() {
-[ -f feeds.conf.default ] && sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
+[ -e feeds.conf.default ] && sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 [ ! -d package/lean ] && mkdir -p package/lean
 
 Replace_File mac80211.sh package/kernel/mac80211/files/lib/wifi
@@ -73,7 +73,7 @@ echo -e "\nMD5:$Firmware_MD5\nSHA256:$Firmware_SHA256" >> bin/Firmware/$AutoBuil
 
 GET_TARGET_INFO() {
 Diy_Core
-[ -f $GITHUB_WORKSPACE/Openwrt.info ] && . $GITHUB_WORKSPACE/Openwrt.info
+[ -e $GITHUB_WORKSPACE/Openwrt.info ] && . $GITHUB_WORKSPACE/Openwrt.info
 AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 Default_File="package/lean/default-settings/files/zzz-default-settings"
 Lede_Version=$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File)
@@ -104,7 +104,7 @@ do
 	svn)
 		svn checkout $REPO_URL/$PKG_NAME $PKG_NAME > /dev/null 2>&1
 	esac
-	if [ -f $PKG_NAME/Makefile ] || [ -f $PKG_NAME/README* ];then
+	if [ -e $PKG_NAME/Makefile ] || [ -e $PKG_NAME/README* ];then
 		echo "[$(date "+%H:%M:%S")] [Done] Package [$PKG_NAME] is detected!"
 		mv $PKG_NAME package/$PKG_DIR
 		break
@@ -123,13 +123,13 @@ FILE_NAME=$1
 PATCH_DIR=$GITHUB_WORKSPACE/openwrt/$2
 FILE_RENAME=$3
 [ ! -d $PATCH_DIR ] && mkdir $PATCH_DIR
-if [ -f $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
+if [ -e $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 	echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is detected!"
 	if [ -z $FILE_RENAME ];then
-		[ -f $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$FILE_NAME
+		[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$FILE_NAME
 		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$1
 	else
-		[ -f $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$3
+		[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$3
 		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$3
 	fi
 else
