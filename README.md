@@ -51,23 +51,19 @@
 
 1. 进入你的`AutoBuild-Actions`仓库
 
-2. 编辑`/.github/workflows/AutoBuild.yml`文件,编辑`第 22 行`,并按需修改 corntab 参数
+2. 编辑`/.github/workflows/AutoBuild.yml`文件,编辑`第 22 行`,并按需修改 corntab 参数(默认每天 19:00 开始编译)
 
 3. 打开 Openwrt 主页,点击`系统`-`定时更新`,设置自动检查升级的时间并保存(**需要 [luci-app-autoupdate](https://github.com/Hyy2001X/luci-app-autoupdate) 支持**)
 
 ## 使用指令升级固件:
-
-   一键升级 [Openwrt-AutoUpdate](https://github.com/Hyy2001X/Openwrt-AutoUpdate)
    
    在终端输入: `bash /bin/AutoUpdate.sh`
 
    不保留配置升级: `bash /bin/AutoUpdate.sh -n`
-
-   使用最新脚本升级: `curl -s https://raw.githubusercontent.com/Hyy2001X/Openwrt-AutoUpdate/master/AutoUpdate.sh | bash`
    
 ## 鸣谢
 
-   - [Lean's OpenWrt](https://github.com/coolsnowwolf/lede)
+   - [Lean's Openwrt](https://github.com/coolsnowwolf/lede)
 
    - [P3TERX](https://github.com/P3TERX/Actions-OpenWrt)
    
