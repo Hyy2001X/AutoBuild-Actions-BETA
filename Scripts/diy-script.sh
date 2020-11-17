@@ -10,7 +10,7 @@ Default_Device=d-team_newifi-d2
 
 Diy-Part1() {
 [ -f feeds.conf.default ] && sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
-[ ! -d package/lean ] && mkdir package/lean
+[ ! -d package/lean ] && mkdir -p package/lean
 
 Replace_File mac80211.sh package/kernel/mac80211/files/lib/wifi
 Replace_File system package/base-files/files/etc/config
@@ -21,8 +21,10 @@ ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/tr
 ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
+ExtraPackages svn network/config firewall https://github.com/openwrt/openwrt/trunk/package/network/config
 ExtraPackages svn system opkg https://github.com/openwrt/openwrt/trunk/package/system
-#ExtraPackages git kernel mt76 https://github.com/openwrt master
+
+# ExtraPackages git kernel mt76 https://github.com/openwrt master
 
 ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
@@ -42,13 +44,14 @@ ExtraPackages svn lean luci-app-socat https://github.com/xiaorouji/openwrt-packa
 
 Diy-Part2() {
 GET_TARGET_INFO
-Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
+ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
+# Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
 echo "AutoUpdate Version: $AutoUpdate_Version"
 echo "Router: $TARGET_PROFILE"
 sed -i "s?$Lede_Version?$Lede_Version Compiled by $Author [$Display_Date]?g" $Default_File
-echo "$Openwrt_Version" > ./package/base-files/files/etc/openwrt_info
+echo "$Openwrt_Version" > package/base-files/files/etc/openwrt_info
 sed -i "s?Openwrt?Openwrt $Openwrt_Version / AutoUpdate $AutoUpdate_Version?g" package/base-files/files/etc/banner
 }
 
@@ -93,7 +96,7 @@ REPO_BRANCH=$5
 Retry_Times=3
 while [ ! -f $PKG_NAME/Makefile ]
 do
-	echo "[$(date "+%H:%M:%S")] Checking out package [$PKG_NAME] from $REPO_URL ..."
+	echo "[$(date "+%H:%M:%S")] Checking out package [$PKG_NAME] ..."
 	case $PKG_PROTO in
 	git)
 		git clone -b $REPO_BRANCH $REPO_URL/$PKG_NAME $PKG_NAME > /dev/null 2>&1
@@ -102,12 +105,12 @@ do
 		svn checkout $REPO_URL/$PKG_NAME $PKG_NAME > /dev/null 2>&1
 	esac
 	if [ -f $PKG_NAME/Makefile ] || [ -f $PKG_NAME/README* ];then
-		echo "[$(date "+%H:%M:%S")] Package [$PKG_NAME] is detected!"
+		echo "[$(date "+%H:%M:%S")] [Done] Package [$PKG_NAME] is detected!"
 		mv $PKG_NAME package/$PKG_DIR
 		break
 	else
 		[ $Retry_Times -lt 1 ] && echo "[$(date "+%H:%M:%S")] Skip check out package [$PKG_NAME] ..." && break
-		echo "[$(date "+%H:%M:%S")] [$Retry_Times] Checkout failed,retry in 3s ..."
+		echo "[$(date "+%H:%M:%S")] [Error] [$Retry_Times] Checkout failed,retry in 3s ..."
 		Retry_Times=$(($Retry_Times - 1))
 		rm -rf $PKG_NAME > /dev/null 2>&1
 		sleep 3
