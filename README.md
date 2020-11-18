@@ -23,6 +23,10 @@
 
 4. 点击右上方菜单中的`Settings`,点击`Secrets`-`New Secrets`,`Name`项填写`RELEASE_TOKEN`,`Value`项粘贴你在第 2 步中复制的 **Token** 
 
+5. **启用 Actions 权限**,点击上方菜单中的`Actions`,点击绿色的`I understand...`即可启用此仓库的 Actions 使用权限
+
+6. 保持上方菜单,点击**带有感叹号**的`AutoBuild OpenWrt`,然后点击`Enable workflow`即可完成 Actions 的环境设置
+
    **注意: 以上操作只需操作一次!**
 
 ## 客制化固件(STEP 2):
@@ -72,4 +76,3 @@
    - [Licsber](https://github.com/Licsber)
    
    - [mab-wien](https://github.com/mab-wien/openwrt-autoupdate)
-   
