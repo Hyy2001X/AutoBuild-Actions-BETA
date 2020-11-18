@@ -23,7 +23,6 @@ ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/t
 ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/config firewall https://github.com/openwrt/openwrt/trunk/package/network/config
 ExtraPackages svn system opkg https://github.com/openwrt/openwrt/trunk/package/system
-
 # ExtraPackages git kernel mt76 https://github.com/openwrt master
 
 ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
@@ -94,7 +93,7 @@ REPO_BRANCH=$5
 [ -d package/$PKG_DIR/$PKG_NAME ] && rm -rf package/$PKG_DIR/$PKG_NAME
 [ -d $PKG_NAME ] && rm -rf $PKG_NAME
 Retry_Times=3
-while [ ! -f $PKG_NAME/Makefile ]
+while [ ! -e $PKG_NAME/Makefile ]
 do
 	echo "[$(date "+%H:%M:%S")] Checking out package [$PKG_NAME] ..."
 	case $PKG_PROTO in
