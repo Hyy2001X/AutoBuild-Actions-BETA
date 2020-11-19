@@ -22,9 +22,9 @@ ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/tr
 ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/config firewall https://github.com/openwrt/openwrt/trunk/package/network/config
-ExtraPackages svn network/config fstools https://github.com/openwrt/openwrt/trunk/package/system
-ExtraPackages svn network/config ubus https://github.com/openwrt/openwrt/trunk/package/system
-ExtraPackages svn network/config ubox https://github.com/openwrt/openwrt/trunk/package/system
+# ExtraPackages svn network/config fstools https://github.com/openwrt/openwrt/trunk/package/system
+# ExtraPackages svn network/config ubus https://github.com/openwrt/openwrt/trunk/package/system
+# ExtraPackages svn network/config ubox https://github.com/openwrt/openwrt/trunk/package/system
 ExtraPackages svn system opkg https://github.com/openwrt/openwrt/trunk/package/system
 # ExtraPackages git kernel mt76 https://github.com/openwrt master
 
