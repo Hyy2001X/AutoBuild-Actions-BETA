@@ -21,7 +21,7 @@ ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/tr
 ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
-ExtraPackages svn network/config firewall https://github.com/openwrt/openwrt/trunk/package/network/config
+# ExtraPackages svn network/config firewall https://github.com/openwrt/openwrt/trunk/package/network/config
 # ExtraPackages git kernel mt76 https://github.com/openwrt master
 
 ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
