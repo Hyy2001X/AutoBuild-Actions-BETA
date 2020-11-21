@@ -21,7 +21,6 @@ ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/tr
 ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
-# ExtraPackages svn network/config firewall https://github.com/openwrt/openwrt/trunk/package/network/config
 # ExtraPackages git kernel mt76 https://github.com/openwrt master
 
 ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
@@ -43,7 +42,6 @@ ExtraPackages svn lean luci-app-socat https://github.com/xiaorouji/openwrt-packa
 Diy-Part2() {
 GET_TARGET_INFO
 ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
-# Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
 echo "AutoUpdate Version: $AutoUpdate_Version"
@@ -103,7 +101,7 @@ do
 		svn checkout $REPO_URL/$PKG_NAME $PKG_NAME > /dev/null 2>&1
 	esac
 	if [ -e $PKG_NAME/Makefile ] || [ -e $PKG_NAME/README* ];then
-		echo "[$(date "+%H:%M:%S")] [Done] Package [$PKG_NAME] is detected!"
+		echo "[$(date "+%H:%M:%S")] Package [$PKG_NAME] is detected!"
 		mv $PKG_NAME package/$PKG_DIR
 		break
 	else
@@ -120,17 +118,27 @@ Replace_File() {
 FILE_NAME=$1
 PATCH_DIR=$GITHUB_WORKSPACE/openwrt/$2
 FILE_RENAME=$3
-[ ! -d $PATCH_DIR ] && mkdir $PATCH_DIR
-if [ -e $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
-	echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is detected!"
-	if [ -z $FILE_RENAME ];then
-		[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$FILE_NAME
-		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$1
+
+[ ! -d $PATCH_DIR ] && mkdir -p $PATCH_DIR
+if [ -f $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
+	if [ -e $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
+		echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is detected!"
+		if [ -z $FILE_RENAME ];then
+			[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$FILE_NAME
+			mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$1
+		else
+			[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$3
+			mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$3
+		fi
 	else
-		[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$3
-		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$3
+		echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is not detected,skip move ..."
 	fi
 else
-	echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is not detected,skip move ..."
+	if [ -d $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
+		echo "[$(date "+%H:%M:%S")] Customize Folder [$FILE_NAME] is detected !"
+		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR
+	else
+		echo "[$(date "+%H:%M:%S")] Customize Folder [$FILE_NAME] is not detected,skip move ..."
+	fi
 fi
 }
