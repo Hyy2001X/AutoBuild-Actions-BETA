@@ -17,10 +17,10 @@ Replace_File system package/base-files/files/etc/config
 Replace_File AutoUpdate.sh package/base-files/files/bin
 Replace_File banner package/base-files/files/etc
 
-ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
-ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
-ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
-ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
+# ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
+# ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
+# ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
+# ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages git kernel mt76 https://github.com/openwrt master
 
 ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
@@ -41,7 +41,7 @@ ExtraPackages svn lean luci-app-socat https://github.com/xiaorouji/openwrt-packa
 
 Diy-Part2() {
 GET_TARGET_INFO
-ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
+# ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
 echo "AutoUpdate Version: $AutoUpdate_Version"
