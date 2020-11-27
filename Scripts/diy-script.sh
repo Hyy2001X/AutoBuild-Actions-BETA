@@ -18,10 +18,10 @@ Replace_File AutoUpdate.sh package/base-files/files/bin
 Replace_File banner package/base-files/files/etc
 
 # ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
-# ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
-# ExtraPackages git kernel mt76 https://github.com/openwrt master
+ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
+ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 
 ExtraPackages git other luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
@@ -32,11 +32,9 @@ ExtraPackages svn other smartdns https://github.com/project-openwrt/openwrt/trun
 ExtraPackages git other OpenClash https://github.com/vernesong master
 ExtraPackages git other luci-app-serverchan https://github.com/tty228 master
 ExtraPackages svn other luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
-# ExtraPackages git other openwrt-upx https://github.com/Hyy2001X master
-# ExtraPackages svn other luci-app-mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
-# ExtraPackages svn other mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
-# ExtraPackages git other openwrt-OpenAppFilter https://github.com/Lienol master
-# ExtraPackages svn other AdGuardHome https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
+# [UPX 压缩] ExtraPackages git other openwrt-upx https://github.com/Hyy2001X master
+# [应用过滤] ExtraPackages git other openwrt-OpenAppFilter https://github.com/Lienol master
+# [AdGuardHome 核心] ExtraPackages svn other AdGuardHome https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 }
 
 Diy-Part2() {
