@@ -23,24 +23,25 @@ Replace_File banner package/base-files/files/etc
 # ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages git kernel mt76 https://github.com/openwrt master
 
-ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
+ExtraPackages git other luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
-ExtraPackages git lean luci-app-argon-config https://github.com/jerrykuku master
-ExtraPackages git lean luci-app-adguardhome https://github.com/Hyy2001X master
-ExtraPackages svn lean luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
-ExtraPackages svn lean smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
-ExtraPackages git lean OpenClash https://github.com/vernesong master
-ExtraPackages git lean luci-app-serverchan https://github.com/tty228 master
-ExtraPackages svn lean luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
-# ExtraPackages git lean openwrt-upx https://github.com/Hyy2001X master
-# ExtraPackages svn lean luci-app-mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
-# ExtraPackages svn lean mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
-# ExtraPackages git lean openwrt-OpenAppFilter https://github.com/Lienol master
-# ExtraPackages svn lean AdGuardHome https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
+ExtraPackages git other luci-app-argon-config https://github.com/jerrykuku master
+ExtraPackages git other luci-app-adguardhome https://github.com/Hyy2001X master
+ExtraPackages svn other luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
+ExtraPackages svn other smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
+ExtraPackages git other OpenClash https://github.com/vernesong master
+ExtraPackages git other luci-app-serverchan https://github.com/tty228 master
+ExtraPackages svn other luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
+# ExtraPackages git other openwrt-upx https://github.com/Hyy2001X master
+# ExtraPackages svn other luci-app-mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
+# ExtraPackages svn other mentohust https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
+# ExtraPackages git other openwrt-OpenAppFilter https://github.com/Lienol master
+# ExtraPackages svn other AdGuardHome https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 }
 
 Diy-Part2() {
 GET_TARGET_INFO
+Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
 # ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
@@ -87,6 +88,7 @@ PKG_NAME=$3
 REPO_URL=$4
 REPO_BRANCH=$5
 
+[ -d package/$PKG_DIR ] && mkdir -p package/$PKG_DIR
 [ -d package/$PKG_DIR/$PKG_NAME ] && rm -rf package/$PKG_DIR/$PKG_NAME
 [ -d $PKG_NAME ] && rm -rf $PKG_NAME
 Retry_Times=3
