@@ -20,8 +20,8 @@ Replace_File banner package/base-files/files/etc
 # ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
-ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
-ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
+# ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
+# ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 
 ExtraPackages git other luci-app-autoupdate https://github.com/Hyy2001X main
 ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
