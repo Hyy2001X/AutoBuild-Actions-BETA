@@ -31,9 +31,9 @@ ExtraPackages svn other luci-app-smartdns https://github.com/project-openwrt/ope
 ExtraPackages svn other smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 ExtraPackages git other OpenClash https://github.com/vernesong master
 ExtraPackages git other luci-app-serverchan https://github.com/tty228 master
-ExtraPackages svn other luci-app-socat https://github.com/xiaorouji/openwrt-package/trunk/lienol
+ExtraPackages svn other luci-app-socat https://github.com/project-openwrt/openwrt/trunk/package/lienol
 # [UPX 压缩] ExtraPackages git other openwrt-upx https://github.com/Hyy2001X master
-# [应用过滤] ExtraPackages git other openwrt-OpenAppFilter https://github.com/Lienol master
+# [应用过滤] ExtraPackages git OAF openwrt-OpenAppFilter https://github.com/Lienol master
 # [AdGuardHome 核心] ExtraPackages svn other AdGuardHome https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
 }
 
