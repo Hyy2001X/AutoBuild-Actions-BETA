@@ -33,11 +33,11 @@
 
 1. 进入你的`AutoBuild-Actions`仓库
 
-2. 编辑`/Customize/AutoUpdate.sh`文件,修改`第 7 行`为你的 **设备名称**,修改`第 8 行`为你的 **Github 地址**
+2. 编辑`Customize/AutoUpdate.sh`文件,修改`第 7 行`为你的 **设备名称**,修改`第 8 行`为你的 **Github 地址**
 
-3. 编辑`/Sctipts/diy-script.sh`文件,修改`第 7 行`为作者,作者将在 OpenWrt 主页显示
+3. 编辑`Scripts/diy-script.sh`文件,修改`第 7 行`为作者,作者将在 OpenWrt 首页显示
 
-4. **启动编译**: 点击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
+4. **手动启动编译**: 点击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
 
    **添加额外的软件包:** 编辑`Scripts/diy-script.sh`,修改`Diy-Part1()`函数,参照下方语法:
 ```
@@ -55,15 +55,15 @@
 
 1. 进入你的`AutoBuild-Actions`仓库
 
-2. 编辑`/.github/workflows/AutoBuild.yml`文件,编辑`第 22 行`,并按需修改 corntab 参数(默认每天 19:00 开始编译)
+2. 编辑`.github/workflows/AutoBuild.yml`文件,编辑`第 22 行`,并按需修改 corntab 参数(默认每天 19:00 开始编译)
 
 3. 打开 Openwrt 主页,点击`系统`-`定时更新`,设置自动检查升级的时间并保存(**需要 [luci-app-autoupdate](https://github.com/Hyy2001X/luci-app-autoupdate) 支持**)
 
 ## 使用指令升级固件:
    
-   在终端输入: `bash /bin/AutoUpdate.sh`
+   在终端输入: `bash /bin/A*.sh`
 
-   不保留配置升级: `bash /bin/AutoUpdate.sh -n`
+   不保留配置升级: `bash /bin/A*.sh -n`
    
 ## 鸣谢
 
