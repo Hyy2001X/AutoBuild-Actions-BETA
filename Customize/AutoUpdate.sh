@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate
 
-Version=V4.0
+Version=V4.1
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -19,10 +19,10 @@ CURRENT_VERSION=$(awk 'NR==1' openwrt_info)
 CURRENT_DEVICE=$(jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_')
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
 if [[ -z "$1" ]];then
-	Upgrade_Options="-q" && TIME && echo "执行: 保留配置升级"
+	Upgrade_Options="-q" && TIME && echo "执行: 保留配置升级固件"
 else
 	Upgrade_Options="$1"
-	[[ "${Upgrade_Options}" == "-n" ]] && TIME && echo "执行: 不保留配置升级"
+	[[ "${Upgrade_Options}" == "-n" ]] && TIME && echo "执行: 不保留配置升级固件"
 	if [[ "${Upgrade_Options}" == "-x" ]];then
 		Upgrade_Options="-q"
 		Force_Update="1"
@@ -32,6 +32,8 @@ fi
 opkg list | awk '{print $1}' > /tmp/Package_list
 grep "curl" /tmp/Package_list > /dev/null 2>&1
 if [[ ! $? -ne 0 ]];then
+	Baidu_Check=$(curl -I -s --connect-timeout 5 www.baidu.com -w %{http_code} | tail -n1)
+	[ ! "$Baidu_Check" == 200 ] && TIME && echo "网络连接失败,请检查连接后重试!" && exit
 	Google_Check=$(curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1)
 	[ ! "$Google_Check" == 200 ] && TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
 fi
@@ -49,14 +51,14 @@ if [[ $? -ne 0 ]];then
 	fi
 fi
 if [[ -z "${CURRENT_VERSION}" ]];then
-	echo -e "\n警告:当前固件版本获取失败!"
+	TIME && echo "警告: 当前固件版本获取失败!"
 	CURRENT_VERSION="未知"
 fi
 if [[ -z "${CURRENT_DEVICE}" ]];then
-	echo -e "\n警告:当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
+	TIME && echo "警告: 当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
 	CURRENT_DEVICE="${DEFAULT_DEVICE}"
 fi
-TIME && echo "正在检查更新..."
+TIME && echo "正在检查版本更新..."
 [ ! -f /tmp/Github_Tags ] && touch /tmp/Github_Tags
 wget -q ${Github_Tags} -O - > /tmp/Github_Tags
 GET_FullVersion=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_DEVICE}-Lede-R[0-9]+.[0-9]+.[0-9]+.[0-9]+" | awk 'END {print}')
@@ -67,8 +69,8 @@ if [[ -z "${GET_FullVersion}" ]] || [[ -z "${GET_Version}" ]];then
 fi
 echo -e "\n固件作者: ${Author%/*}"
 echo "设备名称: ${DEFAULT_DEVICE}"
-echo -e "\n当前固件版本:${CURRENT_VERSION}"
-echo -e "云端固件版本:${GET_Version}\n"
+echo -e "\n当前固件版本: ${CURRENT_VERSION}"
+echo -e "云端固件版本: ${GET_Version}"
 if [[ ! ${Force_Update} == 1 ]];then
 	if [ "${CURRENT_VERSION}" == "${GET_Version}" ];then
 		TIME && read -p "已是最新版本,是否强制更新固件?[Y/n]:" Choose
@@ -84,7 +86,7 @@ fi
 Firmware_Info="${GET_FullVersion}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
-echo "云端固件名称:${Firmware}"
+echo "云端固件名称: ${Firmware}"
 cd /tmp
 TIME && echo "正在下载固件,请耐心等待..."
 wget -q ${Github_Download}/${Firmware} -O ${Firmware}
