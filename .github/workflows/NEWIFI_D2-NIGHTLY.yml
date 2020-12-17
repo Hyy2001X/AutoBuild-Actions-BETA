@@ -16,7 +16,7 @@ on:
 #    branches:
 #      - master
   paths:
-    - 'NEWIFI_D2.config'
+    - 'Configs/NEWIFI_D2-NIGHTLY.config'
 
   schedule:
     - cron: 0 11 * * *
@@ -26,7 +26,7 @@ on:
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
-  CONFIG_FILE: NEWIFI_D2.config
+  CONFIG_FILE: Configs/NEWIFI_D2-NIGHTLY.config
   DIY_SCRIPT: Scripts/diy-script.sh
   UPLOAD_RELEASE: true
   UPLOAD_FIRMWARE: true
