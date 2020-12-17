@@ -6,7 +6,7 @@
 # Modify: Hyy2001X
 #=======================================================
 
-name: AutoBuild OpenWrt
+name: AutoBuild-NEWIFI_D2-NIGHTLY
 
 on: 
 #  release:
@@ -15,8 +15,8 @@ on:
 #  push:
 #    branches:
 #      - master
-#    paths:
-#      - '.config'
+  paths:
+    - 'NEWIFI_D2.config'
 
   schedule:
     - cron: 0 11 * * *
@@ -26,11 +26,11 @@ on:
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
-  CONFIG_FILE: .config
+  CONFIG_FILE: NEWIFI_D2.config
   DIY_SCRIPT: Scripts/diy-script.sh
   UPLOAD_RELEASE: true
   UPLOAD_FIRMWARE: true
-  UPLOAD_BIN_DIR: false
+  UPLOAD_BIN_DIR: true
   REMOVE_OLD_RELEASE: false
   DELETE_WORKFLOW_RUNS: true
 
@@ -91,7 +91,7 @@ jobs:
 
     - name: Run Diy-Part3 Scripts
       run: |
-        echo "## $(date +"%Y%m%d")-AutoBuild" > update_log.txt
+        echo "## $(date +"%Y%m%d")-NEWIFI_D2-NIGHTLY" > update_log.txt
         cd openwrt
         source $GITHUB_WORKSPACE/$DIY_SCRIPT && Diy-Part3
         echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
