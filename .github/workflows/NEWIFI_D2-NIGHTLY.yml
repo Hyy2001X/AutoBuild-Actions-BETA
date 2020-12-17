@@ -15,8 +15,6 @@ on:
 #  push:
 #    branches:
 #      - master
-  paths:
-    - 'Configs/NEWIFI_D2-NIGHTLY.config'
 
   schedule:
     - cron: 0 11 * * *
