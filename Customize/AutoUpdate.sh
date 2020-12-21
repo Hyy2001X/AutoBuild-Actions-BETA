@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V4.3
+Version=V4.4
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -19,23 +19,44 @@ CURRENT_VERSION=$(awk 'NR==1' openwrt_info)
 CURRENT_DEVICE=$(jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_')
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
 if [[ -z "$1" ]];then
-	Upgrade_Options="-q" && TIME && echo "执行: 保留配置更新固件"
+	Upgrade_Options="-q" && TIME && echo "执行: 保留配置更新固件[静默模式]"
 else
-	Upgrade_Options="$1"
-	[[ "${Upgrade_Options}" == "-n" ]] && TIME && echo "执行: 不保留配置更新固件"
-	if [[ "${Upgrade_Options}" == "-x" ]];then
-		Upgrade_Options="-q"
+	case $1 in
+	-n)
+		TIME && echo "执行: 不保留配置更新固件"
+	;;
+	-q)
+		TIME && echo "执行: 保留配置更新固件[静默模式]"
+	;;
+	-v)
+		TIME && echo "执行: 保留配置更新固件[详细模式]"
+	;;
+	-f)
 		Force_Update="1"
-		TIME && echo "执行: 保留配置强制更新"
-	else
-		Force_Update="0"
-	fi
+		Upgrade_Options="-q"
+		TIME && echo "执行: 强制更新固件并保留配置"
+	;;
+	*)
+		echo -e "\nUsage: bash /bin/AutoUpdate.sh [<Option>]"
+		echo -e "\n可使用的选项:"
+		echo "	-f	强制更新固件并保留配置"
+		echo "	-q	更新固件并保留配置[静默模式]"
+		echo "	-v	更新固件并保留配置[详细模式]"
+		echo "	-n	更新固件但不保留配置"
+		echo -e "\n项目地址: ${Github}"
+		echo -e "默认设备: ${DEFAULT_DEVICE}\n"
+		exit
+	;;
+	esac
+	[ ! $1 == "-f" ] && Upgrade_Options="$1"
 fi
 opkg list | awk '{print $1}' > /tmp/Package_list
-grep "curl" /tmp/Package_list > /dev/null 2>&1
-if [[ ! $? -ne 0 ]];then
-	Google_Check=$(curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1)
-	[ ! "$Google_Check" == 200 ] && TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
+if [[ ! "${Force_Update}" == "1" ]];then
+	grep "curl" /tmp/Package_list > /dev/null 2>&1
+	if [[ ! $? -ne 0 ]];then
+		Google_Check=$(curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1)
+		[ ! "$Google_Check" == 200 ] && TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
+	fi
 fi
 grep "wget" /tmp/Package_list > /dev/null 2>&1
 if [[ $? -ne 0 ]];then
