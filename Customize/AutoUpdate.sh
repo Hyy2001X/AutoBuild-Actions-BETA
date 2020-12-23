@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V4.4
+Version=V4.5
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -80,7 +80,7 @@ if [[ -z "${CURRENT_VERSION}" ]];then
 	CURRENT_VERSION="未知"
 fi
 if [[ -z "${CURRENT_DEVICE}" ]];then
-	[[ "${Upgrade_Options}" == "-x" ]] && exit
+	[[ "${Force_Update}" == "1" ]] && exit
 	TIME && echo "警告: 当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
 	CURRENT_DEVICE="${DEFAULT_DEVICE}"
 fi
@@ -113,14 +113,45 @@ Firmware_Info="${GET_FullVersion}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
 echo "云端固件名称: ${Firmware}"
-cd /tmp
+Disk_List="/tmp/disk_list"
+[ -f $Disk_List ] && rm -f $Disk_List
+Check_Disk="$(mount | egrep -o "mnt/+sd[a-zA-Z][0-9]+")"
+if [ ! -z "${Check_Disk}" ];then
+	echo "${Check_Disk}" > ${Disk_List}
+	Disk_Number=$(sed -n '$=' ${Disk_List})
+	if [ ${Disk_Number} -gt 1 ];then
+		for Disk_Name in $(cat ${Disk_List})
+		do
+			Disk_Available="$(df -m | grep "${Disk_Name}" | awk '{print $4}')"
+			if [ "${Disk_Available}" -gt 20 ];then
+				Download_Path="/${Disk_Name}"
+				break
+			else
+				Download_Path="/tmp"
+			fi
+		done
+	else
+		Disk_Name="${Check_Disk}"
+		Disk_Available="$(df -m | grep "${Disk_Name}" | awk '{print $4}')"
+		if [ "${Disk_Available}" -gt 20 ];then
+			Download_Path="/${Disk_Name}"
+		else
+			Download_Path="/tmp"
+		fi
+	fi
+else
+	Download_Path="/tmp"
+fi
+[ ! -d "${Download_Path}/Downloads" ] && mkdir -p ${Download_Path}/Downloads
+cd ${Download_Path}/Downloads
+echo "固件保存位置: ${Download_Path}/Downloads"
 TIME && echo "正在下载固件,请耐心等待..."
 wget -q ${Github_Download}/${Firmware} -O ${Firmware}
 if [[ ! $? == 0 ]];then
 	TIME && echo "固件下载失败,请检查网络后重试!"
 	exit
 fi
-TIME && echo "下载成功!固件大小:$(du -h ${Firmware} | awk '{print $1}')B"
+TIME && echo "下载成功!固件大小:$(du -h ${Download_Path}/Downloads/${Firmware} | awk '{print $1}')B"
 TIME && echo "正在获取云端固件MD5,请耐心等待..."
 wget -q ${Github_Download}/${Firmware_Detail} -O ${Firmware_Detail}
 if [[ ! $? == 0 ]];then
