@@ -40,6 +40,7 @@ ExtraPackages svn other luci-app-socat https://github.com/project-openwrt/openwr
 Diy-Part2() {
 GET_TARGET_INFO
 Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
+sed -i 's/143/143,25,5222/' package/feeds/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 # ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
 echo "Author: $Author"
 echo "Openwrt Version: $Openwrt_Version"
