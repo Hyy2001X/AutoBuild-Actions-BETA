@@ -19,7 +19,7 @@ Replace_File banner package/base-files/files/etc
 
 ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
-# ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
+ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
 ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 # ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
 
@@ -39,7 +39,7 @@ ExtraPackages svn other luci-app-socat https://github.com/project-openwrt/openwr
 
 Diy-Part2() {
 GET_TARGET_INFO
-Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
+# Replace_File mwan3 package/feeds/packages/mwan3/files/etc/config
 sed -i 's/143/143,25,5222/' package/feeds/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 # ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
 echo "Author: $Author"
