@@ -15,6 +15,7 @@ Diy-Part1() {
 Replace_File mac80211.sh package/kernel/mac80211/files/lib/wifi
 Replace_File system package/base-files/files/etc/config
 Replace_File AutoUpdate.sh package/base-files/files/bin
+Replace_File AutoExpand.sh package/base-files/files/bin
 Replace_File banner package/base-files/files/etc
 
 ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
@@ -124,6 +125,7 @@ FILE_RENAME=$3
 if [ -f $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 	if [ -e $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 		echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is detected!"
+		chmod 777 $GITHUB_WORKSPACE/Customize/$FILE_NAME
 		if [ -z $FILE_RENAME ];then
 			[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$FILE_NAME
 			mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$1
@@ -138,6 +140,7 @@ else
 	if [ -d $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 		echo "[$(date "+%H:%M:%S")] Customize Folder [$FILE_NAME] is detected !"
 		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR
+		chmod -R 777 $PATCH_DIR
 	else
 		echo "[$(date "+%H:%M:%S")] Customize Folder [$FILE_NAME] is not detected,skip move ..."
 	fi
