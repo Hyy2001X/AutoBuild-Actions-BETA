@@ -28,9 +28,8 @@ env:
   DIY_SCRIPT: Scripts/diy-script.sh
   UPLOAD_RELEASE: true
   UPLOAD_FIRMWARE: true
-  UPLOAD_BIN_DIR: true
+  UPLOAD_BIN_DIR: false
   REMOVE_OLD_RELEASE: false
-  DELETE_WORKFLOW_RUNS: true
 
 jobs:
   build:
@@ -117,13 +116,6 @@ jobs:
         tag_name: AutoUpdate
         body_path: update_log.txt
         files: openwrt/bin/Firmware/*
-        
-    - name: Delete workflow runs
-      if: env.DELETE_WORKFLOW_RUNS == 'true' && !cancelled()
-      uses: ActionsRML/delete-workflow-runs@main
-      with:
-        retain_days: 1
-        keep_minimum_runs: 3
         
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
