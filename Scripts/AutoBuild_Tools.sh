@@ -1,7 +1,7 @@
 #!/bin/bash
 # https://github.com/Hyy2001X/AutoBuild-Actions
 # AutoBuild Module by Hyy2001
-# AutoBuild_Tools Tools for Openwrt
+# AutoBuild_Tools for Openwrt
 
 Version=V1.1-BETA
 
