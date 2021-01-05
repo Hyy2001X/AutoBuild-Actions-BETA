@@ -125,7 +125,6 @@ FILE_RENAME=$3
 if [ -f $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 	if [ -e $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 		echo "[$(date "+%H:%M:%S")] Customize File [$FILE_NAME] is detected!"
-		chmod 777 $GITHUB_WORKSPACE/Customize/$FILE_NAME
 		if [ -z $FILE_RENAME ];then
 			[ -e $PATCH_DIR/$FILE_NAME ] && rm -f $PATCH_DIR/$FILE_NAME
 			mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR/$1
@@ -140,7 +139,6 @@ else
 	if [ -d $GITHUB_WORKSPACE/Customize/$FILE_NAME ];then
 		echo "[$(date "+%H:%M:%S")] Customize Folder [$FILE_NAME] is detected !"
 		mv -f $GITHUB_WORKSPACE/Customize/$FILE_NAME $PATCH_DIR
-		chmod -R 777 $PATCH_DIR
 	else
 		echo "[$(date "+%H:%M:%S")] Customize Folder [$FILE_NAME] is not detected,skip move ..."
 	fi
