@@ -11,6 +11,10 @@ Diy_Core() {
 Diy-Part1() {
 	# [ -e feeds.conf.default ] && sed -i "s/#src-git helloworld/src-git helloworld/g" feeds.conf.default
 	[ ! -d package/lean ] && mkdir -p package/lean
+	
+	Update_Makefile xray package/lean/xray
+	Update_Makefile v2ray package/lean/v2ray
+	Update_Makefile v2ray-plugin package/lean/v2ray-plugin
 
 	Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
 	Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
