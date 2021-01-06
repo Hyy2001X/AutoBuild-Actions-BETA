@@ -48,7 +48,7 @@
 
    **添加自定义文件:** 首先将文件上传到`/Customize`,然后修改`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
-   [mv -f] Replace_File 文件名称 替换目录 重命名
+   [mv -f] Replace_File 文件名称 替换目录 重命名(可选)
 ```
 
 ## 自动编译 && 定时更新:
@@ -59,11 +59,19 @@
 
 3. 打开 Openwrt 主页,点击`系统`-`定时更新`,设置自动检查更新的时间并保存(需要 [luci-app-autoupdate](https://github.com/Hyy2001X/luci-app-autoupdate) 支持)
 
-## 使用指令更新固件:
-   
-   在终端输入: `bash /bin/AutoUpdate.sh`
+## 使用一键更新固件脚本:
 
-   不保留配置更新: `bash /bin/AutoUpdate.sh -n`
+   首先需要打开 Openwrt 主页,点击`系统`-`TTYD 终端`或者在浏览器输入`192.168.1.1:7681`,按需输入下方指令:
+   
+   检查更新(保留配置): `bash /bin/AutoUpdate.sh`
+
+   检查更新(不保留配置): `bash /bin/AutoUpdate.sh -n`
+   
+   更新到最新稳定版: `bash /bin/AutoUpdate.sh -s`
+   
+## 使用一键扩展内部空间\挂载 Samba 脚本:
+
+   同上方操作,打开`TTYD 终端`,输入`bash /bin/AutoBuild_Tools.sh`
    
 ## 鸣谢
 
