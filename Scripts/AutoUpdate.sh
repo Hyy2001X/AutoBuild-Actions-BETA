@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V4.6
+Version=V4.7
 DEFAULT_DEVICE=d-team_newifi-d2
 Github=https://github.com/Hyy2001X/AutoBuild-Actions
 
@@ -24,31 +24,37 @@ if [[ -z "${Input_Option}" ]];then
 else
 	case ${Input_Option} in
 	-n)
-		TIME && echo "执行: 不保留配置更新固件"
+		TIME && echo "执行: 更新固件(不保留配置)"
 	;;
 	-q)
 		TIME && echo "执行: 保留配置更新固件[静默模式]"
 	;;
 	-v)
-		TIME && echo "执行: 保留配置更新固件[详细模式]"
+		TIME && echo "执行: 保留配置更新固件[详细日志]"
 	;;
 	-f)
 		Force_Update="1"
 		Upgrade_Options="-q"
-		TIME && echo "执行: 强制更新固件并保留配置"
+		TIME && echo "执行: 强制更新固件(保留配置)"
 	;;
 	-u)
 		AutoUpdate_Mode="1"
 		Upgrade_Options="-q"
 	;;
+	-s)
+		Stable_Mode="1"
+		Upgrade_Options="-q"
+		TIME && echo "执行: 更新固件到稳定版本(保留配置)"
+	;;
 	*)
 		echo -e "\nUsage: bash /bin/AutoUpdate.sh [<Option>]"
 		echo -e "\n可使用的选项:"
-		echo "	-f	强制更新固件并保留配置"
+		echo "	-f	强制更新固件,自动下载以及安装依赖包,跳过版本号验证(保留配置)"
 		echo "	-q	更新固件并保留配置[静默模式]"
-		echo "	-v	更新固件并保留配置[详细模式]"
-		echo "	-n	更新固件但不保留配置"
-		echo "	-u	适用于定时更新的参数"
+		echo "	-v	更新固件并保留配置[详细日志]"
+		echo "	-n	更新固件(不保留配置)"
+		echo "	-u	适用于定时更新的参数,自动下载以及安装依赖包(保留配置)"
+		echo "	-s	更新固件到最新的稳定版本(保留配置)"
 		echo -e "\n项目地址: ${Github}"
 		echo -e "默认设备: ${DEFAULT_DEVICE}\n"
 		exit
@@ -95,8 +101,12 @@ fi
 TIME && echo "正在检查版本更新..."
 [ ! -f /tmp/Github_Tags ] && touch /tmp/Github_Tags
 wget -q ${Github_Tags} -O - > /tmp/Github_Tags
-GET_FullVersion=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_DEVICE}-Lede-R[0-9]+.[0-9]+.[0-9]+.[0-9]+" | awk 'END {print}')
-GET_Version="${GET_FullVersion#*Lede-}"
+if [[ ${Stable_Mode} == 1 ]];then
+	GET_FullVersion=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_DEVICE}-R[0-9]+.[0-9]+.[0-9]+.[0-9]+-Stable" | awk 'END {print}')
+else
+	GET_FullVersion=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_DEVICE}-R[0-9]+.[0-9]+.[0-9]+.[0-9]+" | awk 'END {print}')
+fi
+GET_Version="${GET_FullVersion#*${CURRENT_DEVICE}-}"
 if [[ -z "${GET_FullVersion}" ]] || [[ -z "${GET_Version}" ]];then
 	TIME && echo "检查更新失败,请稍后重试!"
 	exit
@@ -122,6 +132,7 @@ Firmware_Info="${GET_FullVersion}"
 Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
 echo -e "\n云端固件名称: ${Firmware}"
+echo "固件下载地址: ${Github_Download}"
 Disk_List="/tmp/disk_list"
 [ -f $Disk_List ] && rm -f $Disk_List
 Check_Disk="$(mount | egrep -o "mnt/+sd[a-zA-Z][0-9]+")"
@@ -160,7 +171,7 @@ if [[ ! $? == 0 ]];then
 	TIME && echo "固件下载失败,请检查网络后重试!"
 	exit
 fi
-TIME && echo "下载成功!固件大小:$(du -h ${Download_Path}/Downloads/${Firmware} | awk '{print $1}')B"
+TIME && echo "固件下载成功!"
 TIME && echo "正在获取云端固件MD5,请耐心等待..."
 wget -q ${Github_Download}/${Firmware_Detail} -O ${Firmware_Detail}
 if [[ ! $? == 0 ]];then
