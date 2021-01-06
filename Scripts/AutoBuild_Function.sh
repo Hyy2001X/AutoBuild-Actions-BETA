@@ -25,14 +25,14 @@ ExtraPackages() {
 	REPO_URL=${4}
 	REPO_BRANCH=${5}
 
-	[ -d package/${PKG_DIR} ] && mkdir -p package/${PKG_DIR}
-	[ -d package/${PKG_DIR}/${PKG_NAME} ] && rm -rf package/${PKG_DIR}/${PKG_NAME}
-	[ -d ${PKG_NAME} ] && rm -rf ${PKG_NAME}
+	[ -d "package/${PKG_DIR}" ] && mkdir -p package/${PKG_DIR}
+	[ -d "package/${PKG_DIR}/${PKG_NAME}" ] && rm -rf package/${PKG_DIR}/${PKG_NAME}
+	[ -d "${PKG_NAME}" ] && rm -rf ${PKG_NAME}
 	Retry_Times=3
-	while [ ! -f ${PKG_NAME}/Makefile ]
+	while [ ! -f "${PKG_NAME}/Makefile" ]
 	do
 		echo "[$(date "+%H:%M:%S")] Checking out package [${PKG_NAME}] to package/${PKG_DIR} ..."
-		case ${PKG_PROTO} in
+		case "${PKG_PROTO}" in
 		git)
 			git clone -b ${REPO_BRANCH} ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
 		;;
@@ -47,7 +47,7 @@ ExtraPackages() {
 			[ ${Retry_Times} -lt 1 ] && echo "[$(date "+%H:%M:%S")] Skip check out package [${PKG_NAME}] ..." && break
 			echo "[$(date "+%H:%M:%S")] [Error] [${Retry_Times}] Checkout failed,retry in 3s ..."
 			Retry_Times=$(($Retry_Times - 1))
-			rm -rf ${PKG_NAME} > /dev/null 2>&1
+			rm -rf ${PKG_NAME}
 			sleep 3
 		fi
 	done
@@ -57,13 +57,13 @@ Replace_File() {
 	FILE_NAME=${1}
 	PATCH_DIR=${GITHUB_WORKSPACE}/openwrt/${2}
 	FILE_RENAME=${3}
-	[ ! -d "${PATCH_DIR}" ] && mkdir -p ${PATCH_DIR}
+	[ ! -d "${PATCH_DIR}" ] && mkdir -p "${PATCH_DIR}"
 
 	[ -f "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="f" && _TYPE2="File"
 	[ -d "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="d" && _TYPE2="Folder"
 	
 	if [ -e "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
-		[ ! -z "${FILE_RENAME}" ] && _RENAME="${FILE_RENAME}" || _RENAME=""
+		[[ ! -z "${FILE_RENAME}" ]] && _RENAME="${FILE_RENAME}" || _RENAME=""
 		if [ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
 			echo "[$(date "+%H:%M:%S")] Move ${FILE_NAME} to ${PATCH_DIR}/${FILE_RENAME} ..."
 			mv -f ${GITHUB_WORKSPACE}/${FILE_NAME} ${PATCH_DIR}/${_RENAME}
@@ -71,13 +71,13 @@ Replace_File() {
 			echo "[$(date "+%H:%M:%S")] Customize ${_TYPE2} [${FILE_NAME}] is not detected,skip move ..."
 		fi
 	fi
-	unset _RENAME
+	unset _RENAME _TYPE1 _TYPE2
 }
 
 Update_Makefile() {
 	PKG_NAME="$1"
 	Makefile="$2/Makefile"
-	if [ -f ${Makefile} ];then
+	if [ -f "${Makefile}" ];then
 		PKG_URL_MAIN="$(grep "PKG_SOURCE_URL:=" ${Makefile} | cut -c17-100)"
 		_process1=${PKG_URL_MAIN##*com/}
 		_process2=${_process1%%/tar*}
@@ -90,7 +90,7 @@ Update_Makefile() {
 		if [[ ! "${Source_Version}" == "${Offical_Version}" ]];then
 			echo -e "Update package ${PKG_NAME} [${Source_Version}] to [${Offical_Version}] ..."
 			sed -i "s?PKG_VERSION:=${Source_Version}?PKG_VERSION:=${Offical_Version}?g" ${Makefile}
-			wget -q ${PKG_DL_URL}${Offical_Version}? -O /tmp/tmp_file
+			wget -q "${PKG_DL_URL}${Offical_Version}?" -O /tmp/tmp_file
 			if [[ $? == 0 ]];then
 				Offical_HASH=$(sha256sum /tmp/tmp_file | cut -d ' ' -f1)
 				sed -i "s?PKG_HASH:=${Source_HASH}?PKG_HASH:=${Offical_HASH}?g" ${Makefile}
@@ -101,4 +101,5 @@ Update_Makefile() {
 	else
 		echo "Package ${PKG_NAME} is not detected,skip update ..."
 	fi
+	unset _process1 _process2 Offical_Version
 }
