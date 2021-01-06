@@ -57,8 +57,8 @@ Diy-Part2() {
 Diy-Part3() {
 	GET_TARGET_INFO
 	Default_Firmware="openwrt-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.bin"
-	AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-Lede-${Openwrt_Version}.bin"
-	AutoBuild_Detail="AutoBuild-${TARGET_PROFILE}-Lede-${Openwrt_Version}.detail"
+	AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.bin"
+	AutoBuild_Detail="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.detail"
 	mkdir -p bin/Firmware
 	echo "Firmware: ${AutoBuild_Firmware}"
 	mv -f bin/targets/"${TARGET_BOARD}/${TARGET_SUBTARGET}/${Default_Firmware}" bin/Firmware/"${AutoBuild_Firmware}"

@@ -10,7 +10,7 @@ GET_TARGET_INFO() {
 	[ -z ${AutoUpdate_Version} ] && AutoUpdate_Version="未知"
 	Default_File="package/lean/default-settings/files/zzz-default-settings"
 	[ -f ${Default_File} ] && Lede_Version=$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File)
-	[ -z ${Lede_Version} ] && Lede_Version="AutoBuild"
+	[ -z ${Lede_Version} ] && Lede_Version="Openwrt"
 	Openwrt_Version="${Lede_Version}-${Compile_Date}"
 	TARGET_PROFILE=$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')
 	[ -z "${TARGET_PROFILE}" ] && TARGET_PROFILE="${Default_Device}"
