@@ -60,7 +60,7 @@ else
 		exit
 	;;
 	esac
-	if [[ ! "${Force_Update}" == "1" ]] && [[ ! "${AutoUpdate_Mode}" == "1" ]];then
+	if [[ ! "${Force_Update}" == "1" ]] && [[ ! "${AutoUpdate_Mode}" == "1" ]] && [[ ! "${Stable_Mode}" == "1" ]];then
 		Upgrade_Options="${Input_Option}"
 	fi
 fi
