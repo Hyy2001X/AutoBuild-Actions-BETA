@@ -3,21 +3,20 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V4.8
-DEFAULT_DEVICE=d-team_newifi-d2
-Github=https://github.com/Hyy2001X/AutoBuild-Actions
+Version=V4.9
 
 TIME() {
 	echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
-Github_Download=${Github}/releases/download/AutoUpdate
-Author=${Github##*com/}
-[[ -z ${Author} ]] && echo "固件作者信息获取失败!" && exit
-Github_Tags=https://api.github.com/repos/${Author}/releases/latest
+CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
+Github="$(awk 'NR==2' /etc/openwrt_info)"
+DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
+CURRENT_Device="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
+Github_Download="${Github}/releases/download/AutoUpdate"
+Author="${Github##*com/}"
+Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
 cd /etc
-CURRENT_VERSION=$(awk 'NR==1' /etc/openwrt_info)
-CURRENT_DEVICE=$(jsonfilter -e '@.model.id' < "/etc/board.json" | tr ',' '_')
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
 Input_Option="$1"
 if [[ -z "${Input_Option}" ]];then
@@ -59,7 +58,7 @@ else
 		echo "	-s	更新/回退固件到最新的稳定版本[保留配置]"
 		echo "	-sn	更新/回退固件到最新的稳定版本[不保留配置]"
 		echo -e "\n项目地址: ${Github}"
-		echo -e "默认设备: ${DEFAULT_DEVICE}\n"
+		echo -e "当前设备: ${DEFAULT_Device}\n"
 		exit
 	;;
 	esac
@@ -92,14 +91,14 @@ if [[ $? -ne 0 ]];then
 		exit
 	fi
 fi
-if [[ -z "${CURRENT_VERSION}" ]];then
+if [[ -z "${CURRENT_Version}" ]];then
 	TIME && echo "警告: 当前固件版本获取失败!"
-	CURRENT_VERSION="未知"
+	CURRENT_Version="未知"
 fi
-if [[ -z "${CURRENT_DEVICE}" ]];then
+if [[ -z "${CURRENT_Device}" ]];then
 	[[ "${Force_Update}" == "1" ]] && exit
-	TIME && echo "警告: 当前设备名称获取失败,使用预设名称[$DEFAULT_DEVICE]"
-	CURRENT_DEVICE="${DEFAULT_DEVICE}"
+	TIME && echo "警告: 当前设备名称获取失败,使用预设名称[$DEFAULT_Device]"
+	CURRENT_Device="${DEFAULT_Device}"
 fi
 TIME && echo "正在检查版本更新..."
 [ ! -f /tmp/Github_Tags ] && touch /tmp/Github_Tags
@@ -109,19 +108,19 @@ if [[ ${Stable_Mode} == 1 ]];then
 else
 	GET_Version_Type=""
 fi
-GET_FullVersion=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_DEVICE}-R[0-9]+.[0-9]+.[0-9]+.[0-9]+${GET_Version_Type}" | awk 'END {print}')
-GET_Version="${GET_FullVersion#*${CURRENT_DEVICE}-}"
+GET_FullVersion=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_Device}-R[0-9]+.[0-9]+.[0-9]+.[0-9]+${GET_Version_Type}" | awk 'END {print}')
+GET_Version="${GET_FullVersion#*${CURRENT_Device}-}"
 if [[ -z "${GET_FullVersion}" ]] || [[ -z "${GET_Version}" ]];then
 	TIME && echo "检查更新失败,请稍后重试!"
 	exit
 fi
 echo -e "\n固件作者: ${Author%/*}"
-echo "设备名称: ${DEFAULT_DEVICE}"
-echo -e "\n当前固件版本: ${CURRENT_VERSION}"
+echo "设备名称: ${DEFAULT_Device}"
+echo -e "\n当前固件版本: ${CURRENT_Version}"
 echo "云端固件版本: ${GET_Version}"
 Check_Stable_Version=$(echo ${GET_Version} | egrep -o "R[0-9]+.[0-9]+.[0-9]+.[0-9]+")
 if [[ ! ${Force_Update} == 1 ]];then
-	if [[ "${CURRENT_VERSION}" == "${Check_Stable_Version}" ]];then
+	if [[ "${CURRENT_Version}" == "${Check_Stable_Version}" ]];then
 		[[ "${AutoUpdate_Mode}" == "1" ]] && exit
 		TIME && read -p "已是最新版本,是否强制更新固件?[Y/n]:" Choose
 		if [[ "${Choose}" == Y ]] || [[ "${Choose}" == y ]];then
