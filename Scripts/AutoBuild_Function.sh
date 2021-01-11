@@ -4,10 +4,7 @@
 # AutoBuild Functions
 
 GET_TARGET_INFO() {
-	Diy_Core
 	[ -f ${GITHUB_WORKSPACE}/Openwrt.info ] && . ${GITHUB_WORKSPACE}/Openwrt.info
-	AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
-	[ -z ${AutoUpdate_Version} ] && AutoUpdate_Version="未知"
 	Default_File="package/lean/default-settings/files/zzz-default-settings"
 	[ -f ${Default_File} ] && Lede_Version=$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File)
 	[ -z ${Lede_Version} ] && Lede_Version="Openwrt"
@@ -20,29 +17,31 @@ GET_TARGET_INFO() {
 }
 
 Diy_Part1_Base() {
+	Diy_Core
 	Mkdir package/lean
-	if [ ${INCLUDE_Latest_Ray} == true ];then
+	if [ "${INCLUDE_Latest_Ray}" == "true" ];then
 		Update_Makefile xray package/lean/xray
 		Update_Makefile v2ray package/lean/v2ray
 		Update_Makefile v2ray-plugin package/lean/v2ray-plugin
 	fi
-	if [ ${INCLUDE_SSR_Plus} == true ];then
+	if [ "${INCLUDE_SSR_Plus}" == "true" ];then
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 	fi
 	Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 }
 
-
 Diy_Part2_Base() {
+	Diy_Core
 	GET_TARGET_INFO
-	if [ ${INCLUDE_AutoUpdate} == true ];then
+	if [ "${INCLUDE_AutoUpdate}" == "true" ];then
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		sed -i '/luci-app-autoupdate/d' .config > /dev/null 2>&1
 		echo "CONFIG_PACKAGE_luci-app-autoupdate=y" >> .config
 	fi
-
+	AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
+	[[ -z "${AutoUpdate_Version}" ]] && AutoUpdate_Version="Unknown version"
 	echo "Author: ${Author}"
 	echo "Openwrt Version: ${Openwrt_Version}"
 	echo "AutoUpdate Version: ${AutoUpdate_Version}"
@@ -56,6 +55,7 @@ Diy_Part2_Base() {
 }
 
 Diy_Part3_Base() {
+	Diy_Core
 	GET_TARGET_INFO
 	Default_Firmware="openwrt-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.bin"
 	AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.bin"
