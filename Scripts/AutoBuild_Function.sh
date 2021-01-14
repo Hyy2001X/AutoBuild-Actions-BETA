@@ -6,13 +6,13 @@
 GET_TARGET_INFO() {
 	[ -f ${GITHUB_WORKSPACE}/Openwrt.info ] && . ${GITHUB_WORKSPACE}/Openwrt.info
 	Default_File="package/lean/default-settings/files/zzz-default-settings"
-	[ -f ${Default_File} ] && Lede_Version=$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File)
+	[ -f ${Default_File} ] && Lede_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File)"
 	[ -z ${Lede_Version} ] && Lede_Version="Openwrt"
 	Openwrt_Version="${Lede_Version}-${Compile_Date}"
-	TARGET_PROFILE=$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')
+	TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	[ -z "${TARGET_PROFILE}" ] && TARGET_PROFILE="${Default_Device}"
-	TARGET_BOARD=$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)
-	TARGET_SUBTARGET=$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)
+	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
+	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 	Github_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
 }
 
@@ -35,23 +35,26 @@ Diy_Part2_Base() {
 	Diy_Core
 	GET_TARGET_INFO
 	if [ "${INCLUDE_AutoUpdate}" == "true" ];then
-		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		sed -i '/luci-app-autoupdate/d' .config > /dev/null 2>&1
 		echo "CONFIG_PACKAGE_luci-app-autoupdate=y" >> .config
+		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
+		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
+		[[ -z "${AutoUpdate_Version}" ]] && AutoUpdate_Version="Unknown"
+		sed -i "s?Openwrt?Openwrt ${Openwrt_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
+		echo "AutoUpdate Version: ${AutoUpdate_Version}"
+	else
+		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
-	AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
-	[[ -z "${AutoUpdate_Version}" ]] && AutoUpdate_Version="Unknown version"
+	[[ -z "${Author}" ]] && Author="Unknown"
 	echo "Author: ${Author}"
 	echo "Openwrt Version: ${Openwrt_Version}"
-	echo "AutoUpdate Version: ${AutoUpdate_Version}"
 	echo "Router: ${TARGET_PROFILE}"
 	echo "Github: ${Github_Repo}"
 	[ -f $Default_File ] && sed -i "s?${Lede_Version}?${Lede_Version} Compiled by ${Author} [${Display_Date}]?g" $Default_File
 	echo "${Openwrt_Version}" > package/base-files/files/etc/openwrt_info
 	echo "${Github_Repo}" >> package/base-files/files/etc/openwrt_info
 	echo "${TARGET_PROFILE}" >> package/base-files/files/etc/openwrt_info
-	sed -i "s?Openwrt?Openwrt ${Openwrt_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
 }
 
 Diy_Part3_Base() {
