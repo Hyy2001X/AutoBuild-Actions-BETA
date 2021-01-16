@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoBuild_Tools for Openwrt
 
-Version=V1.1-BETA
+Version=V1.2-BETA
 
 AutoBuild_Tools() {
 	while :
@@ -11,7 +11,9 @@ AutoBuild_Tools() {
 		clear
 		echo -e "USB \ Samba 工具箱 ${Version}\n"
 		echo "1.内部空间扩展"
-		echo "2.Samba"
+		echo "2.Samba 共享工具箱"
+		echo "3.挂载硬盘"
+		echo "4.查看挂载点"
 		echo -e "\nq.退出\n"
 		read -p "请从上方选择一个操作:" Choose
 		case $Choose in
@@ -27,10 +29,16 @@ AutoBuild_Tools() {
 		2)
 			Samba_UI
 		;;
+		3)
+			block mount
+		;;
+		4)
+			clear && mount
+			Enter
+		;;
 		esac
 	done
 }
-
 
 AutoExpand_UI() {
 	uci set fstab.@global[0].auto_mount='0'
@@ -188,11 +196,14 @@ Remove_Samba_Settings() {
 		uci delete samba.@sambashare[0]
 		uci commit
 	done
+	echo -e "\n已删除所有共享挂载点!"
+	sleep 2
 }
 
 Mount_Samba_Devices() {
 	echo "$(cat /proc/mounts  | awk  -F ':' '/sd/{print $1}')" > ${Disk_List}
 	Disk_Number=$(sed -n '$=' ${Disk_List})
+	echo ""
 	for ((i=1;i<=${Disk_Number};i++));
 	do
 		Disk_Name=$(sed -n ${i}p ${Disk_List} | awk '{print $1}')
@@ -200,6 +211,7 @@ Mount_Samba_Devices() {
 		Samba_Name=${Disk_Mounted_on#*/mnt/}
 		uci show 2>&1 | grep "sambashare" > ${UCI_Show_List}
 		if [[ ! "$(cat ${UCI_Show_List})" =~ "${Disk_Name}" ]] > /dev/null 2>&1 ;then
+			echo "共享硬盘: '${Disk_Name}' on '${Disk_Mounted_on}' 到 '${Samba_Name}' ..."
 			echo -e "\nconfig sambashare" >> ${Samba_Config_File}
 			echo -e "\toption auto '1'" >> ${Samba_Config_File}
 			echo -e "\toption name '${Samba_Name}'" >> ${Samba_Config_File}
@@ -209,9 +221,16 @@ Mount_Samba_Devices() {
 			echo -e "\toption guest_ok 'yes'" >> ${Samba_Config_File}
 			echo -e "\toption create_mask '0666'" >> ${Samba_Config_File}
 			echo -e "\toption dir_mask '0777'" >> ${Samba_Config_File}
+		else
+			echo "硬盘: '${Disk_Name}' 已设置共享."
 		fi
 	done
 	/etc/init.d/samba restart
+	sleep 2
+}
+
+Enter() {
+	echo "" && read -p "按下[回车]键以继续..." Key
 }
 
 AutoExpend_Tmp="/tmp/AutoExpand"
@@ -224,4 +243,9 @@ Samba_Tmp="/tmp/AutoSamba"
 Disk_List="${Samba_Tmp}/Disk_List"
 UCI_Show_List="${Samba_Tmp}/UCI_List"
 [ ! -d ${Samba_Tmp} ] && mkdir -p ${Samba_Tmp}
-AutoBuild_Tools
+which block
+if [ "$?" -eq 0 ];then
+	AutoBuild_Tools
+else
+	echo -e "\nAutoBuild_Tools 不适用于此固件,请先安装[block-mount] !"
+fi
