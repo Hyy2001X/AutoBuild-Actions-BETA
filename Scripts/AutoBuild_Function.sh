@@ -28,7 +28,12 @@ Diy_Part1_Base() {
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 	fi
-	Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
+	if [ "${INCLUDE_AutoBuild_Tools}" == "true" ];then
+		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
+	fi
+	if [ "${INCLUDE_Passwall}" == "true" ];then
+		ExtraPackages git lienol openwrt-passwall https://github.com/xiaorouji main
+	fi
 }
 
 Diy_Part2_Base() {
@@ -111,7 +116,7 @@ ExtraPackages() {
 			break
 		;;
 		esac
-		if [ -f ${PKG_NAME}/Makefile ] || [ -f ${PKG_NAME}/README* ];then
+		if [ "$?" -eq 0 ] || [ -f ${PKG_NAME}/Makefile ] || [ -f ${PKG_NAME}/README* ] || [ ! "$(ls -A ${PKG_NAME})" = "" ];then
 			echo "[$(date "+%H:%M:%S")] Package [${PKG_NAME}] is detected!"
 			mv -f ${PKG_NAME} package/${PKG_DIR}
 			break

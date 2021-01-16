@@ -8,7 +8,9 @@ Diy_Core() {
 	Default_Device=d-team_newifi-d2
 
 	INCLUDE_AutoUpdate=true
+	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_SSR_Plus=true
+	INCLUDE_Passwall=false
 	INCLUDE_Latest_Ray=true
 }
 
