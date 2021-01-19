@@ -7,10 +7,10 @@ GET_TARGET_INFO() {
 	[ -f ${GITHUB_WORKSPACE}/Openwrt.info ] && . ${GITHUB_WORKSPACE}/Openwrt.info
 	Default_File="package/lean/default-settings/files/zzz-default-settings"
 	[ -f ${Default_File} ] && Lede_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" $Default_File)"
-	[ -z ${Lede_Version} ] && Lede_Version="Openwrt"
+	[[ -z ${Lede_Version} ]] && Lede_Version="Openwrt"
 	Openwrt_Version="${Lede_Version}-${Compile_Date}"
 	TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
-	[ -z "${TARGET_PROFILE}" ] && TARGET_PROFILE="${Default_Device}"
+	[[ -z "${TARGET_PROFILE}" ]] && TARGET_PROFILE="${Default_Device}"
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 	Github_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
@@ -19,27 +19,30 @@ GET_TARGET_INFO() {
 Diy_Part1_Base() {
 	Diy_Core
 	Mkdir package/lean
-	if [ "${INCLUDE_Latest_Ray}" == "true" ];then
+	if [[ "${INCLUDE_Latest_Xray}" == "true" ]];then
 		Update_Makefile xray package/lean/xray
 		Update_Makefile v2ray package/lean/v2ray
 		Update_Makefile v2ray-plugin package/lean/v2ray-plugin
 	fi
-	if [ "${INCLUDE_SSR_Plus}" == "true" ];then
+	if [[ "${INCLUDE_SSR_Plus}" == "true" ]];then
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 	fi
-	if [ "${INCLUDE_AutoBuild_Tools}" == "true" ];then
+	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
-	if [ "${INCLUDE_Passwall}" == "true" ];then
+	if [[ "${INCLUDE_Passwall}" == "true" ]];then
 		ExtraPackages git lienol openwrt-passwall https://github.com/xiaorouji main
+	fi
+	if [[ "${INCLUDE_mt7621_OC1000MHz}" == "true" ]];then
+		Replace_File Customize/102-mt7621-fix-cpu-clk-add-clkdev.patch target/linux/ramips/patches-5.4
 	fi
 }
 
 Diy_Part2_Base() {
 	Diy_Core
 	GET_TARGET_INFO
-	if [ "${INCLUDE_AutoUpdate}" == "true" ];then
+	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		sed -i '/luci-app-autoupdate/d' .config > /dev/null 2>&1
 		echo -e "\nCONFIG_PACKAGE_luci-app-autoupdate=y" >> .config
@@ -56,7 +59,7 @@ Diy_Part2_Base() {
 	echo "Openwrt Version: ${Openwrt_Version}"
 	echo "Router: ${TARGET_PROFILE}"
 	echo "Github: ${Github_Repo}"
-	[ -f $Default_File ] && sed -i "s?${Lede_Version}?${Lede_Version} Compiled by ${Author} [${Display_Date}]?g" $Default_File
+	[ -f "$Default_File" ] && sed -i "s?${Lede_Version}?${Lede_Version} Compiled by ${Author} [${Display_Date}]?g" $Default_File
 	echo "${Openwrt_Version}" > package/base-files/files/etc/openwrt_info
 	echo "${Github_Repo}" >> package/base-files/files/etc/openwrt_info
 	echo "${TARGET_PROFILE}" >> package/base-files/files/etc/openwrt_info

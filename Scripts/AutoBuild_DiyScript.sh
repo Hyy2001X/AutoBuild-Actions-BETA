@@ -11,7 +11,8 @@ Diy_Core() {
 	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_SSR_Plus=true
 	INCLUDE_Passwall=false
-	INCLUDE_Latest_Ray=true
+	INCLUDE_Latest_Xray=true
+	INCLUDE_mt7621_OC1000MHz=false
 }
 
 Diy-Part1() {
