@@ -35,16 +35,18 @@
 
 5. **手动启动编译**: 点击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
 
-   **添加额外的软件包:** 编辑`Scripts/AutoBuild_DiyScript.sh`,修改`Diy-Part1()`函数,参照下方语法:
+   **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
    [git clone -b]  ExtraPackages git 安装位置 软件包名 Github仓库地址 远程分支
     
    [svn checkout]  ExtraPackages svn 安装位置 软件包名 Github仓库地址/trunk
-```
-
-   **添加自定义文件:** 首先将文件上传到`/Customize`,然后修改`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
-```
-   [mv -f] Replace_File 文件名称 替换目录 重命名(可选)
+   
+   [mv -f] Replace_File 文件名称 目标路径 重命名(可选)
+   
+   [mkdir -p] Mkdir 目标路径
+   
+   [更新 Makefile] Update_Makefile 软件包名 软件包路径
+   
 ```
 
 ## 自动编译 && 定时更新:
