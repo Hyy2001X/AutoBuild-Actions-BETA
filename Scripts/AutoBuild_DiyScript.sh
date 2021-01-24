@@ -12,7 +12,7 @@ Diy_Core() {
 	INCLUDE_SSR_Plus=true
 	INCLUDE_Passwall=false
 	INCLUDE_Latest_Xray=true
-	INCLUDE_mt7621_OC1000MHz=false
+	INCLUDE_mt7621_OC1000MHz=true
 	INCLUDE_Enable_FirewallPort_53=true
 }
 
@@ -28,7 +28,7 @@ Diy-Part1() {
 	# ExtraPackages svn network/services ppp https://github.com/openwrt/openwrt/trunk/package/network/services
 	# ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 	# ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
-	
+
 	ExtraPackages git lean helloworld https://github.com/fw876 master
 	ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
 	ExtraPackages git other luci-app-argon-config https://github.com/jerrykuku master
