@@ -19,14 +19,14 @@ GET_TARGET_INFO() {
 Diy_Part1_Base() {
 	Diy_Core
 	Mkdir package/lean
-	if [[ "${INCLUDE_Latest_Xray}" == "true" ]];then
-		Update_Makefile xray package/lean/xray
-		Update_Makefile v2ray package/lean/v2ray
-		Update_Makefile v2ray-plugin package/lean/v2ray-plugin
-	fi
 	if [[ "${INCLUDE_SSR_Plus}" == "true" ]];then
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+	fi
+	if [[ "${INCLUDE_Latest_Xray}" == "true" ]];then
+		Update_Makefile xray package/lean/helloworld/xray
+		Update_Makefile v2ray package/lean/v2ray
+		Update_Makefile v2ray-plugin package/lean/v2ray-plugin
 	fi
 	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
@@ -43,7 +43,7 @@ Diy_Part2_Base() {
 	Diy_Core
 	GET_TARGET_INFO
 	if [[ "${INCLUDE_Enable_FirewallPort_53}" == "true" ]];then
-		sed -i "s?iptables?#iptables?g" ${Default_File} > /dev/null 2>&1
+		[ -f "${Default_File}" ] && sed -i "s?iptables?#iptables?g" ${Default_File} > /dev/null 2>&1
 	fi
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
