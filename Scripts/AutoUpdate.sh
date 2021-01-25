@@ -3,12 +3,14 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V4.9
+Version=V5.0
 
 TIME() {
 	echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
+Input_Option="$1"
+Input_Other="$2"
 CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
 Github="$(awk 'NR==2' /etc/openwrt_info)"
 DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
@@ -16,9 +18,40 @@ CURRENT_Device="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
 Github_Download="${Github}/releases/download/AutoUpdate"
 Author="${Github##*com/}"
 Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
+Disk_List="/tmp/disk_list"
+[ -f ${Disk_List} ] && rm -f ${Disk_List}
+Check_Disk="$(mount | egrep -o "mnt/+sd[a-zA-Z][0-9]+")"
+if [ ! -z "${Check_Disk}" ];then
+	echo "${Check_Disk}" > ${Disk_List}
+	Disk_Number=$(sed -n '$=' ${Disk_List})
+	if [ ${Disk_Number} -gt 1 ];then
+		for Disk_Name in $(cat ${Disk_List})
+		do
+			Disk_Available="$(df -m | grep "${Disk_Name}" | awk '{print $4}')"
+			if [ "${Disk_Available}" -gt 20 ];then
+				Download_Path="/${Disk_Name}"
+				break
+			else
+				Download_Path="/tmp"
+			fi
+		done
+	else
+		Disk_Name="${Check_Disk}"
+		Disk_Available="$(df -m | grep "${Disk_Name}" | awk '{print $4}')"
+		if [ "${Disk_Available}" -gt 200 ];then
+			Download_Path="/${Disk_Name}"
+		else
+			Download_Path="/tmp"
+		fi
+	fi
+else
+	Disk_Number="0"
+	Download_Path="/tmp"
+fi
+[ ! -d "${Download_Path}/Downloads" ] && mkdir -p ${Download_Path}/Downloads
+
 cd /etc
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
-Input_Option="$1"
 if [[ -z "${Input_Option}" ]];then
 	Upgrade_Options="-q" && TIME && echo "执行: 保留配置更新固件[静默模式]"
 else
@@ -48,8 +81,37 @@ else
 		Upgrade_Options="-n"
 		TIME && echo "执行: 更新固件到最新稳定版本(不保留配置)"
 	;;
+	-c)
+		if [[ ! -z "${Input_Other}" ]];then
+			sed -i "s?${Github}?${Input_Other}?g" /etc/openwrt_info > /dev/null 2>&1
+			echo -e "\nGithub 地址已更换为: ${Input_Other}"
+			unset Input_Other
+		else
+			echo -e "\n使用方法: bash /bin/AutoUpdate.sh -c [地址]"
+		fi
+		exit
+	;;
+	-l)
+		Overlay_Size="$(df -h | grep ":/overlay" | awk '{print $4}')"
+		TMP_Size="$(df -h | grep "tmp" | awk '{print $4}' | awk 'NR==1')"
+		echo -e "\n传入参数:	bash ${0} ${@}"
+		echo "参数个数:	$#"
+		echo "/overlay 可用:	${Overlay_Size}"
+		echo "/tmp 可用:	${TMP_Size}"
+		echo "硬盘个数:	${Disk_Number}"
+		echo "硬盘可用:	${Disk_Available}M"
+		echo "固件下载位置:	${Download_Path}/Downloads"
+		echo "当前版本:	${CURRENT_Version}"
+		echo "Github 地址:	${Github}"
+		echo "默认设备:	${DEFAULT_Device}"
+		echo "当前设备:	${CURRENT_Device}"
+		echo "固件下载地址:	${Github_Download}"
+		echo "API地址:	${Github_Tags}"
+		echo "作者/仓库:	${Author}"
+		exit
+	;;
 	*)
-		echo -e "\n使用方法: bash /bin/AutoUpdate.sh [参数]"
+		echo -e "\n使用方法: bash /bin/AutoUpdate.sh [参数1] [参数2]"
 		echo -e "\n可供使用的[参数]:\n"
 		echo "	-q	更新固件,不打印备份信息日志[保留配置]"
 		echo "	-n	更新固件[不保留配置]"
@@ -57,8 +119,10 @@ else
 		echo "	-u	适用于定时更新的参数,自动下载以及安装必要软件包[保留配置]"
 		echo "	-s	更新/回退固件到最新的稳定版本[保留配置]"
 		echo "	-sn	更新/回退固件到最新的稳定版本[不保留配置]"
-		echo -e "\n项目地址: ${Github}"
-		echo -e "当前设备: ${DEFAULT_Device}\n"
+		echo "	-c	[地址] 更换 Github 检查更新地址"
+		echo "	-l	列出所有信息"
+		echo -e "\nGithub地址:	${Github}"
+		echo -e "当前设备:	${DEFAULT_Device}\n"
 		exit
 	;;
 	esac
@@ -137,36 +201,6 @@ Firmware="${Firmware_Info}.bin"
 Firmware_Detail="${Firmware_Info}.detail"
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Download}"
-Disk_List="/tmp/disk_list"
-[ -f $Disk_List ] && rm -f $Disk_List
-Check_Disk="$(mount | egrep -o "mnt/+sd[a-zA-Z][0-9]+")"
-if [ ! -z "${Check_Disk}" ];then
-	echo "${Check_Disk}" > ${Disk_List}
-	Disk_Number=$(sed -n '$=' ${Disk_List})
-	if [ ${Disk_Number} -gt 1 ];then
-		for Disk_Name in $(cat ${Disk_List})
-		do
-			Disk_Available="$(df -m | grep "${Disk_Name}" | awk '{print $4}')"
-			if [ "${Disk_Available}" -gt 20 ];then
-				Download_Path="/${Disk_Name}"
-				break
-			else
-				Download_Path="/tmp"
-			fi
-		done
-	else
-		Disk_Name="${Check_Disk}"
-		Disk_Available="$(df -m | grep "${Disk_Name}" | awk '{print $4}')"
-		if [ "${Disk_Available}" -gt 20 ];then
-			Download_Path="/${Disk_Name}"
-		else
-			Download_Path="/tmp"
-		fi
-	fi
-else
-	Download_Path="/tmp"
-fi
-[ ! -d "${Download_Path}/Downloads" ] && mkdir -p ${Download_Path}/Downloads
 cd ${Download_Path}/Downloads
 echo "固件保存位置: ${Download_Path}/Downloads"
 TIME && echo "正在下载固件,请耐心等待..."
