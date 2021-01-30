@@ -11,7 +11,7 @@ Diy_Core() {
 	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_SSR_Plus=true
 	INCLUDE_Passwall=false
-	INCLUDE_Latest_Xray=true
+	INCLUDE_Keep_Latest_Xray=true
 	INCLUDE_mt7621_OC1000MHz=true
 	INCLUDE_Enable_FirewallPort_53=true
 }
@@ -20,8 +20,14 @@ Diy-Part1() {
 	Diy_Part1_Base
 	
 	Replace_File Customize/mac80211.sh package/kernel/mac80211/files/lib/wifi
-	Replace_File Customize/system package/base-files/files/etc/config
+	if [ "${Default_Device}" == "d-team_newifi-d2" ];then
+		Replace_File Customize/system_newifi-d2 package/base-files/files/etc/config system
+	else
+		Replace_File Customize/system_common package/base-files/files/etc/config system
+	fi
 	Replace_File Customize/banner package/base-files/files/etc
+	
+	Update_Makefile exfat package/kernel/exfat
 
 	# ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
 	# ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
