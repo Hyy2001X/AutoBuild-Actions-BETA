@@ -33,6 +33,28 @@
 
 4. 编辑`Scripts/AutoBuild_DiyScript.sh`文件,修改`第 7 行`为作者,作者将在 OpenWrt 首页显示
 
+   **Diy_Core 下的名词解释:**
+```
+   Author 作者名称,这个名称将在 OpenWrt 首页显示
+   
+   Default_Device 路由器的完整名称,例如 d-team_newifi-d2 phicomm_k2p,用于无法从 .config 正常获取设备时备用
+   
+   INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
+   
+   INCLUDE_AutoBuild_Tools 自动添加 AutoBuild_Tools 到固件
+   
+   INCLUDE_SSR_Plus 自动添加 fw876 的 SSR Plus+ 仓库到源码目录
+   
+   INCLUDE_Passwall 自动添加 xiaorouji 的 openwrt-passwall 仓库到源码目录
+   
+   INCLUDE_Latest_Xray 启用后,将自动更新 v2ray v2ray-plugin xray 到最新版本
+   
+   INCLUDE_mt7621_OC1000MHz 启用后,mt7621 系列的路由器将自动超频到 1000MHz
+   
+   INCLUDE_Enable_FirewallPort_53 启用后,自动注释防火墙-自定义规则中的两行 53 端口重定向
+
+```
+
 5. **手动启动编译**: 点击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
 
    **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
@@ -41,11 +63,11 @@
     
    [svn checkout]  ExtraPackages svn 安装位置 软件包名 Github仓库地址/trunk
    
-   [mv -f] Replace_File 文件名称 目标路径 重命名(可选)
+   [mv -f] Replace_File 文件名称 目标路径 重命名文件(可选)
    
-   [mkdir -p] Mkdir 目标路径
+   [mkdir -p] Mkdir 文件夹名称
    
-   [更新 Makefile] Update_Makefile 软件包名 软件包路径
+   [更新 Makefile] Update_Makefile 软件包名 软件包路径 (仅支持部分软件包,自行测试)
    
 ```
 
@@ -69,7 +91,7 @@
    
    更新到最新稳定版(不保留配置): `bash /bin/AutoUpdate.sh -sn`
    
-## 使用一键扩展内部空间\挂载 Samba 脚本:
+## 使用一键扩展内部空间\挂载 Samba 共享脚本:
 
    同上方操作,打开`TTYD 终端`,输入`bash /bin/AutoBuild_Tools.sh`
    
