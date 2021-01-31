@@ -3,41 +3,43 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Forks&logo=github)
 
-**自动编译:本项目将在每天 19:00 自动编译固件,如需自助更新请点击 ***Star*****
+**自动编译:本项目将在每天 19:00 自动编译固件**
 
-测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`
-
-测试通过的源码: [Lede](https://github.com/coolsnowwolf/lede)
+测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`、以及一些使用 bin 格式固件的路由器
 
 ## Github Actions 部署指南(STEP 1):
 
-1. 首先需要获取[Github Token](https://github.com/settings/tokens/new),`Note`项随意填写,`Select scopes`**全部打勾**,完成后点击`Generate token`
+1. 首先需要获取 **Github Token**: [点击这里](https://github.com/settings/tokens/new) 进入获取页面,
 
-2. 复制页面中显示的 **Token**
+   `Note`项填写你中意的名称,`Select scopes`不懂就**全部打勾**,操作完成后点击下方`Generate token`
 
-   **注意: 一定要第一时间保存到本地, Token 值只会显示一次!**
+2. 复制页面中生成的 **Token**,并**保存**到本地
 
-3. ***Fork*** 此仓库,然后进入你的`AutoBuild-Actions`仓库
+   **一定要第一时间保存到本地,为了安全起见, Token 值只会显示一次!**
 
-4. 点击右上方菜单中的`Settings`,点击`Secrets`-`New Secrets`,`Name`项填写`RELEASE_TOKEN`,`Value`项粘贴你在第 2 步中复制的 **Token** 
+3. ***Fork*** 我的`AutoBuild-Actions`仓库,然后进入你的`AutoBuild-Actions`仓库进行之后的设置
+
+4. 点击上方菜单中的`Settings`,依次点击`Secrets`-`New repository secret`
+
+   其中`Name`项填写`RELEASE_TOKEN`,然后将你的 **Token** 粘贴到`Value`项,完成后点击`Add secert`
 
    **注意: 以上操作只需操作一次!**
 
 ## 客制化固件(STEP 2):
 
-1. 进入你的`AutoBuild-Actions`仓库
+1. 进入你的`AutoBuild-Actions`仓库,下方所有操作都将在你的`AutoBuild-Actions`仓库下进行
 
-2. 首先需要将本地的 '.config' 文件**重命名**并上传到`AutoBuild-Actions`仓库根目录
+2. 把本地的 '.config' 文件重命名并上传到仓库根目录或者直接修改
 
 3. 编辑`.github/workflows/AutoBuild.yml`文件,修改`第 27 行`为你上传的 '.config' 文件名称
 
-4. 编辑`Scripts/AutoBuild_DiyScript.sh`文件,修改`第 7 行`为作者,作者将在 OpenWrt 首页显示
+4. 按需编辑`Scripts/AutoBuild_DiyScript.sh`文件
 
    **Diy_Core 下的名词解释:**
 ```
    Author 作者名称,这个名称将在 OpenWrt 首页显示
    
-   Default_Device 路由器的完整名称,例如 d-team_newifi-d2 phicomm_k2p,用于无法从 .config 正常获取设备时备用
+   Default_Device 路由器的完整名称,例如 [d-team_newifi-d2、phicomm_k2p],用于无法从 .config 正常获取设备时备用
    
    INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
    
@@ -54,9 +56,6 @@
    INCLUDE_Enable_FirewallPort_53 启用后,自动注释防火墙-自定义规则中的两行 53 端口重定向
 
 ```
-
-5. **手动启动编译**: 点击右上方 ***Star*** 即可开始编译,最好先同步我的最新改动~~以获得更多特性(bug)~~
-
    **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
    [git clone -b]  ExtraPackages git 安装位置 软件包名 Github仓库地址 远程分支
@@ -70,14 +69,7 @@
    [更新 Makefile] Update_Makefile 软件包名 软件包路径 (仅支持部分软件包,自行测试)
    
 ```
-
-## 自动编译 && 定时更新:
-
-1. 进入你的`AutoBuild-Actions`仓库
-
-2. 编辑`.github/workflows/AutoBuild.yml`文件,编辑`第 21 行`,并按需修改 corntab 参数(默认每天 19:00 开始编译)
-
-3. 打开 Openwrt 主页,点击`系统`-`定时更新`,设置自动检查更新的时间并保存(需要 [luci-app-autoupdate](https://github.com/Hyy2001X/luci-app-autoupdate) 支持)
+5. **手动启动编译**: 点击右上方 ***Star*** 即可开始编译,最好先同步我的改动~~以获得更多特性(bug)~~
 
 ## 使用一键更新固件脚本:
 
@@ -99,10 +91,8 @@
 
    - [Lean's Openwrt](https://github.com/coolsnowwolf/lede)
 
-   - [P3TERX](https://github.com/P3TERX/Actions-OpenWrt)
+   - [P3TERX's Project](https://github.com/P3TERX/Actions-OpenWrt)
    
-   - [CurssedCoffin](https://github.com/CurssedCoffin)
+   - [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
    
-   - [Licsber](https://github.com/Licsber)
-   
-   - [mab-wien](https://github.com/mab-wien/openwrt-autoupdate)
+   - 测试人员: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber)
