@@ -40,7 +40,7 @@ Diy-Part1() {
 	ExtraPackages git other luci-app-argon-config https://github.com/jerrykuku master
 	ExtraPackages git other luci-app-adguardhome https://github.com/Hyy2001X master
 	ExtraPackages svn other luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
-	ExtraPackages git other luci-app-openclash https://github.com/vernesong/OpenClash/trunk
+	ExtraPackages svn other luci-app-openclash https://github.com/vernesong/OpenClash/trunk
 	ExtraPackages git other luci-app-serverchan https://github.com/tty228 master
 	ExtraPackages svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 	ExtraPackages svn other luci-app-usb3disable https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
