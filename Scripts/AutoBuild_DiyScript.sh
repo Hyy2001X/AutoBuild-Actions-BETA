@@ -11,6 +11,8 @@ Diy_Core() {
 	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_SSR_Plus=true
 	INCLUDE_Passwall=false
+	INCLUDE_HelloWorld=false
+	INCLUDE_Bypass=false
 	INCLUDE_Keep_Latest_Xray=true
 	INCLUDE_mt7621_OC1000MHz=true
 	INCLUDE_Enable_FirewallPort_53=true

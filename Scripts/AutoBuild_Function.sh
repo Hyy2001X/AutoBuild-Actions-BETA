@@ -23,6 +23,14 @@ Diy_Part1_Base() {
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 	fi
+	if [[ "${INCLUDE_HelloWorld}" == "true" ]];then
+		ExtraPackages git lean luci-app-vssr https://github.com/jerrykuku master
+	fi
+	if [[ "${INCLUDE_Bypass}" == "true" ]];then
+		ExtraPackages git other luci-app-bypass https://github.com/garypang13 main
+		find package/*/ feeds/*/ -maxdepth 2 -path "*luci-app-bypass/Makefile" | xargs -i sed -i 's/shadowsocksr-libev-ssr-redir/shadowsocksr-libev-alt/g' {}
+		find package/*/ feeds/*/ -maxdepth 2 -path "*luci-app-bypass/Makefile" | xargs -i sed -i 's/shadowsocksr-libev-ssr-server/shadowsocksr-libev-server/g' {}
+	fi
 	if [[ "${INCLUDE_Keep_Latest_Xray}" == "true" ]];then
 		Update_Makefile xray-core package/lean/helloworld/xray-core
 		# Update_Makefile v2ray package/lean/v2ray
