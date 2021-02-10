@@ -9,13 +9,15 @@ Diy_Core() {
 
 	INCLUDE_AutoUpdate=true
 	INCLUDE_AutoBuild_Tools=true
+	INCLUDE_Keep_Latest_Xray=true
+	INCLUDE_mt7621_OC1000MHz=true
+	INCLUDE_Enable_FirewallPort_53=true
+
 	INCLUDE_SSR_Plus=true
 	INCLUDE_Passwall=false
 	INCLUDE_HelloWorld=false
 	INCLUDE_Bypass=false
-	INCLUDE_Keep_Latest_Xray=true
-	INCLUDE_mt7621_OC1000MHz=true
-	INCLUDE_Enable_FirewallPort_53=true
+	INCLUDE_OpenClash=true
 }
 
 Diy-Part1() {
@@ -42,7 +44,6 @@ Diy-Part1() {
 	ExtraPackages git other luci-app-argon-config https://github.com/jerrykuku master
 	ExtraPackages git other luci-app-adguardhome https://github.com/Hyy2001X master
 	ExtraPackages svn other luci-app-smartdns https://github.com/project-openwrt/openwrt/trunk/package/ntlf9t
-	ExtraPackages svn other luci-app-openclash https://github.com/vernesong/OpenClash/trunk
 	ExtraPackages git other luci-app-serverchan https://github.com/tty228 master
 	ExtraPackages svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 	ExtraPackages svn other luci-app-usb3disable https://github.com/project-openwrt/openwrt/trunk/package/ctcgfw
