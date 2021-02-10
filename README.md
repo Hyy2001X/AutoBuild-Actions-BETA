@@ -43,15 +43,19 @@
    
    INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
    
-   INCLUDE_AutoBuild_Tools 自动添加 AutoBuild_Tools 到固件
+   INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
    
-   INCLUDE_SSR_Plus 自动添加 fw876 的 SSR Plus+ 仓库到源码目录
+   INCLUDE_SSR_Plus 添加 大雕 的 SSR Plus+ 仓库到源码目录
    
-   INCLUDE_Passwall 自动添加 xiaorouji 的 openwrt-passwall 仓库到源码目录
+   INCLUDE_Passwall 添加 Lienol 的 openwrt-passwall 仓库到源码目录
+   
+   INCLUDE_HelloWorld 添加 jerrykuku 的 luci-app-vssr 仓库到源码目录
+   
+	INCLUDE_Bypass 添加 garypang13 的 luci-app-bypass 仓库到源码目录
    
    INCLUDE_Latest_Xray 启用后,将自动更新 v2ray v2ray-plugin xray 到最新版本
    
-   INCLUDE_mt7621_OC1000MHz 启用后,mt7621 系列的路由器将自动超频到 1000MHz
+   INCLUDE_mt7621_OC1000MHz 启用后,Ramips_mt7621 系列的路由器将自动超频到 1000MHz
    
    INCLUDE_Enable_FirewallPort_53 启用后,自动注释防火墙-自定义规则中的两行 53 端口重定向
 
