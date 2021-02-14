@@ -68,7 +68,7 @@ Diy_Part2_Base() {
 	else
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
-	Replace_File Customize/uhttpd.po package/feeds/luci/applications/luci-app-uhttpd/po/zh-cn
+	Replace_File Customize/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
 	Replace_File Customize/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
 	[[ -z "${Author}" ]] && Author="Unknown"
 	echo "Author: ${Author}"
