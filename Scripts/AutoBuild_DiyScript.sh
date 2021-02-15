@@ -32,6 +32,7 @@ Diy-Part1() {
 	Replace_File Customize/banner package/base-files/files/etc
 	
 	Update_Makefile exfat package/kernel/exfat
+	Replace_File Customize/mt76-20210127.mk package/kernel/mt76 Makefile
 
 	# ExtraPackages svn network/services dnsmasq https://github.com/openwrt/openwrt/trunk/package/network/services
 	# ExtraPackages svn network/services dropbear https://github.com/openwrt/openwrt/trunk/package/network/services
