@@ -41,7 +41,6 @@ Diy-Part1() {
 	# ExtraPackages svn network/services hostapd https://github.com/openwrt/openwrt/trunk/package/network/services
 	# ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
 
-	ExtraPackages git lean helloworld https://github.com/fw876 master
 	ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
 	ExtraPackages git other luci-app-argon-config https://github.com/jerrykuku master
 	ExtraPackages git other luci-app-adguardhome https://github.com/Hyy2001X master
@@ -54,7 +53,6 @@ Diy-Part1() {
 Diy-Part2() {
 	Diy_Part2_Base
 	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
-	# ExtraPackages svn feeds/packages mwan3 https://github.com/openwrt/packages/trunk/net
 }
 
 Diy-Part3() {
