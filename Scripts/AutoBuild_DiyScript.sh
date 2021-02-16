@@ -22,16 +22,15 @@ Diy_Core() {
 
 Diy-Part1() {
 	Diy_Part1_Base
-	
-	Replace_File Customize/mac80211.sh package/kernel/mac80211/files/lib/wifi
+
 	if [ "${Default_Device}" == "d-team_newifi-d2" ];then
 		Replace_File Customize/system_newifi-d2 package/base-files/files/etc/config system
 	else
 		Replace_File Customize/system_common package/base-files/files/etc/config system
 	fi
-	Replace_File Customize/banner package/base-files/files/etc
-	
+
 	Update_Makefile exfat package/kernel/exfat
+
 	Replace_File Customize/mt76-20210127.mk package/kernel/mt76 Makefile
 	rm -rf package/kernel/mt76/patches
 
@@ -52,7 +51,6 @@ Diy-Part1() {
 
 Diy-Part2() {
 	Diy_Part2_Base
-	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
 }
 
 Diy-Part3() {
