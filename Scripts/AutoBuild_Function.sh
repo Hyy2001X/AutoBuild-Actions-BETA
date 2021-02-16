@@ -25,6 +25,7 @@ Diy_Part1_Base() {
 	fi
 	if [[ "${INCLUDE_HelloWorld}" == "true" ]];then
 		ExtraPackages git lean luci-app-vssr https://github.com/jerrykuku master
+		ExtraPackages git lean lua-maxminddb https://github.com/jerrykuku master
 	fi
 	if [[ "${INCLUDE_Bypass}" == "true" ]];then
 		ExtraPackages git other luci-app-bypass https://github.com/garypang13 main
