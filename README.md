@@ -62,18 +62,18 @@
 ```
    **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
-   [git clone -b]  ExtraPackages git 安装位置 软件包名 Github仓库地址 远程分支
+   [使用 git clone 拉取文件]  ExtraPackages git 存放位置 软件包名 仓库地址 分支
     
-   [svn checkout]  ExtraPackages svn 安装位置 软件包名 Github仓库地址/trunk
+   [使用 svn checkout 拉取文件]  ExtraPackages svn 存放位置 软件包名 仓库地址/trunk/目录
    
-   [mv -f] Replace_File 文件名称 目标路径 重命名文件(可选)
+   [替换 /Customize 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
    
-   [mkdir -p] Mkdir 文件夹名称
+   [新建文件夹] Mkdir 文件夹名称
    
    [更新 Makefile] Update_Makefile 软件包名 软件包路径 (仅支持部分软件包,自行测试)
    
 ```
-5. **开始编译**: 点击右上方 ***Star***即可启动编译,最好同步我的最新改动以获得更多特性~~(BUG)~~
+5. **开始编译**: 点击右上方 ***Star***即可启动编译,最好同步我的最新改动以获得更多特性
 
 ## 使用一键更新固件脚本:
 
@@ -89,7 +89,7 @@
    
    列出部分系统参数(用于反馈问题): `bash /bin/AutoUpdate.sh -l`
    
-   切换换检查更新/下载通道: `bash /bin/AutoUpdate.sh -c [地址]`
+   切换检查更新/固件下载通道: `bash /bin/AutoUpdate.sh -c [地址]`
    
    **注意: 一键更新固件需要在 Diy-Core() 函数中启用`INCLUDE_AutoUpdate`**
    
