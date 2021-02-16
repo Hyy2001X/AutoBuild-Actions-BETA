@@ -33,7 +33,7 @@ Diy_Part1_Base() {
 		find package/*/ feeds/*/ -maxdepth 2 -path "*luci-app-bypass/Makefile" | xargs -i sed -i 's/shadowsocksr-libev-ssr-server/shadowsocksr-libev-server/g' {}
 	fi
 	if [[ "${INCLUDE_OpenClash}" == "true" ]];then
-		ExtraPackages svn other luci-app-openclash https://github.com/vernesong/OpenClash/trunk
+		ExtraPackages git other OpenClash https://github.com/vernesong master
 	fi
 	if [[ "${INCLUDE_Keep_Latest_Xray}" == "true" ]];then
 		Update_Makefile xray-core package/lean/helloworld/xray-core
