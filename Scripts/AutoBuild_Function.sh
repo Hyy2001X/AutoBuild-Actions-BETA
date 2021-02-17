@@ -82,7 +82,7 @@ Diy_Part2_Base() {
 	echo "${Openwrt_Version}" > package/base-files/files/etc/openwrt_info
 	echo "${Github_Repo}" >> package/base-files/files/etc/openwrt_info
 	echo "${TARGET_PROFILE}" >> package/base-files/files/etc/openwrt_info
-	[ -f "${GITHUB_WORKSPACE}/Customize/mwan3" ] && Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
+	[ -f "${GITHUB_WORKSPACE}/Customize/mwan3.config" ] && Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
 }
 
 Diy_Part3_Base() {
