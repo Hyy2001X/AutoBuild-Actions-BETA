@@ -5,7 +5,7 @@
 
 **自动编译:本项目将在每天 19:00 启动自动编译**
 
-当前测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`、以及一些使用 bin 格式固件的设备
+测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`、`x86_64(img、img.gz)`、以及使用 bin 格式固件的设备
 
 ## Github Actions 部署指南(STEP 1):
 
@@ -29,9 +29,9 @@
 
 1. 进入你的`AutoBuild-Actions`仓库,**下方所有操作都将在你的`AutoBuild-Actions`仓库下进行**
 
-2. 把本地的 '.config' 文件重命名并上传到**仓库根目录**或者直接修改`NEWIFI_D2-NIGHTLY.config`
+2. 把本地的 '.config' 文件重命名并上传到**仓库下的/Configs文件夹**或者直接修改原有文件
 
-3. 编辑`.github/workflows/AutoBuild.yml`文件,修改`第 27 行`为你上传的 '.config' 文件名称
+3. 编辑`.github/workflows/*.yml`文件,修改`第 27 行`为你上传的 '.config' 文件名称
 
 4. 按照你的需求编辑`Scripts/AutoBuild_DiyScript.sh`文件(可以跳过此步骤)
 
