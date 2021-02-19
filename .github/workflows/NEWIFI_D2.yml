@@ -1,0 +1,147 @@
+#=======================================================
+# Description: Build OpenWrt using GitHub Actions
+# https://github.com/Hyy2001X/AutoBuild-Actions
+# Lisence: MIT
+# Author: P3TERX
+# Modify: Hyy2001X
+#=======================================================
+
+name: AutoBuild-NEWIFI_D2
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: true
+        default: 'false'
+
+  schedule:
+    - cron: 0 11 * * *
+
+  watch:
+    types: [started]
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  CONFIG_FILE: Configs/NEWIFI_D2.config
+  DIY_SCRIPT: Scripts/AutoBuild_DiyScript.sh
+  FUNCTION_SCRIPT: Scripts/AutoBuild_Function.sh
+  UPLOAD_RELEASE: true
+  UPLOAD_FIRMWARE: false
+  UPLOAD_BIN_DIR: true
+  REMOVE_OLD_RELEASE: false
+  REMOVE_WORKFLOW_RUNS: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Initialization Environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
+        sudo timedatectl set-timezone "Asia/Shanghai"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+    - name: Clone Openwrt source code
+      run: |
+        git clone -b master $REPO_URL openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Run Diy-Part1 Scripts
+      run: |
+        chmod +x $DIY_SCRIPT
+        cd openwrt
+        source $GITHUB_WORKSPACE/$DIY_SCRIPT
+        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part1
+        echo "Compile_Date=$(date +%Y%m%d)" > $GITHUB_WORKSPACE/Openwrt.info
+        echo "Display_Date=$(date +'%Y/%m/%d')" >> $GITHUB_WORKSPACE/Openwrt.info
+
+    - name: Update & Install Feeds
+      run: |
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Run Diy-Part2 Scripts
+      run: |
+        [ -f $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        cd openwrt
+        source $GITHUB_WORKSPACE/$DIY_SCRIPT
+        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part2
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    - name: Download Packages
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j$(nproc) V=s
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Compile the Openwrt
+      run: |
+        cd openwrt
+        make -j$(nproc) || make -j1 V=s
+
+    - name: Run Diy-Part3 Scripts
+      run: |
+        echo "## $(date +"%Y%m%d")-NEWIFI_D2-NIGHTLY" > update_log.txt
+        cd openwrt
+        source $GITHUB_WORKSPACE/$DIY_SCRIPT
+        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part3
+        echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    - name: Upload Firmware to Artifacts
+      uses: actions/upload-artifact@main
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      with:
+        name: OpenWrt_Firmware_${{ env.Artifacts_DATE }}
+        path: openwrt/bin/Firmware
+        
+    - name: Upload Firmware directory to Artifacts
+      uses: actions/upload-artifact@main
+      if: env.UPLOAD_BIN_DIR == 'true' && !cancelled()
+      with:
+        name: OpenWrt_bin_${{ env.Artifacts_DATE }}
+        path: openwrt/bin
+
+    - name: Upload Firmware to Releases
+      uses: softprops/action-gh-release@v1
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      with:
+        tag_name: AutoUpdate
+        body_path: update_log.txt
+        files: openwrt/bin/Firmware/*
+        
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.1.0
+      if: env.REMOVE_OLD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 3
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Remove workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      if: env.REMOVE_WORKFLOW_RUNS == 'true' && !cancelled()
+      with:
+        retain_days: 1
+        keep_minimum_runs: 3
