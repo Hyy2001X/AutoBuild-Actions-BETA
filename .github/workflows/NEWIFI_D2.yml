@@ -30,7 +30,7 @@ env:
   FUNCTION_SCRIPT: Scripts/AutoBuild_Function.sh
   UPLOAD_RELEASE: true
   UPLOAD_FIRMWARE: false
-  UPLOAD_BIN_DIR: true
+  UPLOAD_BIN_DIR: false
   REMOVE_OLD_RELEASE: false
   REMOVE_WORKFLOW_RUNS: true
 

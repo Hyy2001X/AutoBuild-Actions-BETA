@@ -150,6 +150,7 @@ Diy_Part3_Base() {
 	;;
 	esac
 	cd ${Home}
+	echo "Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 }
 
 Mkdir() {
