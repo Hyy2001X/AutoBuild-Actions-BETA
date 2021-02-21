@@ -3,7 +3,7 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Forks&logo=github)
 
-**自动编译:本项目将在每天 19:00 启动自动编译**
+~~自动编译:本项目将在每天 19:00 启动自动编译~~
 
 测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`、`x86_64(img、img.gz)`、以及使用 bin 格式固件的设备
 
@@ -29,7 +29,7 @@
 
 1. 进入你的`AutoBuild-Actions`仓库,**下方所有操作都将在你的`AutoBuild-Actions`仓库下进行**
 
-2. 把本地的 '.config' 文件重命名并上传到**仓库下的/Configs文件夹**或者直接修改原有文件
+2. 把本地的 '.config' 文件重命名并上传到`/Configs`或者直接修改原有文件
 
 3. 编辑`.github/workflows/*.yml`文件,修改`第 27 行`为你上传的 '.config' 文件名称
 
@@ -82,10 +82,6 @@
    检查并更新固件(保留配置): `bash /bin/AutoUpdate.sh`
 
    检查并更新固件(不保留配置): `bash /bin/AutoUpdate.sh -n`
-   
-   更新到最新稳定版(保留配置): `bash /bin/AutoUpdate.sh -s`
-   
-   更新到最新稳定版(不保留配置): `bash /bin/AutoUpdate.sh -sn`
    
    列出部分系统参数(用于反馈问题): `bash /bin/AutoUpdate.sh -l`
    
