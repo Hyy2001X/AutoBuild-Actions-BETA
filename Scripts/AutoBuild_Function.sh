@@ -49,6 +49,8 @@ Diy_Part1_Base() {
 	if [[ "${INCLUDE_HelloWorld}" == "true" ]];then
 		ExtraPackages git lean luci-app-vssr https://github.com/jerrykuku master
 		ExtraPackages git lean lua-maxminddb https://github.com/jerrykuku master
+		PKG_Finder d package xray-core
+		[[ -z "${PKG_RESULT}" ]] && ExtraPackages svn other xray-core https://github.com/fw876/helloworld/trunk
 	fi
 	if [[ "${INCLUDE_Bypass}" == "true" ]];then
 		ExtraPackages git other luci-app-bypass https://github.com/garypang13 main
@@ -161,6 +163,18 @@ Mkdir() {
 		mkdir -p ${_DIR}
 	fi
 	unset _DIR
+}
+
+PKG_Finder() {
+	unset PKG_RESULT
+	PKG_TYPE=${1}
+	PKG_DIR=${2}
+	PKG_NAME=${3}
+	[[ -z ${PKG_TYPE} ]] && [[ -z ${PKG_NAME} ]] || [[ -z ${PKG_DIR} ]] && return
+	PKG_RESULT=$(find -name ${PKG_DIR}/${PKG_NAME} -type ${PKG_TYPE} -exec echo {} \;)
+	if [[ ! -z "${PKG_RESULT}" ]];then
+		echo "[${PKG_NAME}] is detected,Dir: ${PKG_RESULT}"
+	fi
 }
 
 ExtraPackages() {
