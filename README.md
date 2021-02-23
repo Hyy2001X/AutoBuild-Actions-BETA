@@ -102,5 +102,7 @@
    - [P3TERX's Project](https://github.com/P3TERX/Actions-OpenWrt)
    
    - [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
+
+   - [eSir's workflow](https://github.com/esirplayground/AutoBuild-OpenWrt/blob/master/.github/workflows/Build_OP_x86_64.yml)
    
-   - 开发前期测试人员: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber)
+   - 测试/建议: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber) [sirliu](https://github.com/sirliu?tab=repositories)
