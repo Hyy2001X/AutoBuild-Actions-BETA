@@ -45,19 +45,19 @@
    
    INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
    
-   INCLUDE_SSR_Plus 添加 大雕 的 SSR Plus+ 仓库到源码目录
+   INCLUDE_mt7621_OC1000MHz 启用后,Ramips_mt7621 系列的路由器将自动超频到 1000MHz
    
-   INCLUDE_Passwall 添加 Lienol 的 openwrt-passwall 仓库到源码目录
+   INCLUDE_SSR_Plus 添加 fw876 的 helloworld 仓库到源码目录
+   
+   INCLUDE_Passwall 添加 xiaorouji 的 openwrt-passwall 仓库到源码目录
    
    INCLUDE_HelloWorld 添加 jerrykuku 的 luci-app-vssr 仓库到源码目录 [Not tested]
    
    INCLUDE_Bypass 添加 garypang13 的 luci-app-bypass 仓库到源码目录,可能与 SSR Plus+ 存在冲突 [Not tested]
    
-   INCLUDE_Latest_Xray 启用后,将自动更新 v2ray v2ray-plugin xray 到最新版本
+   INCLUDE_OpenClash 添加 vernesong 的 luci-app-openclash 到源码目录
    
-   INCLUDE_mt7621_OC1000MHz 启用后,Ramips_mt7621 系列的路由器将自动超频到 1000MHz
-   
-   INCLUDE_Enable_FirewallPort_53 启用后,自动注释防火墙-自定义规则中的两行 53 端口重定向
+   INCLUDE_OAF 添加 destan19 的 OpenAppFilter 仓库到源码目录,可能与 TurboACC 存在冲突 [Not tested]
 
 ```
    **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:

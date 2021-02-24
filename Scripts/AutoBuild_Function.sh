@@ -41,7 +41,6 @@ Diy_Part1_Base() {
 	Diy_Core
 	Mkdir package/lean
 	Replace_File Customize/banner package/base-files/files/etc
-	Replace_File Customize/mac80211.sh package/kernel/mac80211/files/lib/wifi
 	if [[ "${INCLUDE_SSR_Plus}" == "true" ]];then
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
@@ -60,11 +59,6 @@ Diy_Part1_Base() {
 	if [[ "${INCLUDE_OpenClash}" == "true" ]];then
 		ExtraPackages git other OpenClash https://github.com/vernesong master
 	fi
-	if [[ "${INCLUDE_Keep_Latest_Xray}" == "true" ]];then
-		Update_Makefile xray-core package/lean/helloworld/xray-core
-		# Update_Makefile v2ray package/lean/v2ray
-		# Update_Makefile v2ray-plugin package/lean/v2ray-plugin
-	fi
 	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
@@ -74,6 +68,14 @@ Diy_Part1_Base() {
 	if [[ "${INCLUDE_mt7621_OC1000MHz}" == "true" ]];then
 		Replace_File Customize/102-mt7621-fix-cpu-clk-add-clkdev.patch target/linux/ramips/patches-5.4
 	fi
+	if [[ "${INCLUDE_OAF}" == "true" ]];then
+		echo "Warning: OpenAppFilter may conflict with FLowoffload/SFE !"
+		ExtraPackages git other OpenAppFilter https://github.com/destan19
+	fi
+	Update_Makefile xray-core package/lean/helloworld/xray-core
+	Update_Makefile exfat package/kernel/exfat
+	ExtraPackages svn lean luci-app-kodexplorer https://github.com/project-openwrt/openwrt/trunk/package/lean
+	# ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
 }
 
 Diy_Part2_Base() {
@@ -82,9 +84,15 @@ Diy_Part2_Base() {
 	Replace_File Customize/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
 	Replace_File Customize/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
 	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
-	if [[ "${INCLUDE_Enable_FirewallPort_53}" == "true" ]];then
-		[ -f "${Default_File}" ] && sed -i "s?iptables?#iptables?g" ${Default_File} > /dev/null 2>&1
-	fi
+	case ${TARGET_PROFILE} in
+	d-team_newifi-d2)
+		Replace_File Customize/system_newifi-d2 package/base-files/files/etc/config system
+	;;
+	*)
+		Replace_File Customize/system_common package/base-files/files/etc/config system
+	;;
+	esac
+	[ -f "${Default_File}" ] && sed -i "s?iptables?#iptables?g" ${Default_File} > /dev/null 2>&1
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		sed -i '/luci-app-autoupdate/d' .config > /dev/null 2>&1
