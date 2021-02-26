@@ -39,6 +39,7 @@ Diy-Part1() {
 
 Diy-Part2() {
 	Diy_Part2_Base
+	ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
 }
 
 Diy-Part3() {
