@@ -74,7 +74,6 @@ Diy_Part1_Base() {
 	fi
 	Update_Makefile xray-core package/lean/helloworld/xray-core
 	Update_Makefile exfat package/kernel/exfat
-	ExtraPackages svn lean luci-app-kodexplorer https://github.com/project-openwrt/openwrt/trunk/package/lean
 	# ExtraPackages svn kernel mt76 https://github.com/openwrt/openwrt/trunk/package/kernel
 }
 
