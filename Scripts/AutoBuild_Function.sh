@@ -195,8 +195,10 @@ ExtraPackages() {
 	REPO_BRANCH=${5}
 
 	Mkdir package/${PKG_DIR}
-	[ -d "package/${PKG_DIR}/${PKG_NAME}" ] && rm -rf package/${PKG_DIR}/${PKG_NAME}
-	echo "[$(date "+%H:%M:%S")] Removing old package [${PKG_NAME}] ..."
+	if [ -d "package/${PKG_DIR}/${PKG_NAME}" ];then
+		echo "[$(date "+%H:%M:%S")] Removing old package [${PKG_NAME}] ..."
+		rm -rf package/${PKG_DIR}/${PKG_NAME}
+	fi
 	[ -d "${PKG_NAME}" ] && rm -rf ${PKG_NAME}
 	Retry_Times=3
 	while [ ! -f "${PKG_NAME}/Makefile" ]
