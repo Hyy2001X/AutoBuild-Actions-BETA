@@ -83,6 +83,9 @@ Diy_Part2_Base() {
 	Replace_File Customize/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
 	Replace_File Customize/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
 	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
+	if [[ "${INCLUDE_DRM_I915}" == "true" ]];then
+		Replace_File Customize/config-5.4 target/linux/x86
+	fi
 	case ${TARGET_PROFILE} in
 	d-team_newifi-d2)
 		Replace_File Customize/system_newifi-d2 package/base-files/files/etc/config system
