@@ -38,7 +38,7 @@ Diy-Part1() {
 	ExtraPackages svn other filebrowser https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages svn lean luci-app-eqos https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
 	
-	ExtraPackages svn lean luci-app-qbittorrent https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
+	ExtraPackages svn lean luci-app-qbittorrent https://github.com/immortalwrt/immortalwrt/trunk/package/lean
 	rm -rf package/lean/qBittorrent
 	Replace_File Customize/qBittorrent-EE.mk package/lean/qBittorrent-Enhanced-Edition Makefile
 }
