@@ -41,7 +41,7 @@ Diy-Part1() {
 	ExtraPackages svn lean luci-app-qbittorrent https://github.com/immortalwrt/immortalwrt/trunk/package/lean
 	ExtraPackages svn lean libtorrent-rasterbar https://github.com/immortalwrt/packages/trunk/libs
 	rm -rf package/lean/qBittorrent
-	Replace_File Customize/qBittorrent-EE.mk package/lean/qBittorrent-Enhanced-Edition Makefile
+	ExtraPackages svn lean qBittorrent-Enhanced-Edition https://github.com/garypang13/openwrt-static-qb/trunk
 }
 
 Diy-Part2() {
