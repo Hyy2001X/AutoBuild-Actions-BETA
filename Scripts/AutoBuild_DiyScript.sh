@@ -37,7 +37,8 @@ Diy-Part1() {
 	ExtraPackages svn other luci-app-filebrowser https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages svn other filebrowser https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages svn lean luci-app-eqos https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
-	
+	ExtraPackages svn other luci-app-mentohust https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
+	ExtraPackages svn other mentohust https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	# ExtraPackages svn lean luci-app-qbittorrent https://github.com/immortalwrt/immortalwrt/trunk/package/lean
 	# ExtraPackages svn lean libtorrent-rasterbar https://github.com/immortalwrt/packages/trunk/libs
 	# rm -rf package/lean/qBittorrent
