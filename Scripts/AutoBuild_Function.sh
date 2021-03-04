@@ -72,8 +72,6 @@ Diy_Part1_Base() {
 		echo "Warning: OpenAppFilter may conflict with FLowoffload/SFE !"
 		ExtraPackages git other OpenAppFilter https://github.com/destan19
 	fi
-	Update_Makefile xray-core package/lean/helloworld/xray-core
-	Update_Makefile exfat package/kernel/exfat
 }
 
 Diy_Part2_Base() {
@@ -111,12 +109,11 @@ Diy_Part2_Base() {
 	echo "Openwrt Version: ${Openwrt_Version}"
 	echo "Router: ${TARGET_PROFILE}"
 	echo "Github: ${Github_Repo}"
+	echo "Firmware Type: ${Firmware_sfx}"
 	[ -f "$Default_File" ] && sed -i "s?${Lede_Version}?${Lede_Version} Compiled by ${Author} [${Display_Date}]?g" $Default_File
 	echo "${Openwrt_Version}" > ${AutoBuild_Info}
 	echo "${Github_Repo}" >> ${AutoBuild_Info}
 	echo "${TARGET_PROFILE}" >> ${AutoBuild_Info}
-	echo "Firmware Type: ${Firmware_sfx}"
-	echo "Writting Type: ${Firmware_sfx} to ${AutoBuild_Info} ..."
 	echo "${Firmware_sfx}" >> ${AutoBuild_Info}
 	
 }
@@ -227,7 +224,7 @@ Replace_File() {
 	Mkdir ${PATCH_DIR}
 	[ -f "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="f" && _TYPE2="File"
 	[ -d "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="d" && _TYPE2="Folder"
-	if [ -f "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
+	if [ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
 		[[ ! -z "${FILE_RENAME}" ]] && _RENAME="${FILE_RENAME}" || _RENAME=""
 		if [ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
 			echo "[$(date "+%H:%M:%S")] Moving [${_TYPE2}] ${FILE_NAME} to ${2}/${FILE_RENAME} ..."
