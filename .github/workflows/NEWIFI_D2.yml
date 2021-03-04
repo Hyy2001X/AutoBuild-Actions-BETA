@@ -32,7 +32,7 @@ env:
   UPLOAD_FIRMWARE: false
   UPLOAD_BIN_DIR: false
   REMOVE_OLD_RELEASE: false
-  REMOVE_WORKFLOW_RUNS: true
+  REMOVE_WORKFLOW_RUNS: false
 
 jobs:
   build:
