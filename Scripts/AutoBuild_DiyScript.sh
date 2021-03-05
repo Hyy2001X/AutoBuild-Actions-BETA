@@ -41,8 +41,6 @@ Diy-Part1() {
 	ExtraPackages svn other luci-app-filebrowser https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages svn other filebrowser https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages svn lean luci-app-eqos https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
-	ExtraPackages svn other luci-app-mentohust https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
-	ExtraPackages svn other mentohust https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages git other luci-app-bearDropper https://github.com/NateLol
 	ExtraPackages git other luci-app-onliner https://github.com/rufengsuixing
 }
@@ -50,7 +48,6 @@ Diy-Part1() {
 Diy-Part2() {
 	Diy_Part2_Base
 	ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
-	ExtraPackages svn other/../../feeds/packages/utils libnetwork https://github.com/openwrt/packages/trunk/utils
 }
 
 Diy-Part3() {
