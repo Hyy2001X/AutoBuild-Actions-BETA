@@ -46,8 +46,8 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        docker rmi `docker images -q`
         echo "Deleting files, please wait ..."
+        docker rmi `docker images -q`
         sudo rm -rf \
           /usr/share/dotnet \
           /etc/mysql \
