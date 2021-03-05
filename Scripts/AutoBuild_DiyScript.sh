@@ -43,6 +43,8 @@ Diy-Part1() {
 	ExtraPackages svn lean luci-app-eqos https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
 	ExtraPackages svn other luci-app-mentohust https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
 	ExtraPackages svn other mentohust https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
+	ExtraPackages git other luci-app-bearDropper https://github.com/NateLol
+	ExtraPackages git other luci-app-onliner https://github.com/rufengsuixing
 }
 
 Diy-Part2() {
