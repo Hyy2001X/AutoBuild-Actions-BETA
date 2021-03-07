@@ -80,6 +80,13 @@ Diy_Part2_Base() {
 	Replace_File Customize/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
 	Replace_File Customize/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
 	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
+	if [[ "${INCLUDE_Argon}" == "true" ]];then
+		if [ -f "${Default_File}" ];then
+			ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
+		else
+			ExtraPackages git other luci-theme-argon https://github.com/jerrykuku
+		fi
+	fi
 	if [[ "${INCLUDE_DRM_I915}" == "true" ]];then
 		Replace_File Customize/config-5.4 target/linux/x86
 	fi
