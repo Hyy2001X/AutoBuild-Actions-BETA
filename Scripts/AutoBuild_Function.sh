@@ -43,11 +43,11 @@ Diy_Part1_Base() {
 	Replace_File Customize/banner package/base-files/files/etc
 	if [[ "${INCLUDE_SSR_Plus}" == "true" ]];then
 		ExtraPackages git lean helloworld https://github.com/fw876 master
-		sed -i 's/143/143,25,5222/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 	fi
 	if [[ "${INCLUDE_HelloWorld}" == "true" ]];then
 		ExtraPackages git lean luci-app-vssr https://github.com/jerrykuku master
-		ExtraPackages git lean lua-maxminddb https://github.com/jerrykuku master
+		ExtraPackages git other lua-maxminddb https://github.com/jerrykuku master
 		PKG_Finder d package xray-core
 		[[ -z "${PKG_RESULT}" ]] && ExtraPackages svn other xray-core https://github.com/fw876/helloworld/trunk
 	fi
@@ -63,13 +63,13 @@ Diy_Part1_Base() {
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
 	if [[ "${INCLUDE_Passwall}" == "true" ]];then
-		ExtraPackages git lienol openwrt-passwall https://github.com/xiaorouji main
+		ExtraPackages git other openwrt-passwall https://github.com/xiaorouji main
 	fi
 	if [[ "${INCLUDE_mt7621_OC1000MHz}" == "true" ]];then
 		Replace_File Customize/102-mt7621-fix-cpu-clk-add-clkdev.patch target/linux/ramips/patches-5.4
 	fi
 	if [[ "${INCLUDE_OAF}" == "true" ]];then
-		echo "Warning: OpenAppFilter may conflict with FLowoffload/SFE !"
+		echo "Warning: OpenAppFilter may conflict with FLowoffload/SFE/Turbo ACC !"
 		ExtraPackages git other OpenAppFilter https://github.com/destan19
 	fi
 }
@@ -112,17 +112,17 @@ Diy_Part2_Base() {
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
 	[[ -z "${Author}" ]] && Author="Unknown"
-	echo "Author: ${Author}"
-	echo "Openwrt Version: ${Openwrt_Version}"
-	echo "Router: ${TARGET_PROFILE}"
-	echo "Github: ${Github_Repo}"
-	echo "Firmware Type: ${Firmware_sfx}"
 	[ -f "$Default_File" ] && sed -i "s?${Lede_Version}?${Lede_Version} Compiled by ${Author} [${Display_Date}]?g" $Default_File
 	echo "${Openwrt_Version}" > ${AutoBuild_Info}
 	echo "${Github_Repo}" >> ${AutoBuild_Info}
 	echo "${TARGET_PROFILE}" >> ${AutoBuild_Info}
 	echo "${Firmware_sfx}" >> ${AutoBuild_Info}
-	
+
+	echo "Author: ${Author}"
+	echo "Openwrt Version: ${Openwrt_Version}"
+	echo "Router: ${TARGET_PROFILE}"
+	echo "Github: ${Github_Repo}"
+	echo "Firmware Type: ${Firmware_sfx}"
 }
 
 Diy_Part3_Base() {
