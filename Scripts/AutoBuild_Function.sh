@@ -43,7 +43,8 @@ Diy_Part1_Base() {
 	Replace_File Customize/banner package/base-files/files/etc
 	if [[ "${INCLUDE_SSR_Plus}" == "true" ]];then
 		ExtraPackages git lean helloworld https://github.com/fw876 master
-		sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		#sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 	fi
 	if [[ "${INCLUDE_HelloWorld}" == "true" ]];then
 		ExtraPackages git lean luci-app-vssr https://github.com/jerrykuku master
