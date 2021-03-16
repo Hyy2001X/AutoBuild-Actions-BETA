@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.2
+Version=V5.3
 
 TIME() {
 	echo -ne "\n[$(date "+%H:%M:%S")] "
@@ -200,7 +200,7 @@ Firmware="${GET_Firmware}"
 Firmware_Detail="${Firmware_Info}${Detail_SFX}"
 echo -e "\n固件作者: ${Author%/*}"
 echo "设备名称: ${CURRENT_Device}"
-echo "固件格式: ${Detail_SFX}"
+echo "固件格式: ${Firmware_SFX}"
 echo -e "\n当前固件版本: ${CURRENT_Version}"
 echo "云端固件版本: ${GET_Version}"
 if [[ ! ${Force_Update} == 1 ]];then
@@ -240,14 +240,14 @@ CURRENT_MD5=$(md5sum ${Firmware} | cut -d ' ' -f1)
 echo -e "\n本地固件MD5:${CURRENT_MD5}"
 echo "云端固件MD5:${GET_MD5}"
 if [[ -z "${GET_MD5}" ]] || [[ -z "${CURRENT_MD5}" ]];then
-	TIME && echo -e "MD5 获取失败!"
+	TIME && echo "MD5 获取失败!"
 	exit
 fi
 if [[ ! "${GET_MD5}" == "${CURRENT_MD5}" ]];then
-	TIME && echo -e "MD5 对比失败,请检查网络后重试!"
+	TIME && echo "MD5 对比失败,请检查网络后重试!"
 	exit
 else
-	TIME && echo -e "MD5 对比通过!"
+	TIME && echo "MD5 对比通过!"
 fi
 if [[ ${Compressed_x86} == 1 ]];then
 	TIME && echo "检测到固件为 [.gz] 压缩格式,开始解压固件..."
@@ -261,9 +261,9 @@ if [[ ${Compressed_x86} == 1 ]];then
 		exit
 	fi
 fi
-TIME && echo -e "一切准备就绪,5s 后开始更新固件...\n"
+TIME && echo -e "一切准备就绪,5s 后开始更新固件..."
 sleep 5
-TIME && echo -e "正在更新固件,期间请耐心等待..."
+TIME && echo "正在更新固件,期间请耐心等待..."
 sysupgrade ${Upgrade_Options} ${Firmware}
 if [[ $? -ne 0 ]];then
 	TIME && echo "固件刷写失败,请尝试不保留配置[-n]或手动下载固件!"
