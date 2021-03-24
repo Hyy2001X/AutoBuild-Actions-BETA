@@ -3,8 +3,6 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Forks&logo=github)
 
-~~自动编译:本项目将在每天 19:00 启动自动编译~~
-
 测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`、`x86_64(img、img.gz)`、以及使用 bin 格式固件的设备
 
 ## Github Actions 部署指南(STEP 1):
@@ -44,20 +42,6 @@
    INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
    
    INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
-   
-   INCLUDE_mt7621_OC1000MHz 启用后,Ramips_mt7621 系列的路由器将自动超频到 1000MHz
-   
-   INCLUDE_SSR_Plus 添加 fw876 的 helloworld 仓库到源码目录
-   
-   INCLUDE_Passwall 添加 xiaorouji 的 openwrt-passwall 仓库到源码目录
-   
-   INCLUDE_HelloWorld 添加 jerrykuku 的 luci-app-vssr 仓库到源码目录 [Not tested]
-   
-   INCLUDE_Bypass 添加 garypang13 的 luci-app-bypass 仓库到源码目录,可能与 SSR Plus+ 存在冲突 [Not tested]
-   
-   INCLUDE_OpenClash 添加 vernesong 的 luci-app-openclash 到源码目录
-   
-   INCLUDE_OAF 添加 destan19 的 OpenAppFilter 仓库到源码目录,可能与 TurboACC 存在冲突 [Not tested]
 
 ```
    **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
@@ -69,8 +53,6 @@
    [替换 /Customize 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
    
    [新建文件夹] Mkdir 文件夹名称
-   
-   [更新 Makefile] Update_Makefile 软件包名 软件包路径 (仅支持部分软件包,自行测试)
    
 ```
 5. **开始编译**: 点击右上方 ***Star***即可启动编译,最好同步我的最新改动以获得更多特性
