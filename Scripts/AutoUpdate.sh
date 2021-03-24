@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.3
+Version=V5.4
 
 TIME() {
 	echo -ne "\n[$(date "+%H:%M:%S")] "
@@ -59,14 +59,15 @@ List_Info() {
 Shell_Helper() {
 	echo -e "\n使用方法: bash /bin/AutoUpdate.sh [参数1] [参数2]"
 	echo -e "\n支持下列参数:\n"
-	echo "	-q	更新固件,不打印备份信息日志[保留配置]"
-	echo "	-n	更新固件[不保留配置]"
-	echo "	-f	强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包[保留配置]"
-	echo "	-u	适用于定时更新 LUCI 的参数[保留配置]"
-	echo "	-c	[参数2:<地址>] 更换 Github 检查更新以及固件下载地址"
+	echo "	-q	更新固件,不打印备份信息日志 [保留配置]"
+	echo "	-n	更新固件 [不保留配置]"
+	echo "	-f	强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]"
+	echo "	-u	适用于定时更新 LUCI 的参数 [保留配置]"
+	echo "	-c	[参数2:<Github 地址>] 更换 Github 检查更新以及固件下载地址"
+	echo "	-b	[参数2:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]"
 	echo "	-l	列出所有信息"
 	echo "	-d	清除固件下载缓存"
-	echo -e "	-h	打印此帮助信息\n"
+	echo -e "	-h	打印帮助信息\n"
 	exit
 }
 
@@ -87,24 +88,34 @@ x86_64)
 	else
 		Compressed_x86="0"
 	fi
-	if [ -d /sys/firmware/efi ];then
-		EFI_Boot="1"
-		BOOT_Type="-UEFI"
+	if [ -f /etc/openwrt_boot ];then
+		BOOT_Type="-$(cat /etc/openwrt_boot)"
 	else
-		EFI_Boot="0"
-		BOOT_Type="-Legacy"
+		if [ -d /sys/firmware/efi ];then
+			BOOT_Type="-UEFI"
+		else
+			BOOT_Type="-Legacy"
+		fi
 	fi
+	case "${BOOT_Type}" in
+	-Legacy)
+		EFI_Boot=0
+	;;
+	-UEFI)
+		EFI_Boot=1
+	;;
+	esac
 	Firmware_SFX="${BOOT_Type}.${Firmware_Type}"
 	Detail_SFX="${BOOT_Type}.detail"
 	CURRENT_Device="x86_64"
-	Space_RQM=500
+	Space_RQM=480
 ;;
 *)
 	CURRENT_Device="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
 	Firmware_SFX=".${Firmware_Type}"
 	[[ -z ${Firmware_SFX} ]] && Firmware_SFX=".bin"
 	Detail_SFX=".detail"
-	Space_RQM=50
+	Space_RQM=30
 esac
 Github_Download="${Github}/releases/download/AutoUpdate"
 Author="${Github##*com/}"
@@ -152,6 +163,21 @@ else
 	-h | --help)
 		Shell_Helper
 	;;
+	-b)
+		[[ -z "${Input_Other}" ]] && Shell_Helper
+		case "${Input_Other}" in
+		UEFI | Legacy)
+			echo "${Input_Other}" > openwrt_boot
+			sed -i '/openwrt_boot/d' /etc/sysupgrade.conf
+			echo -e "\n/etc/openwrt_boot" >> /etc/sysupgrade.conf
+			TIME && echo "固件引导方式已指定为: ${Input_Other}!"
+		;;
+		*)
+			echo -e "\n当前仅支持的选项: [UEFI/Legacy] !"
+		;;
+		esac
+		exit
+	;;
 	*)
 		echo -e "\nERROR INPUT: [$*]"
 		Shell_Helper
@@ -162,7 +188,7 @@ else
 	fi
 fi
 if [[ "${TMP_Available}" -lt "${Space_RQM}" ]];then
-	TIME && echo "/tmp 空间不足: [${Space_RQM}M],无法执行程序!"
+	TIME && echo "/tmp 空间不足: [${Space_RQM}M],无法执行更新!"
 	exit
 fi
 if [[ ! "${Force_Update}" == "1" ]] && [[ ! "${AutoUpdate_Mode}" == "1" ]];then
