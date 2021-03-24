@@ -4,13 +4,28 @@
 # AutoBuild Functions
 
 GET_TARGET_INFO() {
+	Diy_Core
 	Home=${GITHUB_WORKSPACE}/openwrt
-	echo "Home Path: ${Home}"
 	[ -f ${GITHUB_WORKSPACE}/Openwrt.info ] && . ${GITHUB_WORKSPACE}/Openwrt.info
-	Default_File="package/lean/default-settings/files/zzz-default-settings"
-	[ -f ${Default_File} ] && Lede_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Default_File})"
-	[[ -z ${Lede_Version} ]] && Lede_Version="Openwrt"
-	Openwrt_Version="${Lede_Version}-${Compile_Date}"
+	Owner_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
+	AB_Firmware_Info=${GITHUB_WORKSPACE}/openwrt/package/base-files/files/etc/openwrt_info
+	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
+	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"
+	case ${Source_Owner} in
+	coolsnowwolf)
+		Version_File="package/lean/default-settings/files/zzz-default-settings"
+		Old_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
+		Openwrt_Version="${Old_Version}-${Compile_Date}"
+		
+	;;
+	immortalwrt)
+		Version_File="package/base-files/files/etc/openwrt_release"
+		Openwrt_Version="${Compile_Date}"
+	;;
+	*)
+		Openwrt_Version=Unknown
+	;;
+	esac
 	x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
 	if [[ "${x86_Test}" == "x86_64" ]];then
 		TARGET_PROFILE="x86_64"
@@ -18,131 +33,112 @@ GET_TARGET_INFO() {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	fi
 	[[ -z "${TARGET_PROFILE}" ]] && TARGET_PROFILE="${Default_Device}"
-	case "${TARGET_PROFILE}" in
+	case ${TARGET_PROFILE} in
 	x86_64)
 		grep "CONFIG_TARGET_IMAGES_GZIP=y" ${Home}/.config > /dev/null 2>&1
-		if [[ ! $? -ne 0 ]];then
-			Firmware_sfx="img.gz"
+		if [[ ! "$?" -ne 0 ]];then
+			Firmware_Type="img.gz"
 		else
-			Firmware_sfx="img"
+			Firmware_Type="img"
 		fi
 	;;
 	*)
-		Firmware_sfx="bin"
+		Firmware_Type="bin"
 	;;
 	esac
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
-	Github_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
-	AutoBuild_Info=${GITHUB_WORKSPACE}/openwrt/package/base-files/files/etc/openwrt_info
 }
 
 Diy_Part1_Base() {
 	Diy_Core
-	Mkdir package/lean
-	Replace_File Customize/banner package/base-files/files/etc
-	if [[ "${INCLUDE_SSR_Plus}" == "true" ]];then
-		ExtraPackages git lean helloworld https://github.com/fw876 master
-		#sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
-		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
-	fi
-	if [[ "${INCLUDE_HelloWorld}" == "true" ]];then
-		ExtraPackages git lean luci-app-vssr https://github.com/jerrykuku master
-		ExtraPackages git other lua-maxminddb https://github.com/jerrykuku master
-		PKG_Finder d package xray-core
-		[[ -z "${PKG_RESULT}" ]] && ExtraPackages svn other xray-core https://github.com/fw876/helloworld/trunk
-	fi
-	if [[ "${INCLUDE_Bypass}" == "true" ]];then
-		ExtraPackages git other luci-app-bypass https://github.com/garypang13 main
-		find package/*/ feeds/*/ -maxdepth 2 -path "*luci-app-bypass/Makefile" | xargs -i sed -i 's/shadowsocksr-libev-ssr-redir/shadowsocksr-libev-alt/g' {}
-		find package/*/ feeds/*/ -maxdepth 2 -path "*luci-app-bypass/Makefile" | xargs -i sed -i 's/shadowsocksr-libev-ssr-server/shadowsocksr-libev-server/g' {}
-	fi
-	if [[ "${INCLUDE_OpenClash}" == "true" ]];then
-		ExtraPackages git other OpenClash https://github.com/vernesong master
+	Replace_File Customize/Depends/banner package/base-files/files/etc
+	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
+		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
+		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
+		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
+		sed -i "s?Openwrt?Openwrt ${Openwrt_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
+	else
+		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
 	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
-	if [[ "${INCLUDE_Passwall}" == "true" ]];then
-		ExtraPackages git other openwrt-passwall https://github.com/xiaorouji main
-	fi
-	if [[ "${INCLUDE_mt7621_OC1000MHz}" == "true" ]];then
-		Replace_File Customize/102-mt7621-fix-cpu-clk-add-clkdev.patch target/linux/ramips/patches-5.4
-	fi
-	if [[ "${INCLUDE_OAF}" == "true" ]];then
-		echo "Warning: OpenAppFilter may conflict with FLowoffload/SFE/Turbo ACC !"
-		ExtraPackages git other OpenAppFilter https://github.com/destan19
-	fi
 }
 
 Diy_Part2_Base() {
-	Diy_Core
 	GET_TARGET_INFO
-	Replace_File Customize/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
-	Replace_File Customize/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
-	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
-	if [[ "${INCLUDE_Argon}" == "true" ]];then
-		if [ -f "${Default_File}" ];then
-			ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
-		else
-			ExtraPackages git other luci-theme-argon https://github.com/jerrykuku
+
+	Replace_File Customize/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
+	case ${Source_Owner} in
+	coolsnowwolf)
+		ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
+		ExtraPackages git lean helloworld https://github.com/fw876 master
+		Update_Makefile xray-core package/lean/helloworld/xray-core
+		sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		Replace_File Customize/Depends/coremark_lede.sh package/lean/coremark coremark.sh
+		ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
+		
+		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
+		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" $Version_File
+
+		if [[ "${INCLUDE_DRM_I915}" == "true" ]];then
+			Replace_File Customize/Depends/config-5.4 target/linux/x86
 		fi
-	fi
-	if [[ "${INCLUDE_DRM_I915}" == "true" ]];then
-		Replace_File Customize/config-5.4 target/linux/x86
-	fi
-	case ${TARGET_PROFILE} in
-	d-team_newifi-d2)
-		Replace_File Customize/system_newifi-d2 package/base-files/files/etc/config system
+	;;
+	immortalwrt)
+		sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		Replace_File Customize/Depends/coremark_ImmortalWrt.sh package/base-files/files/etc coremark.sh
+		
+		Replace_File Customize/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
+		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" $Version_File
 	;;
 	*)
-		Replace_File Customize/system_common package/base-files/files/etc/config system
+		ExtraPackages git other luci-theme-argon https://github.com/jerrykuku
 	;;
 	esac
-	[ -f "${Default_File}" ] && sed -i "s?iptables?#iptables?g" ${Default_File} > /dev/null 2>&1
-	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
-		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
-		sed -i '/luci-app-autoupdate/d' .config > /dev/null 2>&1
-		echo -e "\nCONFIG_PACKAGE_luci-app-autoupdate=y" >> .config
-		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
-		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
-		[[ -z "${AutoUpdate_Version}" ]] && AutoUpdate_Version="Unknown"
-		sed -i "s?Openwrt?Openwrt ${Openwrt_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
-		echo "AutoUpdate Version: ${AutoUpdate_Version}"
-	else
-		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
-	fi
-	[[ -z "${Author}" ]] && Author="Unknown"
-	[ -f "$Default_File" ] && sed -i "s?${Lede_Version}?${Lede_Version} Compiled by ${Author} [${Display_Date}]?g" $Default_File
-	echo "${Openwrt_Version}" > ${AutoBuild_Info}
-	echo "${Github_Repo}" >> ${AutoBuild_Info}
-	echo "${TARGET_PROFILE}" >> ${AutoBuild_Info}
-	echo "${Firmware_sfx}" >> ${AutoBuild_Info}
+
+	echo "${Openwrt_Version}" > ${AB_Firmware_Info}
+	echo "${Owner_Repo}" >> ${AB_Firmware_Info}
+	echo "${TARGET_PROFILE}" >> ${AB_Firmware_Info}
+	echo "${Firmware_Type}" >> ${AB_Firmware_Info}
 
 	echo "Author: ${Author}"
-	echo "Openwrt Version: ${Openwrt_Version}"
+	echo "Github: ${Owner_Repo}"
 	echo "Router: ${TARGET_PROFILE}"
-	echo "Github: ${Github_Repo}"
-	echo "Firmware Type: ${Firmware_sfx}"
+	echo "Firmware Version: ${Openwrt_Version}"
+	echo "Firmware Type: ${Firmware_Type}"
+	echo "Source Github: ${Source_Repo}"
 }
 
 Diy_Part3_Base() {
-	Diy_Core
 	GET_TARGET_INFO
+	case ${Source_Owner} in
+	immortalwrt)
+		_Firmware=immortalwrt
+		_Legacy_Firmware=combined-squashfs
+		_EFI_Firmware=uefi-gpt-squashfs
+	;;
+	*)
+		_Firmware=openwrt
+		_Legacy_Firmware=generic-squashfs-combined
+		_EFI_Firmware=generic-squashfs-combined-efi
+	;;
+	esac
 	Firmware_Path="bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
 	Mkdir bin/Firmware
 	case "${TARGET_PROFILE}" in
 	x86_64)
 		cd ${Firmware_Path}
-		Legacy_Firmware=openwrt-${TARGET_BOARD}-${TARGET_SUBTARGET}-generic-squashfs-combined.${Firmware_sfx}
-		EFI_Firmware=openwrt-${TARGET_BOARD}-${TARGET_SUBTARGET}-generic-squashfs-combined-efi.${Firmware_sfx}
+		Legacy_Firmware=${_Firmware}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${_Legacy_Firmware}.${Firmware_Type}
+		EFI_Firmware=${_Firmware}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${_EFI_Firmware}.${Firmware_Type}
 		AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}"
 		if [ -f "${Legacy_Firmware}" ];then
 			_MD5=$(md5sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
-			mv -f ${Legacy_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.${Firmware_sfx}
+			mv -f ${Legacy_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.${Firmware_Type}
 			echo "Legacy Firmware is detected !"
 		fi
 		if [ -f "${EFI_Firmware}" ];then
@@ -150,14 +146,14 @@ Diy_Part3_Base() {
 			_SHA256=$(sha256sum ${EFI_Firmware} | cut -d ' ' -f1)
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
-			cp ${EFI_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.${Firmware_sfx}
+			cp ${EFI_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.${Firmware_Type}
 			echo "UEFI Firmware is detected !"
 		fi
 	;;
 	*)
 		cd ${Home}
-		Default_Firmware="openwrt-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_sfx}"
-		AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.${Firmware_sfx}"
+		Default_Firmware="${_Firmware}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+		AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.${Firmware_Type}"
 		AutoBuild_Detail="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.detail"
 		echo "Firmware: ${AutoBuild_Firmware}"
 		mv -f ${Firmware_Path}/${Default_Firmware} bin/Firmware/${AutoBuild_Firmware}

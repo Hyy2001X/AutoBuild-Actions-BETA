@@ -9,27 +9,17 @@ Diy_Core() {
 
 	INCLUDE_AutoUpdate=true
 	INCLUDE_AutoBuild_Tools=true
-	INCLUDE_mt7621_OC1000MHz=true
 	INCLUDE_DRM_I915=true
-
-	INCLUDE_SSR_Plus=true
-	INCLUDE_Passwall=true
-	INCLUDE_HelloWorld=false
-	INCLUDE_Bypass=false
-	INCLUDE_OpenClash=true
-	INCLUDE_OAF=false
-	INCLUDE_Argon=true
 }
 
 Diy-Part1() {
 	Diy_Part1_Base
 
-	Replace_File Customize/mac80211.sh package/kernel/mac80211/files/lib/wifi
-	Replace_File Customize/coremark.sh package/lean/coremark
-	Replace_File Customize/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 	Update_Makefile xray-core package/lean/helloworld/xray-core
 	Update_Makefile exfat package/kernel/exfat
 
+	ExtraPackages git other OpenClash https://github.com/vernesong master
+	ExtraPackages git other openwrt-passwall https://github.com/xiaorouji main
 	ExtraPackages git other luci-app-argon-config https://github.com/jerrykuku
 	ExtraPackages git other luci-app-adguardhome https://github.com/Hyy2001X
 	ExtraPackages git other luci-app-shutdown https://github.com/Hyy2001X
@@ -38,8 +28,8 @@ Diy-Part1() {
 	ExtraPackages svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 	ExtraPackages svn other luci-app-usb3disable https://github.com/immortalwrt/luci/trunk/applications
 	ExtraPackages svn other luci-app-filebrowser https://github.com/immortalwrt/luci/trunk/applications
-	ExtraPackages svn other filebrowser https://github.com/immortalwrt/immortalwrt/trunk/package/ctcgfw
-	ExtraPackages svn lean luci-app-eqos https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
+	ExtraPackages svn other filebrowser https://github.com/immortalwrt/packages/trunk/utils
+	ExtraPackages svn other luci-app-eqos https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
 	ExtraPackages git other luci-app-bearDropper https://github.com/NateLol
 	ExtraPackages git other luci-app-onliner https://github.com/rufengsuixing
 }
@@ -47,6 +37,21 @@ Diy-Part1() {
 Diy-Part2() {
 	Diy_Part2_Base
 	ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
+
+	Replace_File Customize/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
+	Replace_File Customize/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
+	Replace_File Customize/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
+
+	case ${TARGET_PROFILE} in
+	d-team_newifi-d2)
+		Replace_File Customize/mac80211.sh package/kernel/mac80211/files/lib/wifi
+		Replace_File Customize/system_newifi-d2 package/base-files/files/etc/config system
+		Replace_File Customize/102-mt7621-fix-cpu-clk-add-clkdev.patch target/linux/ramips/patches-5.4
+	;;
+	*)
+		Replace_File Customize/system_common package/base-files/files/etc/config system
+	;;
+	esac
 }
 
 Diy-Part3() {
