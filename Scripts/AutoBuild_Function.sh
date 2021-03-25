@@ -52,6 +52,14 @@ GET_TARGET_INFO() {
 
 Diy_Part1_Base() {
 	Diy_Core
+	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
+		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
+	fi
+}
+
+Diy_Part2_Base() {
+	GET_TARGET_INFO
+
 	Replace_File Customize/Depends/banner package/base-files/files/etc
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
@@ -61,24 +69,16 @@ Diy_Part1_Base() {
 	else
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
-	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
-		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
-	fi
-}
-
-Diy_Part2_Base() {
-	GET_TARGET_INFO
-
-	Replace_File Customize/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 	case ${Source_Owner} in
 	coolsnowwolf)
+		Replace_File Customize/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		Update_Makefile xray-core package/lean/helloworld/xray-core
-		sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 		Replace_File Customize/Depends/coremark_lede.sh package/lean/coremark coremark.sh
 		ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
-		
+
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" $Version_File
 
@@ -87,9 +87,8 @@ Diy_Part2_Base() {
 		fi
 	;;
 	immortalwrt)
-		sed -i 's/143/143,25,5222,6969,1337,2710/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		sed -i 's/143/143,8080/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 		Replace_File Customize/Depends/coremark_ImmortalWrt.sh package/base-files/files/etc coremark.sh
-		
 		Replace_File Customize/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" $Version_File
 	;;
