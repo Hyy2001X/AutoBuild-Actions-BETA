@@ -52,6 +52,7 @@ GET_TARGET_INFO() {
 
 Diy_Part1_Base() {
 	Diy_Core
+
 	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
@@ -59,8 +60,7 @@ Diy_Part1_Base() {
 
 Diy_Part2_Base() {
 	GET_TARGET_INFO
-
-	Replace_File Customize/Depends/banner package/base-files/files/etc
+	Auto_ExtraPackages
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
@@ -69,27 +69,28 @@ Diy_Part2_Base() {
 	else
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
+	Replace_File CustomFiles/Depends/banner package/base-files/files/etc
+	Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 	case ${Source_Owner} in
 	coolsnowwolf)
-		Replace_File Customize/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		Update_Makefile xray-core package/lean/helloworld/xray-core
 		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
-		Replace_File Customize/Depends/coremark_lede.sh package/lean/coremark coremark.sh
+		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
 		ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
-
+		
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" $Version_File
 
 		if [[ "${INCLUDE_DRM_I915}" == "true" ]];then
-			Replace_File Customize/Depends/config-5.4 target/linux/x86
+			Replace_File CustomFiles/Depends/config-5.4 target/linux/x86
 		fi
 	;;
 	immortalwrt)
 		sed -i 's/143/143,8080/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
-		Replace_File Customize/Depends/coremark_ImmortalWrt.sh package/base-files/files/etc coremark.sh
-		Replace_File Customize/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
+		Replace_File CustomFiles/Depends/coremark_ImmortalWrt.sh package/base-files/files/etc coremark.sh
+		Replace_File CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" $Version_File
 	;;
 	*)
@@ -186,6 +187,16 @@ PKG_Finder() {
 	fi
 }
 
+Auto_ExtraPackages() {
+	[[ ! -f "${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}" ]] && return
+	echo "CustomFile: ${TARGET_PROFILE} is detected !"
+	cat ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE} | while read X
+	do
+		ExtraPackages ${X}
+	done
+	echo "Done !"
+}
+
 ExtraPackages() {
 	PKG_PROTO=${1}
 	PKG_DIR=${2}
@@ -233,7 +244,7 @@ Replace_File() {
 			echo "[$(date "+%H:%M:%S")] Moving [${_TYPE2}] ${FILE_NAME} to ${2}/${FILE_RENAME} ..."
 			mv -f ${GITHUB_WORKSPACE}/${FILE_NAME} ${PATCH_DIR}/${_RENAME}
 		else
-			echo "[$(date "+%H:%M:%S")] Customize ${_TYPE2} [${FILE_NAME}] is not detected,skip move ..."
+			echo "[$(date "+%H:%M:%S")] CustomFiles ${_TYPE2} [${FILE_NAME}] is not detected,skip move ..."
 		fi
 	fi
 	unset FILE_NAME PATCH_DIR FILE_RENAME

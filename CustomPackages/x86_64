@@ -1,0 +1,10 @@
+git other OpenClash https://github.com/vernesong master
+git other openwrt-passwall https://github.com/xiaorouji main
+git other luci-app-argon-config https://github.com/jerrykuku
+git other luci-app-adguardhome https://github.com/Hyy2001X
+git other luci-app-shutdown https://github.com/Hyy2001X
+svn other luci-app-smartdns https://github.com/immortalwrt/immortalwrt/trunk/package/ntlf9t
+git other luci-app-serverchan https://github.com/tty228
+svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
+git other luci-app-bearDropper https://github.com/NateLol
+git other luci-app-onliner https://github.com/rufengsuixing
