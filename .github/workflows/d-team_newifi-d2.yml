@@ -6,7 +6,7 @@
 # Modify: Hyy2001X
 #=======================================================
 
-name: AutoBuild-NEWIFI_D2
+name: AutoBuild-d-team_newifi-d2
 
 on:
   repository_dispatch:
@@ -121,7 +121,7 @@ jobs:
 
     - name: Run Diy-Part3 Scripts
       run: |
-        echo "## $(date +"%Y%m%d")-NEWIFI_D2" > update_log.txt
+        echo "## $(date +"%Y%m%d")-d-team_newifi-d2" > update_log.txt
         cd openwrt
         source $GITHUB_WORKSPACE/$DIY_SCRIPT
         source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part3
