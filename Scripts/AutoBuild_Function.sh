@@ -77,6 +77,7 @@ Diy_Part2_Base() {
 		Update_Makefile xray-core package/lean/helloworld/xray-core
 		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
+		Replace_File CustomFiles/Depends/profile_lede package/base-files/files/etc profile
 		ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
 		
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
