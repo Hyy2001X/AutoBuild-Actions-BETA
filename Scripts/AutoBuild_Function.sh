@@ -61,6 +61,7 @@ Diy_Part1_Base() {
 Diy_Part2_Base() {
 	GET_TARGET_INFO
 	Replace_File CustomFiles/Depends/banner package/base-files/files/etc
+	sed -i "s?By?By ${Author}?g" package/base-files/files/etc/banner
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
