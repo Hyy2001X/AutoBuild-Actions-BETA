@@ -8,7 +8,7 @@ GET_TARGET_INFO() {
 	Home=${GITHUB_WORKSPACE}/openwrt
 	[ -f ${GITHUB_WORKSPACE}/Openwrt.info ] && . ${GITHUB_WORKSPACE}/Openwrt.info
 	Owner_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
-	AB_Firmware_Info=${GITHUB_WORKSPACE}/openwrt/package/base-files/files/etc/openwrt_info
+	AB_Firmware_Info=package/base-files/files/etc/openwrt_info
 	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
 	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"
 	case ${Source_Owner} in
@@ -61,6 +61,7 @@ Diy_Part1_Base() {
 Diy_Part2_Base() {
 	GET_TARGET_INFO
 	Auto_ExtraPackages
+	Replace_File CustomFiles/Depends/banner package/base-files/files/etc
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
@@ -69,7 +70,6 @@ Diy_Part2_Base() {
 	else
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version}?g" package/base-files/files/etc/banner
 	fi
-	Replace_File CustomFiles/Depends/banner package/base-files/files/etc
 	Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 	case ${Source_Owner} in
 	coolsnowwolf)
