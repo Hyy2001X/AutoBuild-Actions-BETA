@@ -52,7 +52,7 @@ GET_TARGET_INFO() {
 
 Diy_Part1_Base() {
 	Diy_Core
-
+	Auto_ExtraPackages
 	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
@@ -60,7 +60,6 @@ Diy_Part1_Base() {
 
 Diy_Part2_Base() {
 	GET_TARGET_INFO
-	Auto_ExtraPackages
 	Replace_File CustomFiles/Depends/banner package/base-files/files/etc
 	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
