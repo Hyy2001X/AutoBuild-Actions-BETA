@@ -15,7 +15,6 @@ Diy_Core() {
 Diy-Part1() {
 	Diy_Part1_Base
 
-	Update_Makefile xray-core package/lean/helloworld/xray-core
 	Update_Makefile exfat package/kernel/exfat
 }
 
