@@ -53,6 +53,8 @@ GET_TARGET_INFO() {
 Diy_Part1_Base() {
 	Diy_Core
 	Auto_ExtraPackages
+	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
+	chmod +x -R ${GITHUB_WORKSPACE}/CustomFiles
 	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	fi
