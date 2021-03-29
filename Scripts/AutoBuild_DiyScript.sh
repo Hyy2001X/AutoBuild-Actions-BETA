@@ -14,7 +14,6 @@ Diy_Core() {
 
 Firmware-Diy() {
 	Update_Makefile exfat package/kernel/exfat
-	Replace_File CustomFiles/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
 	Replace_File CustomFiles/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
 	Replace_File CustomFiles/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
 
