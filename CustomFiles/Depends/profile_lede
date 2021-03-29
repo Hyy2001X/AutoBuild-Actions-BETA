@@ -29,6 +29,7 @@ esac
 }
 
 Target=$([ -f /etc/openwrt_info ] && cat /etc/openwrt_info | awk 'NR==3')
+Version=$([ -f /etc/openwrt_info ] && cat /etc/openwrt_info | awk 'NR==1')
 [ -z "${Target}" ] && Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
 IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
 CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
@@ -37,7 +38,8 @@ Srartup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 
 Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 
 echo -e "\n\n           设备名称:		${Target}"
-echo -e "           IP 地址: 		${IP_Address}"
+echo "           固件版本:		${Version}"
+echo "           IP 地址: 		${IP_Address}"
 echo "           运行时间: 		${Srartup}"
 echo "           CoreMark 得分: 	${CoreMark}"
 echo -e "           可用空间:		${Overlay_Available}\n"

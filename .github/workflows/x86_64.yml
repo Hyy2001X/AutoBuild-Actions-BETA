@@ -25,7 +25,8 @@ on:
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
-  CONFIG_FILE: Configs/x86_64.config
+  REPO_BRANCH: master
+  CONFIG_FILE: x86_64
   DIY_SCRIPT: Scripts/AutoBuild_DiyScript.sh
   FUNCTION_SCRIPT: Scripts/AutoBuild_Function.sh
   UPLOAD_RELEASE: true
@@ -46,7 +47,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        echo "Deleting files, please wait ..."
+        echo "Deleting useless files, please wait ..."
         docker rmi `docker images -q`
         sudo rm -rf \
           /usr/share/dotnet \
@@ -74,32 +75,29 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
         echo "Compile_Date=$(date +%Y%m%d)" > $GITHUB_WORKSPACE/Openwrt.info
         echo "Display_Date=$(date +'%Y/%m/%d')" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "## $(date +"%Y%m%d")-x86_64" > update_log.txt
+        echo "## $(date +"%Y%m%d")-$CONFIG_FILE" > update_log.txt
+        echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
-    - name: Clone Openwrt source code
+    - name: Clone source code
       run: |
-        git clone -b master $REPO_URL openwrt
+        git clone -b $REPO_BRANCH $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-    - name: Run Diy-Part1 Scripts
-      run: |
-        chmod +x $DIY_SCRIPT
-        cd openwrt
-        source $GITHUB_WORKSPACE/$DIY_SCRIPT
-        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part1
-
-    - name: Update & Install Feeds
+    - name: Update & Install all feeds
       run: |
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
-    - name: Run Diy-Part2 Scripts
+    - name: Run [Firmware-Diy] Scripts
       run: |
-        [ -f $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_SCRIPT
+        chmod +x $FUNCTION_SCRIPT
+        [ -f Configs/$CONFIG_FILE ] && mv Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
         source $GITHUB_WORKSPACE/$DIY_SCRIPT
-        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part2
+        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Firmware-Diy_Base
+        Firmware-Diy
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -111,6 +109,8 @@ jobs:
     - name: Download Packages
       run: |
         cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
         make defconfig
         make download -j$(nproc) V=s
         find dl -size -1024c -exec rm -f {} \;
@@ -120,28 +120,27 @@ jobs:
         cd openwrt
         make -j$(nproc) || make -j1 V=s
 
-    - name: Run Diy-Part3 Scripts
+    - name: Process the AutoBuild Firmware
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/$DIY_SCRIPT
-        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Diy-Part3
-        echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && PS_Firmware
 
-    - name: Upload Firmware to Artifacts
+    - name: Upload AutoBuild Firmware to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       with:
         name: OpenWrt_Firmware_${{ env.Artifacts_DATE }}
         path: openwrt/bin/Firmware
         
-    - name: Upload Firmware directory to Artifacts
+    - name: Upload bin directory to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_DIR == 'true' && !cancelled()
       with:
         name: OpenWrt_bin_${{ env.Artifacts_DATE }}
         path: openwrt/bin
 
-    - name: Upload Firmware to Releases
+    - name: Upload AutoBuild Firmware to Release
       uses: softprops/action-gh-release@v1
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       env:
@@ -151,7 +150,7 @@ jobs:
         body_path: update_log.txt
         files: openwrt/bin/Firmware/*
         
-    - name: Remove old Releases
+    - name: Remove old Release
       uses: dev-drprasad/delete-older-releases@v0.1.0
       if: env.REMOVE_OLD_RELEASE == 'true' && !cancelled()
       with:

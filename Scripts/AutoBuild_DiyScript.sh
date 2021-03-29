@@ -12,16 +12,8 @@ Diy_Core() {
 	INCLUDE_DRM_I915=true
 }
 
-Diy-Part1() {
-	Diy_Part1_Base
-
+Firmware-Diy() {
 	Update_Makefile exfat package/kernel/exfat
-}
-
-Diy-Part2() {
-	Diy_Part2_Base
-	ExtraPackages svn other/../../feeds/packages/admin netdata https://github.com/openwrt/packages/trunk/admin
-
 	Replace_File CustomFiles/uhttpd.po feeds/luci/applications/luci-app-uhttpd/po/zh-cn
 	Replace_File CustomFiles/webadmin.po package/lean/luci-app-webadmin/po/zh-cn
 	Replace_File CustomFiles/mwan3.config package/feeds/packages/mwan3/files/etc/config mwan3
@@ -36,8 +28,4 @@ Diy-Part2() {
 		Replace_File CustomFiles/system_common package/base-files/files/etc/config system
 	;;
 	esac
-}
-
-Diy-Part3() {
-	Diy_Part3_Base
 }
