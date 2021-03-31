@@ -31,6 +31,10 @@
 
 3. 编辑`.github/workflows/*.yml`文件,修改`第 29 行 CONFIG_FILE:`为你上传的 '.config' 名称
 
+   **定时编译** 先删除`第 20-21 行 #`注释,然后按需修改 cron 参数,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
+   
+   **一键编译** 删除`第 23-24 行 #`注释,单击右上角 **Star** 即可一键编译
+   
 4. 按照需求编辑`Scripts/AutoBuild_DiyScript.sh`文件的 **Firmware-Diy() 函数**
 
    **Diy_Core() 函数中的名词解释:**
@@ -55,7 +59,6 @@
    [替换 /Customize 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
    
 ```
-5. **开始编译**: 点击右上方 ***Star***即可启动编译,最好同步我的最新改动以获得更多特性
 
 ## 使用一键更新固件脚本:
 
