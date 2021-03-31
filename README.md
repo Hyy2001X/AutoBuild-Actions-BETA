@@ -7,9 +7,9 @@
 
 ## Github Actions 部署指南(STEP 1):
 
-1. 首先需要获取 **Github Token**: [点击这里](https://github.com/settings/tokens/new) 进入获取页面,
+1. 首先需要获取 **Github Token**: [点击这里](https://github.com/settings/tokens/new) 获取,
 
-   `Note`项填写你中意的名称,`Select scopes`不懂就**全部打勾**,操作完成后点击下方`Generate token`
+   `Note`项填写一个名称,`Select scopes`不理解就**全部打勾**,操作完成后点击下方`Generate token`
 
 2. 复制页面中生成的 **Token**,并保存到本地
 
@@ -29,30 +29,30 @@
 
 2. 把本地的 '.config' 文件重命名并上传到`/Configs`或者直接修改原有文件
 
-3. 编辑`.github/workflows/*.yml`文件,修改`第 27 行`为你上传的 '.config' 文件名称
+3. 编辑`.github/workflows/*.yml`文件,修改`第 29 行 CONFIG_FILE:`为你上传的 '.config' 名称
 
-4. 按照你的需求编辑`Scripts/AutoBuild_DiyScript.sh`文件(可以跳过此步骤)
+4. 按照需求编辑`Scripts/AutoBuild_DiyScript.sh`文件的 **Firmware-Diy() 函数**
 
    **Diy_Core() 函数中的名词解释:**
 ```
    Author 作者名称,这个名称将在 OpenWrt 首页显示
-   
+
    Default_Device 路由器的完整名称,例如 [d-team_newifi-d2、phicomm_k2p],用于无法从 .config 正常获取设备时备用
-   
+
    INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
-   
+
    INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
+
+   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅 lede 和部分核显可用)
 
 ```
    **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
    [使用 git clone 拉取文件]  ExtraPackages git 存放位置 软件包名 仓库地址 分支
-    
+
    [使用 svn checkout 拉取文件]  ExtraPackages svn 存放位置 软件包名 仓库地址/trunk/目录
-   
+
    [替换 /Customize 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
-   
-   [新建文件夹] Mkdir 文件夹名称
    
 ```
 5. **开始编译**: 点击右上方 ***Star***即可启动编译,最好同步我的最新改动以获得更多特性
