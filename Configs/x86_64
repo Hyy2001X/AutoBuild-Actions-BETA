@@ -60,6 +60,7 @@ CONFIG_PACKAGE_luci-app-mwan3=y
 CONFIG_PACKAGE_luci-app-netdata=y
 CONFIG_PACKAGE_luci-app-nfs=y
 CONFIG_PACKAGE_luci-app-onliner=y
+CONFIG_PACKAGE_luci-app-openvpn=y
 # CONFIG_PACKAGE_luci-app-rclone is not set
 # CONFIG_PACKAGE_luci-app-rclone_INCLUDE_fuse-utils is not set
 # CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-ng is not set
@@ -70,19 +71,16 @@ CONFIG_PACKAGE_luci-app-smartdns=y
 CONFIG_PACKAGE_luci-app-samba=y
 CONFIG_PACKAGE_luci-app-socat=y
 CONFIG_SOCAT_SSL=y
-# CONFIG_PACKAGE_luci-app-softethervpn is not set
 CONFIG_PACKAGE_luci-app-sqm=y
 CONFIG_PACKAGE_luci-app-shutdown=y
 CONFIG_PACKAGE_luci-app-passwall=y
 CONFIG_PACKAGE_luci-app-ssr-plus=y
 CONFIG_PACKAGE_luci-app-syncdial=y
-# CONFIG_PACKAGE_luci-app-transmission is not set
 CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_luci-app-uhttpd=y
 CONFIG_PACKAGE_luci-app-usb-printer=y
 # CONFIG_PACKAGE_luci-app-uugamebooster is not set
 # CONFIG_PACKAGE_luci-app-v2ray-server is not set
-# CONFIG_PACKAGE_luci-app-verysync is not set
 # CONFIG_PACKAGE_luci-app-xlnetacc is not set
 CONFIG_PACKAGE_luci-app-wireguard=y
 CONFIG_PACKAGE_luci-app-wrtbwmon=y
