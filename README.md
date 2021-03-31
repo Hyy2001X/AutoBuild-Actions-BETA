@@ -3,7 +3,7 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Forks&logo=github)
 
-测试通过的设备: `d-team_newifi-d2`、`phicomm_k2p`、`x86_64(img、img.gz)`、以及使用 bin 格式固件的设备
+测试通过的设备: `d-team_newifi-d2`、`x86_64(仅支持 img、img.gz 格式)`、以及使用 bin 格式固件的设备
 
 ## Github Actions 部署指南(STEP 1):
 
@@ -13,7 +13,7 @@
 
 2. 复制页面中生成的 **Token**,并保存到本地
 
-   **一定要保存到本地,Github 为了安全起见, Token 值只会显示一次!**
+   **一定要保存到本地,Token 值只会显示一次!**
 
 3. ***Fork*** 我的`AutoBuild-Actions`仓库,然后进入你的`AutoBuild-Actions`仓库进行之后的设置
 
@@ -21,7 +21,7 @@
 
    其中`Name`项填写`RELEASE_TOKEN`,然后将你的 **Token** 粘贴到`Value`项,完成后点击`Add secert`
 
-   **注意: Github Actions 部署只需操作一次!**
+   **Github Actions 部署只需操作一次**
 
 ## 客制化固件(STEP 2):
 
@@ -33,31 +33,29 @@
 
    **定时编译** 先删除`第 20-21 行 #`注释,然后按需修改 cron 参数,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
    
-   **一键编译** 删除`第 23-24 行 #`注释,单击右上角 **Star** 即可一键编译
+   **一键编译** 先删除`第 23-24 行 #`注释,单击右上角 **Star** 重新点亮 **Star** 即可一键编译
    
 4. 按照需求编辑`Scripts/AutoBuild_DiyScript.sh`文件的 **Firmware-Diy() 函数**
 
-   **Diy_Core() 函数中的名词解释:**
+   **Diy_Core() 函数中的赋值解释:**
 ```
    Author 作者名称,这个名称将在 OpenWrt 首页显示
 
-   Default_Device 路由器的完整名称,例如 [d-team_newifi-d2、phicomm_k2p],用于无法从 .config 正常获取设备时备用
+   Default_Device 可选,设备的官方完整名称,例如 [d-team_newifi-d2]
 
    INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
 
    INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
 
-   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅 lede 和部分核显可用)
-
+   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅 lede 源码以及部分核显可用)
 ```
-   **AutoBuild 特有指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
+   **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
    [使用 git clone 拉取文件]  ExtraPackages git 存放位置 软件包名 仓库地址 分支
 
    [使用 svn checkout 拉取文件]  ExtraPackages svn 存放位置 软件包名 仓库地址/trunk/目录
 
-   [替换 /Customize 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
-   
+   [替换 /CustomFiles 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
 ```
 
 ## 使用一键更新固件脚本:
@@ -68,9 +66,7 @@
 
    检查并更新固件(不保留配置): `bash /bin/AutoUpdate.sh -n`
    
-   列出部分系统参数(用于反馈问题): `bash /bin/AutoUpdate.sh -l`
-   
-   切换检查更新/固件下载通道: `bash /bin/AutoUpdate.sh -c [地址]`
+   更多使用方法: `bash /bin/AutoUpdate.sh -help`
    
    **注意: 一键更新固件需要在 Diy-Core() 函数中启用`INCLUDE_AutoUpdate`**
    
