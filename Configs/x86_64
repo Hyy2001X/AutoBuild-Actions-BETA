@@ -8,20 +8,9 @@ CONFIG_TARGET_ROOTFS_PARTSIZE=384
 # CONFIG_GRUB_CONSOLE is not set
 CONFIG_TARGET_IMAGES_GZIP=y
 
-# CONFIG_PACKAGE_kmod-8139cp is not set
-# CONFIG_PACKAGE_kmod-8139too is not set
-# CONFIG_PACKAGE_kmod-bnx2 is not set
-# CONFIG_PACKAGE_kmod-mlx4-core is not set
-# CONFIG_PACKAGE_kmod-mlx5-core is not set
-# CONFIG_PACKAGE_kmod-ath10k is not set
-# CONFIG_PACKAGE_kmod-ath5k is not set
-# CONFIG_PACKAGE_kmod-ath9k is not set
-# CONFIG_PACKAGE_kmod-ath9k-htc is not set
-# CONFIG_PACKAGE_kmod-rt2800-usb is not set
-# CONFIG_PACKAGE_ath10k-firmware-qca9888 is not set
-# CONFIG_PACKAGE_ath10k-firmware-qca988x is not set
-# CONFIG_PACKAGE_ath10k-firmware-qca9984 is not set
-# CONFIG_PACKAGE_brcmfmac-firmware-43602a1-pcie is not set
+CONFIG_PACKAGE_kmod-rtl8812au-ct=y
+CONFIG_PACKAGE_kmod-rtl8821ae=y
+CONFIG_PACKAGE_kmod-mt76x2u=y
 
 CONFIG_PACKAGE_kmod-fs-nfs-v3=y
 CONFIG_PACKAGE_kmod-fs-nfs-v4=y
@@ -111,6 +100,7 @@ CONFIG_PACKAGE_git=y
 CONFIG_PACKAGE_git-http=y
 CONFIG_PACKAGE_gzip=y
 CONFIG_PACKAGE_httping=y
+CONFIG_PACKAGE_hd-parm=y
 CONFIG_PACKAGE_iperf3=y
 CONFIG_PACKAGE_ipv6helper=y
 CONFIG_PACKAGE_libudev-fbsd=y
@@ -124,6 +114,4 @@ CONFIG_PACKAGE_usbutils=y
 CONFIG_PACKAGE_wget=y
 CONFIG_PACKAGE_xz=y
 CONFIG_PACKAGE_xz-utils=y
-# CONFIG_PACKAGE_hostapd is not set
-# CONFIG_PACKAGE_wpad is not set
 # CONFIG_UnblockNeteaseMusic_NodeJS is not set
