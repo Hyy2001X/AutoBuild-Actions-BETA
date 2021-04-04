@@ -6,3 +6,6 @@ svn other luci-app-smartdns https://github.com/immortalwrt/luci/trunk/applicatio
 git other luci-app-serverchan https://github.com/tty228
 svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 git other luci-app-onliner https://github.com/rufengsuixing
+git other netspeedtest https://github.com/sirpdboy
+git lean luci-app-netdata https://github.com/sirpdboy
+svn other luci-app-rebootschedule https://github.com/zxlhhyccc/bf-package-master/trunk/zxlhhyccc
