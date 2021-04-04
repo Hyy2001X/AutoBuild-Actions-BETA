@@ -19,7 +19,7 @@
 
 4. 点击上方菜单中的`Settings`,依次点击`Secrets`-`New repository secret`
 
-   其中`Name`项填写`RELEASE_TOKEN`,然后将你的 **Token** 粘贴到`Value`项,完成后点击`Add secert`
+   其中`Name`项填写`GITHUB_TOKEN`,然后将你的 **Token** 粘贴到`Value`项,完成后点击`Add secert`
 
    **Github Actions 部署只需操作一次**
 
@@ -31,10 +31,10 @@
 
 3. 编辑`.github/workflows/*.yml`文件,修改`第 29 行 CONFIG_FILE:`为你上传的 '.config' 名称
 
-   **定时编译** 先删除`第 20-21 行 #`注释,然后按需修改 cron 参数,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
-   
-   **一键编译** 先删除`第 23-24 行 #`注释,单击右上角 **Star** 重新点亮 **Star** 即可一键编译
-   
+   **定时编译** 先删除`第 20-21 行 #`注释,然后按需修改相关参数,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
+
+   **一键编译** 先删除`第 23-24 行 #`注释,单(双)击右上角 **Star** 重新点亮 **Star** 即可一键编译
+
 4. 按照需求编辑`Scripts/AutoBuild_DiyScript.sh`文件的 **Firmware-Diy() 函数**
 
    **Diy_Core() 函数中的赋值解释:**
@@ -48,6 +48,8 @@
    INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
 
    INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅 lede 源码以及部分核显可用)
+
+   INCLUDE_Translation_Converter 添加 [zh-cn to zh_Hans] 转换脚本并执行
 ```
    **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
@@ -69,7 +71,7 @@
    更多使用方法: `bash /bin/AutoUpdate.sh -help`
    
    **注意: 一键更新固件需要在 Diy-Core() 函数中启用`INCLUDE_AutoUpdate`**
-   
+
 ## 使用一键扩展内部空间\挂载 Samba 共享脚本:
 
    同上方操作,打开`TTYD 终端`,输入`bash /bin/AutoBuild_Tools.sh`
@@ -78,12 +80,14 @@
    
 ## 鸣谢
 
-   - [Lean's Openwrt](https://github.com/coolsnowwolf/lede)
+   - [Lean's Openwrt Source code](https://github.com/coolsnowwolf/lede)
 
-   - [P3TERX's Project](https://github.com/P3TERX/Actions-OpenWrt)
-   
+   - [P3TERX's Actions-OpenWrt Project](https://github.com/P3TERX/Actions-OpenWrt)
+
    - [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
 
+   - [ImmortalWrt](https://github.com/immortalwrt)
+
    - [eSir's workflow](https://github.com/esirplayground/AutoBuild-OpenWrt/blob/master/.github/workflows/Build_OP_x86_64.yml)
-   
-   - 测试/建议: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber) [sirliu](https://github.com/sirliu?tab=repositories)
+
+   - 测试/建议: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber) [sirliu](https://github.com/sirliu) [teasiu](https://github.com/teasiu)

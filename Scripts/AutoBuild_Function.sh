@@ -107,6 +107,14 @@ Firmware-Diy_Base() {
 	;;
 	esac
 
+	if [[ "${INCLUDE_Translation_Converter}" == "true" ]];then
+		echo "Start to convert zh-cn translation files to zh_Hans ..."
+		Replace_File Scripts/Convert_Translation.sh package
+		cd ./package
+		bash ./Convert_Translation.sh
+		cd ..
+	fi
+
 	echo "${Openwrt_Version}" > ${AB_Firmware_Info}
 	echo "${Owner_Repo}" >> ${AB_Firmware_Info}
 	echo "${TARGET_PROFILE}" >> ${AB_Firmware_Info}
