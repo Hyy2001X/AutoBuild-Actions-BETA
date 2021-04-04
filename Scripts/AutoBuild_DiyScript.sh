@@ -10,7 +10,7 @@ Diy_Core() {
 	INCLUDE_AutoUpdate=true
 	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_DRM_I915=true
-	INCLUDE_Translation_Converter=true
+	INCLUDE_Translation_Converter=
 }
 
 Firmware-Diy() {
