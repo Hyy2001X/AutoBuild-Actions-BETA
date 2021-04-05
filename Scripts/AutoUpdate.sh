@@ -76,6 +76,9 @@ Input_Option="$1"
 Input_Other="$2"
 CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
 Github="$(awk 'NR==2' /etc/openwrt_info)"
+Github_Download="${Github}/releases/download/AutoUpdate"
+Author="${Github##*com/}"
+Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
 DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
 Firmware_Type="$(awk 'NR==4' /etc/openwrt_info)"
 TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
@@ -117,9 +120,6 @@ x86_64)
 	Detail_SFX=".detail"
 	Space_Req=0
 esac
-Github_Download="${Github}/releases/download/AutoUpdate"
-Author="${Github##*com/}"
-Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
 cd /etc
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
 if [[ -z "${Input_Option}" ]];then
@@ -186,11 +186,14 @@ else
 	;;
 	esac
 fi
-if [[ ! "${Force_Update}" == "1" ]] && [[ ! "${AutoUpdate_Mode}" == "1" ]];then
+if [[ ! "${Force_Update}" == "1" ]];then
 	grep "curl" /tmp/Package_list > /dev/null 2>&1
 	if [[ ! $? -ne 0 ]];then
-		Google_Check=$(curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1)
-		[ ! "$Google_Check" == 200 ] && TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
+		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
+		if [ ! "$Google_Check" == 301 ];then
+			TIME && echo "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
+			PROXY_URL="https://download.fastgit.org"
+		fi
 	fi
 	if [[ "${TMP_Available}" -lt "${Space_Req}" ]];then
 		TIME && echo "/tmp 空间不足: [${Space_Req}M],无法执行更新!"
@@ -249,11 +252,14 @@ if [[ ! ${Force_Update} == 1 ]];then
 		fi
 	fi
 fi
+if [ ! -z "${PROXY_URL}" ];then
+	Github_Download=${PROXY_URL}/${Author}/releases/download/AutoUpdate
+fi
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Download}"
 echo "固件保存位置: /tmp/Downloads"
 [ ! -d "/tmp/Downloads" ] && mkdir -p /tmp/Downloads
-TIME && echo "正在删除旧版本固件..." && rm -f /tmp/Downloads/*
+rm -f /tmp/Downloads/*
 TIME && echo "正在下载固件,请耐心等待..."
 cd /tmp/Downloads
 wget -q "${Github_Download}/${Firmware}" -O ${Firmware}
