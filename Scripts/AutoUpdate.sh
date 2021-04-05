@@ -3,10 +3,41 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.4
+Version=V5.5
 
-TIME() {
-	echo -ne "\n[$(date "+%H:%M:%S")] "
+Shell_Helper() {
+	echo -e "\n使用方法: bash /bin/AutoUpdate.sh [参数1] [参数2]"
+	echo -e "\n支持下列参数:\n"
+	echo "	-q	更新固件,不打印备份信息日志 [保留配置]"
+	echo "	-n	更新固件 [不保留配置]"
+	echo "	-f	强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]"
+	echo "	-u	适用于定时更新 LUCI 的参数 [保留配置]"
+	echo "	-c	[参数2:<Github 地址>] 更换 Github 检查更新以及固件下载地址"
+	echo "	-b	[参数2:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]"
+	echo "	-l	列出所有信息"
+	echo "	-d	清除固件下载缓存"
+	echo -e "	-h	打印帮助信息\n"
+	exit
+}
+
+List_Info() {
+	echo -e "\n/overlay 可用:	${Overlay_Available}"
+	echo "/tmp 可用:	${TMP_Available}M"
+	echo "固件下载位置:	/tmp/Downloads"
+	echo "当前设备:	${CURRENT_Device}"
+	echo "默认设备:	${DEFAULT_Device}"
+	echo "当前固件版本:	${CURRENT_Version}"
+	echo "固件名称:	AutoBuild-${CURRENT_Device}-${CURRENT_Version}${Firmware_SFX}"
+	echo "Github 地址:	${Github}"
+	echo "解析 API 地址:	${Github_Tags}"
+	echo "固件下载地址:	${Github_Download}"
+	echo "作者/仓库:	${Author}"
+	if [[ ${DEFAULT_Device} == "x86_64" ]];then
+		echo "EFI 引导: 	${EFI_Boot}"
+		echo "固件压缩:	${Compressed_x86}"
+	fi
+	echo "固件格式:	${Firmware_SFX}"
+	exit
 }
 
 Install_Pkg() {
@@ -36,39 +67,8 @@ Install_Pkg() {
 	fi
 }
 
-List_Info() {
-	echo -e "\n/overlay 可用:	${Overlay_Available}"
-	echo "/tmp 可用:	${TMP_Available}M"
-	echo "固件下载位置:	/tmp/Downloads"
-	echo "当前设备:	${CURRENT_Device}"
-	echo "默认设备:	${DEFAULT_Device}"
-	echo "当前固件版本:	${CURRENT_Version}"
-	echo "固件名称:	AutoBuild-${CURRENT_Device}-${CURRENT_Version}${Firmware_SFX}"
-	echo "Github 地址:	${Github}"
-	echo "解析 API 地址:	${Github_Tags}"
-	echo "固件下载地址:	${Github_Download}"
-	echo "作者/仓库:	${Author}"
-	if [[ ${DEFAULT_Device} == "x86_64" ]];then
-		echo "EFI 引导: 	${EFI_Boot}"
-		echo "固件压缩:	${Compressed_x86}"
-	fi
-	echo "固件格式:	${Firmware_SFX}"
-	exit
-}
-
-Shell_Helper() {
-	echo -e "\n使用方法: bash /bin/AutoUpdate.sh [参数1] [参数2]"
-	echo -e "\n支持下列参数:\n"
-	echo "	-q	更新固件,不打印备份信息日志 [保留配置]"
-	echo "	-n	更新固件 [不保留配置]"
-	echo "	-f	强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]"
-	echo "	-u	适用于定时更新 LUCI 的参数 [保留配置]"
-	echo "	-c	[参数2:<Github 地址>] 更换 Github 检查更新以及固件下载地址"
-	echo "	-b	[参数2:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]"
-	echo "	-l	列出所有信息"
-	echo "	-d	清除固件下载缓存"
-	echo -e "	-h	打印帮助信息\n"
-	exit
+TIME() {
+	echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
 opkg list | awk '{print $1}' > /tmp/Package_list
@@ -78,7 +78,7 @@ CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
 Github="$(awk 'NR==2' /etc/openwrt_info)"
 DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
 Firmware_Type="$(awk 'NR==4' /etc/openwrt_info)"
-TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1')"
+TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 case ${DEFAULT_Device} in
 x86_64)
@@ -108,14 +108,14 @@ x86_64)
 	Firmware_SFX="${BOOT_Type}.${Firmware_Type}"
 	Detail_SFX="${BOOT_Type}.detail"
 	CURRENT_Device="x86_64"
-	Space_RQM=480
+	Space_Req=480
 ;;
 *)
 	CURRENT_Device="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
 	Firmware_SFX=".${Firmware_Type}"
 	[[ -z ${Firmware_SFX} ]] && Firmware_SFX=".bin"
 	Detail_SFX=".detail"
-	Space_RQM=30
+	Space_Req=0
 esac
 Github_Download="${Github}/releases/download/AutoUpdate"
 Author="${Github##*com/}"
@@ -126,20 +126,22 @@ if [[ -z "${Input_Option}" ]];then
 	Upgrade_Options="-q" && TIME && echo "执行: 保留配置更新固件[静默模式]"
 else
 	case ${Input_Option} in
-	-n)
-		TIME && echo "执行: 更新固件(不保留配置)"
-	;;
-	-q)
-		TIME && echo "执行: 更新固件(保留配置)"
-	;;
-	-f)
-		Force_Update=1
-		Upgrade_Options="-q"
-		TIME && echo "执行: 强制更新固件(保留配置)"
-	;;
-	-u)
-		AutoUpdate_Mode=1
-		Upgrade_Options="-q"
+	-n | -f | -u)
+		case ${Input_Option} in
+		-n)
+			TIME && echo "执行: 更新固件(不保留配置)"
+			Upgrade_Options="-n"
+		;;
+		-f)
+			Force_Update=1
+			Upgrade_Options="-q"
+			TIME && echo "执行: 强制更新固件(保留配置)"
+		;;
+		-u)
+			AutoUpdate_Mode=1
+			Upgrade_Options="-q"
+		;;
+		esac
 	;;
 	-c)
 		if [[ ! -z "${Input_Other}" ]];then
@@ -151,7 +153,7 @@ else
 		fi
 		exit
 	;;
-	-l)
+	-l | -L)
 		List_Info
 	;;
 	-d)
@@ -160,7 +162,7 @@ else
 		sleep 1
 		exit
 	;;
-	-h | --help)
+	-h | -H | --help)
 		Shell_Helper
 	;;
 	-b)
@@ -173,7 +175,7 @@ else
 			TIME && echo "固件引导方式已指定为: ${Input_Other}!"
 		;;
 		*)
-			echo -e "\n当前仅支持的选项: [UEFI/Legacy] !"
+			echo -e "\n错误的参数: [${Input_Other}],当前支持的选项: [UEFI/Legacy] !"
 		;;
 		esac
 		exit
@@ -183,19 +185,16 @@ else
 		Shell_Helper
 	;;
 	esac
-	if [[ ! "${Force_Update}" == "1" ]] && [[ ! "${AutoUpdate_Mode}" == "1" ]];then
-		Upgrade_Options="${Input_Option}"
-	fi
-fi
-if [[ "${TMP_Available}" -lt "${Space_RQM}" ]];then
-	TIME && echo "/tmp 空间不足: [${Space_RQM}M],无法执行更新!"
-	exit
 fi
 if [[ ! "${Force_Update}" == "1" ]] && [[ ! "${AutoUpdate_Mode}" == "1" ]];then
 	grep "curl" /tmp/Package_list > /dev/null 2>&1
 	if [[ ! $? -ne 0 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 5 www.google.com -w %{http_code} | tail -n1)
 		[ ! "$Google_Check" == 200 ] && TIME && echo "Google 连接失败,可能导致固件下载速度缓慢!"
+	fi
+	if [[ "${TMP_Available}" -lt "${Space_Req}" ]];then
+		TIME && echo "/tmp 空间不足: [${Space_Req}M],无法执行更新!"
+		exit
 	fi
 fi
 Install_Pkg wget
@@ -224,12 +223,20 @@ fi
 Firmware_Info="$(echo ${GET_Firmware} | egrep -o "AutoBuild-${CURRENT_Device}-R[0-9].+-[0-9]+")"
 Firmware="${GET_Firmware}"
 Firmware_Detail="${Firmware_Info}${Detail_SFX}"
+let X=$(grep -n "${Firmware}" /tmp/Github_Tags | tail -1 | cut -d : -f 1)-4
+let Cloud_Firmware_Size=$(sed -n "${X}p" /tmp/Github_Tags | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1
 echo -e "\n固件作者: ${Author%/*}"
 echo "设备名称: ${CURRENT_Device}"
 echo "固件格式: ${Firmware_SFX}"
 echo -e "\n当前固件版本: ${CURRENT_Version}"
 echo "云端固件版本: ${GET_Version}"
+echo "当前可用空间: ${TMP_Available}M"
+echo "云端固件大小: ${Cloud_Firmware_Size}M"
 if [[ ! ${Force_Update} == 1 ]];then
+	if [[ "${TMP_Available}" -lt "${Cloud_Firmware_Size}" ]];then
+		TIME && echo "/tmp 空间不足: [${Cloud_Firmware_Size}M],无法执行更新!"
+		exit
+	fi
 	if [[ ${CURRENT_Version} == ${GET_Version} ]];then
 		[[ "${AutoUpdate_Mode}" == "1" ]] && exit
 		TIME && read -p "已是最新版本,是否强制更新固件?[Y/n]:" Choose
@@ -287,11 +294,11 @@ if [[ ${Compressed_x86} == 1 ]];then
 		exit
 	fi
 fi
-TIME && echo -e "一切准备就绪,5s 后开始更新固件..."
-sleep 5
+TIME && echo -e "一切准备就绪,3s 后开始更新固件..."
+sleep 3
 TIME && echo "正在更新固件,期间请耐心等待..."
 sysupgrade ${Upgrade_Options} ${Firmware}
 if [[ $? -ne 0 ]];then
-	TIME && echo "固件刷写失败,请尝试不保留配置[-n]或手动下载固件!"
+	TIME && echo "固件刷写失败,请尝试手动下载更新固件!"
 	exit
 fi
