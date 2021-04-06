@@ -49,7 +49,7 @@
 
    INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅 lede 源码以及部分核显可用)
 
-   INCLUDE_Translation_Converter 添加 [zh-cn to zh_Hans] 转换脚本并执行
+   INCLUDE_Obsolete_PKG_Compatible 优化 原生 OpenWrt-19.07、21.02 支持[测试特性]
 ```
    **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
