@@ -10,7 +10,7 @@ Diy_Core() {
 	INCLUDE_AutoUpdate=true
 	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_DRM_I915=true
-	INCLUDE_Obsolete_PKG_Compatible=true
+	INCLUDE_Obsolete_PKG_Compatible=
 }
 
 Firmware-Diy() {
