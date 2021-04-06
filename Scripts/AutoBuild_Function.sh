@@ -16,14 +16,13 @@ GET_TARGET_INFO() {
 		Version_File="package/lean/default-settings/files/zzz-default-settings"
 		Old_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
 		Openwrt_Version="${Old_Version}-${Compile_Date}"
-		
 	;;
 	immortalwrt)
 		Version_File="package/base-files/files/etc/openwrt_release"
 		Openwrt_Version="${Compile_Date}"
 	;;
 	*)
-		Openwrt_Version=Unknown
+		Openwrt_Version="${Compile_Date}"
 	;;
 	esac
 	x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
@@ -107,12 +106,25 @@ Firmware-Diy_Base() {
 	;;
 	esac
 
-	if [[ "${INCLUDE_Translation_Converter}" == "true" ]];then
-		echo "Start to convert zh-cn translation files to zh_Hans ..."
-		Replace_File Scripts/Convert_Translation.sh package
-		cd ./package
-		bash ./Convert_Translation.sh
-		cd ..
+	if [[ "${INCLUDE_Obsolete_PKG_Compatible}" == "true" ]];then
+		echo "[$(date "+%H:%M:%S")] Start to run Obsolete_Package_Compatible Scripts ..."
+		Current_Branch="$(git branch | sed 's/* //g')"
+		case ${Current_Branch} in
+		openwrt-19.07 | openwrt-21.02)
+			Replace_File CustomFiles/Patches/0003-upx-ucl-${Current_Branch}.patch ./
+			cat 0003-upx-ucl-${Current_Branch}.patch | patch -p1 > /dev/null 2>&1
+			ExtraPackages svn ../feeds/packages/lang golang https://github.com/coolsnowwolf/packages/trunk/lang
+		
+			echo "[$(date "+%H:%M:%S")] Start to convert zh-cn translation files to zh_Hans ..."
+			Replace_File Scripts/Convert_Translation.sh package
+			cd ./package
+			bash ./Convert_Translation.sh
+			cd ..
+		;;
+		*)
+			echo "[ERROR] Current branch: [${Current_Branch}] is not supported !"
+		;;
+		esac
 	fi
 
 	echo "${Openwrt_Version}" > ${AB_Firmware_Info}
@@ -156,7 +168,7 @@ PS_Firmware() {
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
 			mv -f ${Legacy_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.${Firmware_Type}
-			echo "Legacy Firmware is detected !"
+			echo "[$(date "+%H:%M:%S")] Legacy Firmware is detected !"
 		fi
 		if [ -f "${EFI_Firmware}" ];then
 			_MD5=$(md5sum ${EFI_Firmware} | cut -d ' ' -f1)
@@ -164,7 +176,7 @@ PS_Firmware() {
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			cp ${EFI_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.${Firmware_Type}
-			echo "UEFI Firmware is detected !"
+			echo "[$(date "+%H:%M:%S")] UEFI Firmware is detected !"
 		fi
 	;;
 	*)
@@ -180,7 +192,7 @@ PS_Firmware() {
 	;;
 	esac
 	cd ${Home}
-	echo "Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
+	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 }
 
 Mkdir() {
@@ -206,12 +218,13 @@ PKG_Finder() {
 
 Auto_ExtraPackages() {
 	[[ ! -f "${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}" ]] && return
-	echo "CustomFile: ${TARGET_PROFILE} is detected !"
+	echo "[$(date "+%H:%M:%S")] Loading Custom Packages list: [${TARGET_PROFILE}] ..."
+	echo "" >> ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}
 	cat ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE} | while read X
 	do
 		ExtraPackages ${X}
 	done
-	echo "Done !"
+	echo "[$(date "+%H:%M:%S")] [CustomPackages] All done !"
 }
 
 ExtraPackages() {
@@ -280,29 +293,29 @@ Update_Makefile() {
 		PKG_DL_URL="${PKG_SOURCE_URL%\$(\PKG_VERSION*}"
 		Offical_Version="$(curl -s ${api_URL} 2>/dev/null | grep 'tag_name' | egrep -o '[0-9].+[0-9.]+' | awk 'NR==1')"
 		if [[ -z "${Offical_Version}" ]];then
-			echo "Failed to obtain the Offical version of [${PKG_NAME}],skip update ..."
+			echo "[ERROR] Failed to obtain the Offical version of [${PKG_NAME}],skip update ..."
 			return
 		fi
 		Source_Version="$(grep "PKG_VERSION:=" ${Makefile} | cut -c14-20)"
 		Source_HASH="$(grep "PKG_HASH:=" ${Makefile} | cut -c11-100)"
 		if [[ -z "${Source_Version}" ]] || [[ -z "${Source_HASH}" ]];then
-			echo "Failed to obtain the Source version or HASH,skip update ..."
+			echo "[ERROR] Failed to obtain the Source version or HASH,skip update ..."
 			return
 		fi
 		echo -e "Current ${PKG_NAME} version: ${Source_Version}\nOffical ${PKG_NAME} version: ${Offical_Version}"
 		if [[ ! "${Source_Version}" == "${Offical_Version}" ]];then
-			echo -e "Updating package ${PKG_NAME} [${Source_Version}] to [${Offical_Version}] ..."
+			echo -e "[$(date "+%H:%M:%S")] Updating package ${PKG_NAME} [${Source_Version}] to [${Offical_Version}] ..."
 			sed -i "s?PKG_VERSION:=${Source_Version}?PKG_VERSION:=${Offical_Version}?g" ${Makefile}
 			wget -q "${PKG_DL_URL}${Offical_Version}?" -O /tmp/tmp_file
 			if [[ "$?" -eq 0 ]];then
 				Offical_HASH="$(sha256sum /tmp/tmp_file | cut -d ' ' -f1)"
 				sed -i "s?PKG_HASH:=${Source_HASH}?PKG_HASH:=${Offical_HASH}?g" ${Makefile}
 			else
-				echo "Failed to update the package [${PKG_NAME}],skip update ..."
+				echo "[ERROR] Failed to update the package [${PKG_NAME}],skip update ..."
 			fi
 		fi
 	else
-		echo "Package ${PKG_NAME} is not detected,skip update ..."
+		echo "[$(date "+%H:%M:%S")] Package ${PKG_NAME} is not detected,skip update ..."
 	fi
 	unset _process1 _process2 Offical_Version Source_Version
 }
