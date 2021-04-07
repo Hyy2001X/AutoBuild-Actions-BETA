@@ -11,11 +11,9 @@ GET_TARGET_INFO() {
 	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
 	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"
 	Current_Branch="$(git branch | sed 's/* //g')"
-	if [[ ! ${Current_Branch} == master ]] || [[ ! ${Current_Branch} == main ]];then
+	if [[ ! ${Current_Branch} == master ]];then
 		Current_Branch="$(echo ${Current_Branch} | egrep -o "[0-9]+.[0-9]+")"
 		Openwrt_Version_="R${Current_Branch}-"
-	else
-		Openwrt_Version_=""
 	fi
 	AB_Firmware_Info=package/base-files/files/etc/openwrt_info
 	case ${Source_Owner} in
@@ -54,6 +52,7 @@ GET_TARGET_INFO() {
 	esac
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
+	echo "[Preload] All done !"
 }
 
 Firmware-Diy_Base() {
@@ -86,7 +85,7 @@ Firmware-Diy_Base() {
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" $Version_File
 
-		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86
+		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
 	;;
 	immortalwrt)
 		sed -i 's/143/143,8080/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
@@ -94,10 +93,10 @@ Firmware-Diy_Base() {
 		Replace_File CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" $Version_File
-		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86
+		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
 	;;
 	openwrt)
-		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.14 target/linux/x86
+		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.14 target/linux/x86 config-4.14
 	;;
 	esac
 	
