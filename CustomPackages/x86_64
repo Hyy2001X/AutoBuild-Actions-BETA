@@ -7,4 +7,3 @@ git other luci-app-serverchan https://github.com/tty228
 svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 git other luci-app-onliner https://github.com/rufengsuixing
 git lean luci-app-netdata https://github.com/sirpdboy
-svn kernel rtl8821cu https://github.com/immortalwrt/immortalwrt/trunk/package/kernel

@@ -11,7 +11,6 @@ CONFIG_TARGET_IMAGES_GZIP=y
 CONFIG_PACKAGE_kmod-rtl8812au-ct=y
 CONFIG_PACKAGE_kmod-rtl8821ae=y
 CONFIG_PACKAGE_kmod-mt76x2u=y
-CONFIG_PACKAGE_kmod-rtl8821cu=y
 
 CONFIG_PACKAGE_kmod-fs-nfs-v3=y
 CONFIG_PACKAGE_kmod-fs-nfs-v4=y
