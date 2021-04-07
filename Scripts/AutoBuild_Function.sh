@@ -10,6 +10,13 @@ GET_TARGET_INFO() {
 	Owner_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
 	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
 	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"
+	Current_Branch="$(git branch | sed 's/* //g')"
+	if [[ ! ${Current_Branch} == master ]] || [[ ! ${Current_Branch} == main ]];then
+		Current_Branch="$(echo ${Current_Branch} | egrep -o "[0-9]+.[0-9]+")"
+		Openwrt_Version_="R${Current_Branch}-"
+	else
+		Openwrt_Version_=""
+	fi
 	AB_Firmware_Info=package/base-files/files/etc/openwrt_info
 	case ${Source_Owner} in
 	coolsnowwolf)
@@ -19,10 +26,10 @@ GET_TARGET_INFO() {
 	;;
 	immortalwrt)
 		Version_File="package/base-files/files/etc/openwrt_release"
-		Openwrt_Version="${Compile_Date}"
+		Openwrt_Version="${Openwrt_Version_}${Compile_Date}"
 	;;
 	*)
-		Openwrt_Version="${Compile_Date}"
+		Openwrt_Version="${Openwrt_Version_}${Compile_Date}"
 	;;
 	esac
 	x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
@@ -66,11 +73,10 @@ Firmware-Diy_Base() {
 	else
 		AutoUpdate_Version=OFF
 	fi
-
+	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
 	case ${Source_Owner} in
 	coolsnowwolf)
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
-		Replace_File CustomFiles/Depends/profile_lede package/base-files/files/etc profile
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 
 		ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
@@ -80,16 +86,18 @@ Firmware-Diy_Base() {
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" $Version_File
 
-		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/config-5.4 target/linux/x86
+		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86
 	;;
 	immortalwrt)
 		sed -i 's/143/143,8080/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
 		Replace_File CustomFiles/Depends/coremark_ImmortalWrt.sh package/base-files/files/etc coremark.sh
 		Replace_File CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
+		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" $Version_File
+		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86
 	;;
 	openwrt)
-		ExtraPackages git other luci-theme-argon https://github.com/jerrykuku
+		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.14 target/linux/x86
 	;;
 	esac
 	
@@ -108,9 +116,8 @@ Firmware-Diy_Base() {
 
 	if [[ "${INCLUDE_Obsolete_PKG_Compatible}" == "true" ]];then
 		echo "[$(date "+%H:%M:%S")] Start to run Obsolete_Package_Compatible Scripts ..."
-		Current_Branch="$(git branch | sed 's/* //g')"
 		case ${Current_Branch} in
-		openwrt-19.07 | openwrt-21.02)
+		19.07 | 21.02)
 			Replace_File CustomFiles/Patches/0003-upx-ucl-${Current_Branch}.patch ./
 			cat 0003-upx-ucl-${Current_Branch}.patch | patch -p1 > /dev/null 2>&1
 			ExtraPackages svn ../feeds/packages/lang golang https://github.com/coolsnowwolf/packages/trunk/lang
@@ -134,10 +141,11 @@ Firmware-Diy_Base() {
 
 	echo "Author: ${Author}"
 	echo "Github: ${Owner_Repo}"
-	echo "Router: ${TARGET_PROFILE}"
+	echo "Device: ${TARGET_PROFILE}"
 	echo "Firmware Version: ${Openwrt_Version}"
 	echo "Firmware Type: ${Firmware_Type}"
-	echo "Source Github: ${Source_Repo}"
+	echo "Source: ${Source_Repo}"
+	echo "Branch: ${Current_Branch}"
 }
 
 PS_Firmware() {
@@ -222,6 +230,7 @@ Auto_ExtraPackages() {
 	echo "" >> ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}
 	cat ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE} | while read X
 	do
+		[[ -z "${X}" ]] && break
 		ExtraPackages ${X}
 	done
 	echo "[$(date "+%H:%M:%S")] [CustomPackages] All done !"
@@ -234,6 +243,10 @@ ExtraPackages() {
 	REPO_URL=${4}
 	REPO_BRANCH=${5}
 
+	if [[ $# -lt 4 ]];then
+		echo "[$(date "+%H:%M:%S")] [ERROR] Missing options,skip check out..."
+		return
+	fi
 	Mkdir package/${PKG_DIR}
 	if [ -d "package/${PKG_DIR}/${PKG_NAME}" ];then
 		echo "[$(date "+%H:%M:%S")] Removing old package [${PKG_NAME}] ..."
