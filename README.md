@@ -43,13 +43,13 @@
 
    Default_Device 可选,设备的官方完整名称,例如 [d-team_newifi-d2]
 
-   INCLUDE_AutoUpdate 启用后,将自动添加 AutoUpdate.sh 和 luci-app-autoupdate 到固件
+   INCLUDE_AutoUpdate 启用后,将自动添加 Scripts/AutoUpdate.sh 和 luci-app-autoupdate 到固件
 
-   INCLUDE_AutoBuild_Tools 添加 AutoBuild_Tools.sh 到固件
+   INCLUDE_AutoBuild_Tools 添加 Scripts/AutoBuild_Tools.sh 到固件
 
-   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅 lede 源码以及部分核显可用)
+   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅部分核显可用)
 
-   INCLUDE_Obsolete_PKG_Compatible 优化 原生 OpenWrt-19.07、21.02 支持[测试特性]
+   INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持(测试特性)
 ```
 
    **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
