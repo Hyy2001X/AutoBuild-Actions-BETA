@@ -75,25 +75,23 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
         echo "Compile_Date=$(date +%Y%m%d)" > $GITHUB_WORKSPACE/Openwrt.info
         echo "Display_Date=$(date +'%Y/%m/%d')" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "## $(date +"%Y%m%d")-$CONFIG_FILE" > update_log.txt
+        echo " " > update_log.txt
         echo "Artifacts_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Clone source code
       run: |
         git clone -b $REPO_BRANCH $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-
-    - name: Update & Install all feeds
-      run: |
+        [ -f Configs/$CONFIG_FILE ] && cp Configs/$CONFIG_FILE openwrt/.config || exit 1
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
+        make defconfig
 
-    - name: Run [Firmware-Diy] Scripts
+    - name: Run Custom Firmware-Diy Scripts
       run: |
         chmod +x $DIY_SCRIPT
         chmod +x $FUNCTION_SCRIPT
-        [ -f Configs/$CONFIG_FILE ] && mv Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
         source $GITHUB_WORKSPACE/$DIY_SCRIPT
         source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Firmware-Diy_Base
@@ -106,18 +104,14 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: Download Packages
+    - name: Preload and Compile the Openwrt
       run: |
+        cp Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
-        ./scripts/feeds update -a
         ./scripts/feeds install -a
         make defconfig
-        make download -j$(nproc) V=s
-        find dl -size -1024c -exec rm -f {} \;
-
-    - name: Compile the Openwrt
-      run: |
-        cd openwrt
+        make download -j$(nproc)
+        echo "Start to compile OpenWrt ..."
         make -j$(nproc) || make -j1 V=s
 
     - name: Process the AutoBuild Firmware
@@ -126,7 +120,7 @@ jobs:
         source $GITHUB_WORKSPACE/$DIY_SCRIPT
         source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && PS_Firmware
 
-    - name: Upload AutoBuild Firmware to Artifacts
+    - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       with:
@@ -140,7 +134,7 @@ jobs:
         name: OpenWrt_bin_${{ env.Artifacts_DATE }}
         path: openwrt/bin
 
-    - name: Upload AutoBuild Firmware to Release
+    - name: Upload Firmware to Release
       uses: softprops/action-gh-release@v1
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       env:
