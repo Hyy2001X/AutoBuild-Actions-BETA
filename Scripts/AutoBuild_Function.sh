@@ -212,7 +212,7 @@ PS_Firmware() {
 		AutoBuild_Detail="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.detail"
 		echo "[Preload Info] Default_Firmware: ${Default_Firmware}"
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
-		if [ -f ${Default_Firmware} ];then
+		if [ -f ${Firmware_Path}/${Default_Firmware} ];then
 			mv -f ${Firmware_Path}/${Default_Firmware} bin/Firmware/${AutoBuild_Firmware}
 			_MD5=$(md5sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
