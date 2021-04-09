@@ -5,12 +5,13 @@
 
 Diy_Core() {
 	Author=Hyy2001
-	Default_Device=
+	Default_Device=x86_64
 
 	INCLUDE_AutoUpdate=true
 	INCLUDE_AutoBuild_Tools=true
 	INCLUDE_DRM_I915=true
-	INCLUDE_Obsolete_PKG_Compatible=
+	INCLUDE_Theme_Argon=true
+	INCLUDE_Obsolete_PKG_Compatible=false
 }
 
 Firmware-Diy() {

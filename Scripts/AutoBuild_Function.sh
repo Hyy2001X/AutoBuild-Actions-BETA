@@ -101,6 +101,29 @@ Firmware-Diy_Base() {
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
 	fi
+	if [[ "${INCLUDE_Theme_Argon}" == "true" ]];then
+		case ${Source_Owner} in
+		coolsnowwolf)
+				ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
+		;;
+		*)
+			case ${Current_Branch} in
+			19.07)
+				ExtraPackages git other luci-theme-argon https://github.com/jerrykuku v2.2.5
+			;;
+			21.02)
+				ExtraPackages git other luci-theme-argon https://github.com/jerrykuku
+			;;
+			18.06)
+				ExtraPackages git other luci-theme-argon https://github.com/jerrykuku 18.06
+			;;
+			*)
+				TIME "[ERROR] Unknown source branch: [${Current_Branch}] !"
+			;;
+			esac
+		;;
+		esac
+	fi
 	if [ -f package/base-files/files/bin/AutoUpdate.sh ];then
 		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	else
@@ -112,7 +135,6 @@ Firmware-Diy_Base() {
 	coolsnowwolf)
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
-		ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
 		ExtraPackages git lean helloworld https://github.com/fw876 master
 		Update_Makefile xray-core package/lean/helloworld/xray-core
 		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
@@ -298,7 +320,7 @@ ExtraPackages() {
 	REPO_BRANCH=${5}
 
 	if [[ $# -lt 4 ]];then
-		TIME "[ERROR] Missing options,skip check out..."
+		TIME "[ERROR] [$#] Missing options,skip check out..."
 		return
 	fi
 	Mkdir package/${PKG_DIR}
