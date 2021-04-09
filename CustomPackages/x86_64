@@ -2,7 +2,7 @@ git other openwrt-passwall https://github.com/xiaorouji main
 git other luci-app-argon-config https://github.com/jerrykuku
 git other luci-app-adguardhome https://github.com/Hyy2001X
 git other luci-app-shutdown https://github.com/Hyy2001X
-svn other luci-app-smartdns https://github.com/immortalwrt/luci/trunk/applications
+svn other luci-app-smartdns https://github.com/immortalwrt/luci/branches/openwrt-18.06/applications
 git other luci-app-serverchan https://github.com/tty228
 svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 git other luci-app-onliner https://github.com/rufengsuixing

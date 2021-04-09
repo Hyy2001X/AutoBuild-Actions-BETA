@@ -1,7 +1,7 @@
 git other OpenClash https://github.com/vernesong master
 git other luci-app-argon-config https://github.com/jerrykuku
 git other luci-app-adguardhome https://github.com/Hyy2001X
-svn other luci-app-smartdns https://github.com/immortalwrt/luci/trunk/applications
+svn other luci-app-smartdns https://github.com/immortalwrt/luci/branches/openwrt-18.06/applications
 git other luci-app-serverchan https://github.com/tty228
 svn other luci-app-socat https://github.com/Lienol/openwrt-package/trunk
 svn other luci-app-usb3disable https://github.com/immortalwrt/luci/trunk/applications
