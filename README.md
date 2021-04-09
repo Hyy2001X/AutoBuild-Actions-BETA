@@ -5,7 +5,7 @@
 
 测试通过的设备: `d-team_newifi-d2(bin)`、`x86_64(img、img.gz)`
 
-测试通过的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt``openwrt/openwrt:!lede-17.01`
+测试通过的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt:!lede-17.01`
 
 ## 部署环境(STEP 1):
 
@@ -45,7 +45,9 @@
 
    INCLUDE_AutoBuild_Tools 添加 Scripts/AutoBuild_Tools.sh 到固件
 
-   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅部分 x86_64 平台可用)
+   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅部分平台可用)
+
+   INCLUDE_Theme_Argon 自动识别并添加适用源码的 luci-theme-argon 主题包
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持(测试特性)
 ```
