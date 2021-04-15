@@ -291,7 +291,7 @@ PKG_Finder() {
 	_PKG_DIR=${2}
 	_PKG_NAME=${3}
 	[[ -z ${_PKG_TYPE} ]] && [[ -z ${_PKG_NAME} ]] || [[ -z ${_PKG_DIR} ]] && return
-	PKG_RESULT=$(find -name ${_PKG_DIR}/${_PKG_NAME} -type ${_PKG_TYPE} -exec echo {} \;)
+	_PKG_RESULT=$(find ${_PKG_DIR} -name ${_PKG_NAME} -type ${_PKG_TYPE} -exec echo {} \;)
 	[[ -n "${_PKG_RESULT}" ]] && echo "${_PKG_RESULT}"
 	unset _PKG_TYPE _PKG_DIR _PKG_NAME
 }
@@ -308,13 +308,7 @@ Auto_ExtraPackages() {
 		TIME "Loading Custom Packages list: [${TARGET_PROFILE}] ..."
 		cat ${TARGET_FILE} | while read X
 		do
-			[[ -n "${X}" ]] && {
-			if [[ ! "${X}" =~ "#" ]];then
-				ExtraPackages ${X}
-			else
-				TIME "Skip line: ${X}"
-			fi
-                        }
+			[[ -n "${X}" ]] && ExtraPackages ${X}
 			unset X
 		done
 		TIME "[CustomPackages] All done !"
@@ -344,9 +338,6 @@ ExtraPackages() {
 	;;
 	svn)
 		svn checkout ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
-	;;
-	*)
-		TIME "[ERROR] Error option: ${PKG_PROTO} !" && return
 	;;
 	esac
 	if [ -f ${PKG_NAME}/Makefile ] || [ -f ${PKG_NAME}/README* ];then
