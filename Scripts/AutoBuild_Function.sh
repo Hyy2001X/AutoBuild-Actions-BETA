@@ -5,27 +5,27 @@
 
 GET_TARGET_INFO() {
 	Diy_Core
-	Home=${GITHUB_WORKSPACE}/openwrt
-	[ -f ${GITHUB_WORKSPACE}/Openwrt.info ] && . ${GITHUB_WORKSPACE}/Openwrt.info
+	Home="${GITHUB_WORKSPACE}/openwrt"
+	[ -f "${GITHUB_WORKSPACE}/Openwrt.info" ] && . ${GITHUB_WORKSPACE}/Openwrt.info
 	Owner_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
 	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
 	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"
 	Current_Branch="$(git branch | sed 's/* //g')"
-	if [[ ! ${Current_Branch} == master ]];then
+	AB_Firmware_Info=package/base-files/files/etc/openwrt_info
+	[[ ! ${Current_Branch} == master ]] && {
 		Current_Branch="$(echo ${Current_Branch} | egrep -o "[0-9]+.[0-9]+")"
 		Openwrt_Version_="R${Current_Branch}-"
-	else
+	} || {
 		Openwrt_Version_="R18.06-"
-	fi
-	AB_Firmware_Info=package/base-files/files/etc/openwrt_info
+	}
 	case ${Source_Owner} in
 	coolsnowwolf)
-		Version_File="package/lean/default-settings/files/zzz-default-settings"
+		Version_File=package/lean/default-settings/files/zzz-default-settings
 		Old_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
 		Openwrt_Version="${Old_Version}-${Compile_Date}"
 	;;
 	immortalwrt)
-		Version_File="package/base-files/files/etc/openwrt_release"
+		Version_File=package/base-files/files/etc/openwrt_release
 		Openwrt_Version="${Openwrt_Version_}${Compile_Date}"
 	;;
 	*)
@@ -39,22 +39,22 @@ GET_TARGET_INFO() {
 		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" .config | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
 		[[ -z "${x86_Test}" ]] && TIME "Can not obtain the TARGET_PROFILE !" && exit 1
 	done
-	if [[ "${x86_Test}" == "x86_64" ]];then
+	[[ "${x86_Test}" == "x86_64" ]] && {
 		TARGET_PROFILE="x86_64"
-	else
+	} || {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
-	fi
+	}
 	[[ -z "${TARGET_PROFILE}" ]] && TARGET_PROFILE="${Default_Device}"
 	case ${TARGET_PROFILE} in
 	x86_64)
-		if [[ "$(cat ${Home}/.config)" =~ "CONFIG_TARGET_IMAGES_GZIP=y" ]];then
-			Firmware_Type="img.gz"
-		else
-			Firmware_Type="img"
-		fi
+		[[ "$(cat ${Home}/.config)" =~ "CONFIG_TARGET_IMAGES_GZIP=y" ]] && {
+			Firmware_Type=img.gz
+		} || {
+			Firmware_Type=img
+		}
 	;;
 	*)
-		Firmware_Type="bin"
+		Firmware_Type=bin
 	;;
 	esac
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
@@ -93,14 +93,15 @@ Firmware-Diy_Base() {
 	Auto_ExtraPackages
 	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
 	chmod +x -R ${GITHUB_WORKSPACE}/CustomFiles
-	if [[ "${INCLUDE_AutoBuild_Tools}" == "true" ]];then
+	chmod +x -R ${GITHUB_WORKSPACE}/CustomPackages
+	[[ "${INCLUDE_AutoBuild_Tools}" == true ]] && {
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
-	fi
-	if [[ "${INCLUDE_AutoUpdate}" == "true" ]];then
+	}
+	[[ "${INCLUDE_AutoUpdate}" == true ]] && {
 		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
-	fi
-	if [[ "${INCLUDE_Theme_Argon}" == "true" ]];then
+	}
+	[[ "${INCLUDE_Theme_Argon}" == true ]] && {
 		case ${Source_Owner} in
 		coolsnowwolf)
 				ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
@@ -122,12 +123,10 @@ Firmware-Diy_Base() {
 			esac
 		;;
 		esac
-	fi
-	if [ -f package/base-files/files/bin/AutoUpdate.sh ];then
+	}
+	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
 		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
-	else
-		AutoUpdate_Version=OFF
-	fi
+	} || AutoUpdate_Version=OFF
 
 	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
 	case ${Source_Owner} in
@@ -135,11 +134,10 @@ Firmware-Diy_Base() {
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		ExtraPackages git lean helloworld https://github.com/fw876 master
-		Update_Makefile xray-core package/lean/helloworld/xray-core
-		sed -i 's/143/143,8080/' package/lean/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" $Version_File
-		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
+		[[ "${INCLUDE_DRM_I915}" == true ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
 	;;
 	immortalwrt)
 		sed -i 's/143/143,8080/' package/lean/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
@@ -147,7 +145,7 @@ Firmware-Diy_Base() {
 		Replace_File CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" $Version_File
-		[[ "${INCLUDE_DRM_I915}" == "true" ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
+		[[ "${INCLUDE_DRM_I915}" == true ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
 	;;
 	esac
 	
@@ -164,9 +162,9 @@ Firmware-Diy_Base() {
 	;;
 	esac
 
-	if [[ "${INCLUDE_Obsolete_PKG_Compatible}" == "true" ]];then
+	[[ "${INCLUDE_Obsolete_PKG_Compatible}" == true ]] && {
 		TIME "Start to run Obsolete_Package_Compatible Scripts ..."
-		if [[ ${Source_Owner} == openwrt ]];then
+		[[ ${Source_Owner} == openwrt ]] && {
 			case ${Current_Branch} in
 			19.07 | 21.02)
 				Replace_File CustomFiles/Patches/0003-upx-ucl-${Current_Branch}.patch ./
@@ -183,10 +181,11 @@ Firmware-Diy_Base() {
 				TIME "[ERROR] Current branch: [${Current_Branch}] is not supported !"
 			;;
 			esac
-		else
+		} || {
 			TIME "[ERROR] Current source: [${Source_Owner}] is not supported !"
-		fi
-	fi
+		}
+	}
+	TIME "[Firmware-Diy_Base] All done !"
 }
 
 PS_Firmware() {
@@ -229,26 +228,26 @@ PS_Firmware() {
 		echo "[Preload Info] Legacy_Firmware: ${Legacy_Firmware}"
 		echo "[Preload Info] UEFI_Firmware: ${EFI_Firmware}"
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
-		if [ -f "${Legacy_Firmware}" ];then
+		[ -f "${Legacy_Firmware}" ] && {
 			_MD5=$(md5sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
 			mv -f ${Legacy_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.${Firmware_Type}
 			TIME "Legacy Firmware is detected !"
-		else
+		} || {
 			TIME "[ERROR] Legacy Firmware is not detected !"
-		fi
-		if [ -f "${EFI_Firmware}" ];then
+		}
+		[ -f "${EFI_Firmware}" ] && {
 			_MD5=$(md5sum ${EFI_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${EFI_Firmware} | cut -d ' ' -f1)
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			cp ${EFI_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.${Firmware_Type}
 			TIME "UEFI Firmware is detected !"
-		else
+		} || {
 			TIME "[ERROR] UEFI Firmware is not detected !"
-		fi
+		}
 	;;
 	*)
 		cd ${Home}
@@ -257,15 +256,15 @@ PS_Firmware() {
 		AutoBuild_Detail="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.detail"
 		echo "[Preload Info] Default_Firmware: ${Default_Firmware}"
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
-		if [ -f ${Firmware_Path}/${Default_Firmware} ];then
+		[ -f ${Firmware_Path}/${Default_Firmware} ] && {
 			mv -f ${Firmware_Path}/${Default_Firmware} bin/Firmware/${AutoBuild_Firmware}
 			_MD5=$(md5sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > bin/Firmware/${AutoBuild_Detail}
 			TIME "Firmware is detected !"
-		else
+		} || {
 			TIME "[ERROR] Firmware is not detected !"
-		fi
+		}
 	;;
 	esac
 	cd ${Home}
@@ -277,15 +276,23 @@ TIME() {
 }
 
 Mkdir() {
+	[[ $# -ne 1 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
 	_DIR=${1}
-	if [ ! -d "${_DIR}" ];then
+	[ ! -d "${_DIR}" ] && {
 		TIME "Creating new folder [${_DIR}] ..."
 		mkdir -p ${_DIR}
-	fi
+	}
 	unset _DIR
 }
 
 PKG_Finder() {
+	[[ $# -ne 3 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
 	unset PKG_RESULT
 	_PKG_TYPE=${1}
 	_PKG_DIR=${2}
@@ -299,36 +306,48 @@ PKG_Finder() {
 Auto_ExtraPackages() {
 	COMMON_FILE="${GITHUB_WORKSPACE}/CustomPackages/Common"
 	TARGET_FILE="${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}"
+	Auto_ExtraPackages_mod ${COMMON_FILE}
+	Auto_ExtraPackages_mod ${TARGET_FILE}
+}
 
-	if [ -f "${TARGET_FILE}" ];then
-		if [ -f "${COMMON_FILE}" ];then
-			TIME "Loading Common Packages list ..."
-			echo -e "\n$(cat ${COMMON_FILE})" >> ${TARGET_FILE}
-		fi
-		TIME "Loading Custom Packages list: [${TARGET_PROFILE}] ..."
-		cat ${TARGET_FILE} | while read X
-		do
-			[[ -n "${X}" ]] && ExtraPackages ${X}
-			unset X
-		done
-		TIME "[CustomPackages] All done !"
-	else
-		TIME "Custom Packages list: [${TARGET_PROFILE}] is not detected !"
-	fi
+Auto_ExtraPackages_mod() {
+    _FILENAME=${1}
+	echo "" >> ${_FILENAME}
+    [ -f "${_FILENAME}" ] && {
+	    TIME "Loading Custom Packages list: [${_FILENAME}]..."
+	    cat ${_FILENAME} | sed '/^$/d' | while read X
+	    do
+	    	[[ "${X}" != "" ]] && [[ -n ${X} ]] && ExtraPackages ${X}
+	    	unset X
+	    done
+	}
+	unset _FILENAME
 }
 
 ExtraPackages() {
-	PKG_PROTO=${1}
+	[[ $# -lt 4 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
+	case ${1} in
+	git | svn)
+		PKG_PROTO=${1}
+	;;
+	*)
+		return 0
+	;;
+	esac
+	
 	PKG_DIR=${2}
 	PKG_NAME=${3}
 	REPO_URL=${4}
 	REPO_BRANCH=${5}
 
-	Mkdir package/${PKG_DIR}
-	if [ -d "package/${PKG_DIR}/${PKG_NAME}" ];then
+	Mkdir "package/${PKG_DIR}"
+	[ -d "package/${PKG_DIR}/${PKG_NAME}" ] && {
 		TIME "Removing old package [${PKG_NAME}] ..."
-		rm -rf package/${PKG_DIR}/${PKG_NAME}
-	fi
+		rm -rf "package/${PKG_DIR}/${PKG_NAME}"
+	}
 	TIME "Checking out package [${PKG_NAME}] to package/${PKG_DIR} ..."
 	case "${PKG_PROTO}" in
 	git)
@@ -340,14 +359,19 @@ ExtraPackages() {
 		svn checkout ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
 	;;
 	esac
-	if [ -f ${PKG_NAME}/Makefile ] || [ -f ${PKG_NAME}/README* ];then
-		TIME "Package [${PKG_NAME}] is detected!"
-		mv -f ${PKG_NAME} package/${PKG_DIR}
-	fi
+	[ -f ${PKG_NAME}/Makefile ] || [ -f ${PKG_NAME}/README* ] && {
+		mv -f "${PKG_NAME}" "package/${PKG_DIR}"
+	} || {
+		TIME "[ERROR] Package [${PKG_NAME}] is not detected!"
+	}
 	unset PKG_PROTO PKG_DIR PKG_NAME REPO_URL REPO_BRANCH
 }
 
 Replace_File() {
+	[[ $# -lt 2 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
 	FILE_NAME=${1}
 	PATCH_DIR=${GITHUB_WORKSPACE}/openwrt/${2}
 	FILE_RENAME=${3}
@@ -355,23 +379,27 @@ Replace_File() {
 	Mkdir ${PATCH_DIR}
 	[ -f "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="f" && _TYPE2="File"
 	[ -d "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="d" && _TYPE2="Folder"
-	if [ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
+	[ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && {
 		[[ -n "${FILE_RENAME}" ]] && _RENAME="${FILE_RENAME}" || _RENAME=""
-		if [ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ];then
+		[ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && {
 			TIME "Moving [${_TYPE2}] ${FILE_NAME} to ${2}/${FILE_RENAME} ..."
-			mv -f ${GITHUB_WORKSPACE}/${FILE_NAME} ${PATCH_DIR}/${_RENAME}
-		else
+			mv -f "${GITHUB_WORKSPACE}/${FILE_NAME}" "${PATCH_DIR}/${_RENAME}"
+		} || {
 			TIME "CustomFiles ${_TYPE2} [${FILE_NAME}] is not detected !"
-		fi
-	fi
+		}
+	}
 	unset FILE_NAME PATCH_DIR FILE_RENAME
 }
 
 Update_Makefile() {
+	[[ $# -ne 2 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
 	PKG_NAME=${1}
 	Makefile=${2}/Makefile
 	[ -f "/tmp/tmp_file" ] && rm -f /tmp/tmp_file
-	if [ -f "${Makefile}" ];then
+	[ -f "${Makefile}" ] && {
 		PKG_URL_MAIN="$(grep "PKG_SOURCE_URL:=" ${Makefile} | cut -c17-100)"
 		_process1=${PKG_URL_MAIN##*com/}
 		_process2=${_process1%%/tar*}
@@ -379,29 +407,29 @@ Update_Makefile() {
 		PKG_SOURCE_URL="$(grep "PKG_SOURCE_URL:=" ${Makefile} | cut -c17-100)"
 		PKG_DL_URL="${PKG_SOURCE_URL%\$(\PKG_VERSION*}"
 		Offical_Version="$(curl -s ${api_URL} 2>/dev/null | grep 'tag_name' | egrep -o '[0-9].+[0-9.]+' | awk 'NR==1')"
-		if [[ -z "${Offical_Version}" ]];then
+		[[ -z "${Offical_Version}" ]] && {
 			TIME "[ERROR] Failed to obtain the Offical version of [${PKG_NAME}] !"
 			return
-		fi
+		}
 		Source_Version="$(grep "PKG_VERSION:=" ${Makefile} | cut -c14-20)"
 		Source_HASH="$(grep "PKG_HASH:=" ${Makefile} | cut -c11-100)"
-		if [[ -z "${Source_Version}" ]] || [[ -z "${Source_HASH}" ]];then
+		[[ -z "${Source_Version}" ]] || [[ -z "${Source_HASH}" ]] && {
 			TIME "[ERROR] Failed to obtain the Source version or Hash !"
 			return
-		fi
-		if [[ ! "${Source_Version}" == "${Offical_Version}" ]];then
+		}
+		[[ ! "${Source_Version}" == "${Offical_Version}" ]] && {
 			TIME "Updating package ${PKG_NAME} [${Source_Version}] to [${Offical_Version}] ..."
 			sed -i "s?PKG_VERSION:=${Source_Version}?PKG_VERSION:=${Offical_Version}?g" ${Makefile}
 			wget -q "${PKG_DL_URL}${Offical_Version}?" -O /tmp/tmp_file
-			if [[ "$?" -eq 0 ]];then
+			[[ "$?" -eq 0 ]] && {
 				Offical_HASH="$(sha256sum /tmp/tmp_file | cut -d ' ' -f1)"
 				sed -i "s?PKG_HASH:=${Source_HASH}?PKG_HASH:=${Offical_HASH}?g" ${Makefile}
-			else
+			} || {
 				TIME "[ERROR] Failed to update the package [${PKG_NAME}] !"
-			fi
-		fi
-	else
-		TIME "Package ${PKG_NAME} is not detected !"
-	fi
+			}
+		}
+	} || {
+		TIME "[ERROR] Package ${PKG_NAME} is not detected !"
+	}
 	unset _process1 _process2 Offical_Version Source_Version
 }
