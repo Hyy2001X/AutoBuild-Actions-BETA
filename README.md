@@ -5,7 +5,7 @@
 
 测试通过的设备: `d-team_newifi-d2(bin)`、`x86_64(img、img.gz)`
 
-测试通过的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt:!lede-17.01`
+测试通过的源码: `coolsnowwolf/lede:master`、`immortalwrt/immortalwrt:all`、`openwrt/openwrt:!lede-17.01`
 
 ## 部署环境(STEP 1):
 
@@ -55,9 +55,11 @@
 ```
    [使用 git clone 拉取文件]  ExtraPackages git 存放位置 软件包名 仓库地址 分支
 
-   [使用 svn checkout 拉取文件]  ExtraPackages svn 存放位置 软件包名 仓库地址/trunk/目录
+   [使用 svn co 拉取文件]  ExtraPackages svn 存放位置 软件包名 仓库地址/branches/分支/路径
 
-   [替换 /CustomFiles 文件到源码] Replace_File 文件名称 目标路径 重命名(可选)
+   [替换 /CustomFiles 文件到源码] Replace_File 文件(夹)名称 目标路径 新名称[可选]
+   
+   [查找文件/文件夹] PKG_Finder f/d(意为 文件/文件夹) 文件(夹)名称 查找路径
 ```
 ## 编译固件(STEP 3):
 
@@ -71,7 +73,7 @@
 
 ## 使用一键更新固件脚本:
 
-   首先需要打开 Openwrt 主页,点击`系统`-`TTYD 终端`或者在浏览器输入`192.168.1.1:7681`,按需输入下方指令:
+   首先需要打开`TTYD 终端`或者在浏览器输入`IP地址:7681`,按需输入下方指令:
    
    检查并更新固件(保留配置): `bash /bin/AutoUpdate.sh`
 
