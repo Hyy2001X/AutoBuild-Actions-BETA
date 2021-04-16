@@ -45,19 +45,22 @@ GET_TARGET_INFO() {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
 	[[ -z "${TARGET_PROFILE}" ]] && TARGET_PROFILE="${Default_Device}"
-	case ${TARGET_PROFILE} in
-	x86_64)
+	[[ "${TARGET_PROFILE}" == x86_64 ]] && {
 		[[ "$(cat ${Home}/.config)" =~ "CONFIG_TARGET_IMAGES_GZIP=y" ]] && {
 			Firmware_Type=img.gz
 		} || {
 			Firmware_Type=img
 		}
-	;;
-	*)
+	}
+	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
+	case ${TARGET_BOARD} in
+	ramips | reltek | ipq40xx | ath79)
 		Firmware_Type=bin
 	;;
+	rockchip)
+		Firmware_Type=img.gz
+	;;
 	esac
-	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 	
 	echo "Firmware_Type=${Firmware_Type}" > ${Home}/TARGET_INFO
@@ -81,7 +84,7 @@ GET_TARGET_INFO() {
 	echo "Source: ${Source_Repo}"
 	echo "Source Author: ${Source_Owner}"
 	echo "Source Branch: ${Current_Branch}"
-	echo "TARGET_PTOFILE: ${TARGET_PROFILE}"
+	echo "TARGET_PROFILE: ${TARGET_PROFILE}"
 	echo "TARGET_BOARD: ${TARGET_BOARD}"
 	echo "TARGET_SUBTARGET: ${TARGET_SUBTARGET}"
 	
