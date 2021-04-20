@@ -7,6 +7,7 @@ GET_TARGET_INFO() {
 	Diy_Core
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	[ -f "${GITHUB_WORKSPACE}/Openwrt.info" ] && . ${GITHUB_WORKSPACE}/Openwrt.info
+	[[ "${Short_Firmware_Date}" == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
 	Owner_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
 	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
 	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"

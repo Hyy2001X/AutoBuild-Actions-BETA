@@ -6,6 +6,7 @@
 Diy_Core() {
 	Author=Hyy2001
 	Default_Device=x86_64
+	Short_Firmware_Date=true
 
 	INCLUDE_AutoUpdate=true
 	INCLUDE_AutoBuild_Tools=true
