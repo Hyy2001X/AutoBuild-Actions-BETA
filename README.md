@@ -40,6 +40,8 @@
    Author 作者名称,这个名称将在 OpenWrt 首页显示
 
    Default_Device 设备的官方名称,例如 [d-team_newifi-d2]、[x86_64]
+   
+   Short_Firmware_Date 固件日期样式,当设置为 true: [20210420] false: [202104202359]
 
    INCLUDE_AutoUpdate 启用后,将自动添加 Scripts/AutoUpdate.sh 和 luci-app-autoupdate 到固件
 
