@@ -112,6 +112,7 @@ CONFIG_PACKAGE_ppp-mod-pptp=y
 CONFIG_PACKAGE_tcpping=y
 CONFIG_PACKAGE_unzip=y
 CONFIG_PACKAGE_usbutils=y
+CONFIG_PACKAGE_usb-modeswitch=y
 CONFIG_PACKAGE_wget=y
 CONFIG_PACKAGE_xz=y
 CONFIG_PACKAGE_xz-utils=y
