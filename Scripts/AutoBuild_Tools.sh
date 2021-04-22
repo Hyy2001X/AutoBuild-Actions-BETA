@@ -9,23 +9,51 @@ AutoBuild_Tools() {
 	while :
 	do
 		clear
+		echo -e "$(cat /etc/banner)\n\n"
 		echo -e "AutoBuild 固件工具箱 ${Version}\n"
-		echo "1.USB 空间扩展"
-		echo "2.Samba 一键共享"
-		echo "3.软件包安装"
-		echo -e "\nq.退出\n"
+		echo "1. USB 空间扩展"
+		echo "2. Samba 一键共享"
+		echo "3. 软件包安装"
+		echo "4. 查找文件(夹)"
+		echo "u. 固件更新"
+		
+		echo -e "\nx. 更新 [AutoBuild_Tools] 脚本"
+		echo -e "q. 退出\n"
 		read -p "请从上方选择一个操作:" Choose
 		case $Choose in
 		q)
-			rm -rf /tmp/AutoExpand /tmp/AutoSamba
+			rm -rf ${AutoBuild_Tools_Temp}
 			clear
-			exit
+			exit 0
+		;;
+		u)
+			[ -f /bin/AutoUpdate.sh ] && {
+				AutoUpdate_UI
+			} || {
+				echo "未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
+			}
+		;;
+		x)
+			wget -q https://github.com/Hyy2001X/AutoBuild-Actions/Scripts/AutoBuild_Tools.sh -O ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh
+			[[ $? == 0 ]] && {
+				echo -e "\n脚本更新成功!"
+				rm -f /bin/AutoBuild_Tools.sh.sh
+				mv -f ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh /bin
+				chmod +x /bin/AutoBuild_Tools.sh.sh
+			} || echo -e "\n脚本更新失败!"
+			sleep 2
 		;;
 		1)
-			uci set fstab.@global[0].auto_mount='0'
-			uci set fstab.@global[0].auto_swap='0'
-			uci commit fstab
-			AutoExpand_UI
+			which block > /dev/null 2>&1
+			[[ ! $? -eq 0 ]] && {
+				echo -e "\n缺少相应依赖包,请先安装 [block-mount] !"
+				sleep 3
+			} || {
+				uci set fstab.@global[0].auto_mount='0'
+				uci set fstab.@global[0].auto_swap='0'
+				uci commit fstab
+				AutoExpand_UI
+			}
 		;;
 		2)
 			AutoSamba_UI
@@ -33,13 +61,28 @@ AutoBuild_Tools() {
 		3)
 			AutoInstall_UI
 		;;
+		4)
+			read -p "请选择要查找的类型[1.文件/*.文件夹]:" _Type
+			[[ "${_Type}" == 1 ]] && _Type="f" || _Type="d"
+			read -p "请输入要查找的路径:" _Path
+			[[ -z "${_Path}" ]] && _Path="/"
+			read -p "请输入要查找的文件(夹)名称:" _Name
+			while [[ -z "${_Name}" ]]
+			do
+				echo -e "\n文件(夹)名称不能为空!\n"
+				read -p "请输入要查找的文件(夹)名称:" _Name
+			done
+			echo -e "\n开始从 [${_Path}] 中查找 [${_Name}],请耐心等待 ...\n"
+			PKG_Finder ${_Type} ${_Path} ${_Name}
+			Enter
+		;;
 		esac
 	done
 }
 
 AutoExpand_UI() {
 	clear
-	echo -e "一键 USB 扩展内部空间\n"
+	echo -e "一键 USB 扩展内部空间/AutoExpand\n"
 	USB_Check_Core
 	[[ -n "${Check_Disk}" ]] && {
 		for ((i=1;i<=${Disk_Number};i++));
@@ -47,18 +90,18 @@ AutoExpand_UI() {
 			Disk_info=$(sed -n ${i}p ${Disk_Processed_List})
 			List_Disk ${Disk_info}
 		done
-		echo -e "\nq.返回"
-		echo "r.重新载入列表"
+		echo -e "\nq. 返回"
+		echo "r. 重新载入列表"
 	} || {
 		echo "未检测到外接硬盘!" && sleep 2
-		return
+		return 1
 	}
 	echo ""
 	read -p "请输入要操作的硬盘编号[1-${Disk_Number}]:" Choose
 	echo ""
 	case ${Choose} in
 	q)
-		return
+		return 0
 	;;
 	r)
 		block mount
@@ -70,7 +113,7 @@ AutoExpand_UI() {
 			[[ $? -eq 0 ]] && {
 				AutoExpand_Core
 			} || {
-				echo "请先安装 [e2fsprogs] !" && sleep 3
+				echo "缺少相应依赖包,请先安装 [e2fsprogs] !" && sleep 3
 			}			
 		} || {
 			echo "选择错误,请输入正确的选项!"
@@ -83,7 +126,7 @@ AutoExpand_UI() {
 
 USB_Check_Core() {
 	block mount
-	rm -rf ${AutoExpend_Tmp}/*
+	rm -rf ${AutoExpend_Temp}/*
 	echo "$(block info)" > ${Block_Info}
 	Check_Disk="$(cat ${Block_Info} | awk  -F ':' '/sd/{print $1}')"
 	[[ -n "${Check_Disk}" ]] && {
@@ -110,6 +153,7 @@ USB_Check_Core() {
 AutoExpand_Core() {
 	Choosed_Disk="$(sed -n ${Choose}p ${Disk_Processed_List} | awk '{print $1}')"
 	echo "警告: 本次操作将把硬盘: '${Choosed_Disk}' 格式化为 'ext4' 格式,请提前做好数据备份工作!"
+	echo "注意: 操作开始后请不要中断任务或进行其他操作,否则可能导致设备数据丢失!"
 	read -p "是否继续本次操作?[Y/n]:" Choose
 	[[ "${Choose}" == Y ]] || [[ "${Choose}" == y ]] && sleep 3 && echo "" || {
 		sleep 3
@@ -122,16 +166,16 @@ AutoExpand_Core() {
 		umount -l ${Choosed_Disk_Mounted} > /dev/null 2>&1
 		[[ "$(mount)" =~ "${Choosed_Disk_Mounted}" ]] > /dev/null 2>&1 && {
 			echo "取消挂载: '${Choosed_Disk_Mounted}' 失败 !"
-			exit
+			exit 1
 		}
 	}
-	echo "正在格式化硬盘: '${Choosed_Disk}' 为 'ext4' 格式 ..."
+	echo "正在格式化硬盘: '${Choosed_Disk}',请耐心等待 ..."
 	mkfs.ext4 -F ${Choosed_Disk} > /dev/null 2>&1
-	echo "格式化完成! 挂载硬盘: '${Choosed_Disk}' 到 ' /tmp/extroot' ..."
+	echo "硬盘格式化完成! 挂载硬盘: '${Choosed_Disk}' 到 ' /tmp/extroot' ..."
 	mkdir -p /tmp/introot && mkdir -p /tmp/extroot
 	mount --bind / /tmp/introot
 	mount ${Choosed_Disk} /tmp/extroot
-	echo "正在备份系统文件到 硬盘: '${Choosed_Disk}',请耐心等待 ..."
+	echo "正在备份系统文件到硬盘: '${Choosed_Disk}',请耐心等待 ..."
 	tar -C /tmp/introot -cf - . | tar -C /tmp/extroot -xf -
 	echo "取消挂载: '/tmp/introot' '/tmp/extroot' ..."
 	umount /tmp/introot && umount /tmp/extroot
@@ -144,7 +188,7 @@ AutoExpand_Core() {
 	sed -i "s?/mnt/bak?/?g" /etc/config/fstab
 	for ((i=0;i<=${Disk_Number};i++));
 	do
-		uci set fstab.@mount[${i}].enabled='1' > /dev/null 2>&1
+		uci set fstab.@mount[${i}].enabled='1'
 	done
 	uci commit fstab
 	umount -l /mnt/bak
@@ -171,11 +215,11 @@ AutoSamba_UI() {
 	while :
 	do
 		clear
-		echo -e "Samba 工具箱\n"
-		echo "1.删除所有 Samba 挂载点"
-		echo "2.自动生成 Samba 共享"
-		echo "3.关闭/开启自动共享"
-		echo -e "\nq.返回\n"
+		echo -e "Samba 工具箱/AutoSamba\n"
+		echo "1. 删除所有 Samba 挂载点"
+		echo "2. 自动生成 Samba 共享"
+		echo "3. 关闭/开启自动共享"
+		echo -e "\nq. 返回\n"
 		read -p "请从上方选择一个操作:" Choose
 		case $Choose in
 		1)
@@ -225,20 +269,20 @@ Mount_Samba_Devices() {
 		Disk_Name=$(sed -n ${i}p ${Samba_Disk_List} | awk '{print $1}')
 		Disk_Mounted_Point=$(sed -n ${i}p ${Samba_Disk_List} | awk '{print $2}')
 		Samba_Name=${Disk_Mounted_Point#*/mnt/}
-		uci show 2>&1 | grep "sambashare" > ${UCI_Show_List}
-		if [[ ! "$(cat ${UCI_Show_List})" =~ "${Disk_Name}" ]] > /dev/null 2>&1 ;then
+		uci show 2>&1 | grep "sambashare" > ${Samba_UCI_List}
+		if [[ ! "$(cat ${Samba_UCI_List})" =~ "${Disk_Name}" ]] > /dev/null 2>&1 ;then
 			echo "共享硬盘: '${Disk_Name}' on '${Disk_Mounted_Point}' 到 '${Samba_Name}' ..."
-			echo -e "\nconfig sambashare" >> ${Samba_Config_File}
-			echo -e "\toption auto '1'" >> ${Samba_Config_File}
-			echo -e "\toption name '${Samba_Name}'" >> ${Samba_Config_File}
-			echo -e "\toption device '${Disk_Name}'" >> ${Samba_Config_File}
-			echo -e "\toption path '${Disk_Mounted_Point}'" >> ${Samba_Config_File}
-			echo -e "\toption read_only 'no'" >> ${Samba_Config_File}
-			echo -e "\toption guest_ok 'yes'" >> ${Samba_Config_File}
-			echo -e "\toption create_mask '0666'" >> ${Samba_Config_File}
-			echo -e "\toption dir_mask '0777'" >> ${Samba_Config_File}
+			echo -e "\nconfig sambashare" >> ${Samba_Config}
+			echo -e "\toption auto '1'" >> ${Samba_Config}
+			echo -e "\toption name '${Samba_Name}'" >> ${Samba_Config}
+			echo -e "\toption device '${Disk_Name}'" >> ${Samba_Config}
+			echo -e "\toption path '${Disk_Mounted_Point}'" >> ${Samba_Config}
+			echo -e "\toption read_only 'no'" >> ${Samba_Config}
+			echo -e "\toption guest_ok 'yes'" >> ${Samba_Config}
+			echo -e "\toption create_mask '0666'" >> ${Samba_Config}
+			echo -e "\toption dir_mask '0777'" >> ${Samba_Config}
 		else
-			echo "硬盘: '${Disk_Name}' 已设置共享."
+			echo "硬盘: '${Disk_Name}' 已设置共享点: '${Samba_Name}' !"
 		fi
 	done
 	/etc/init.d/samba restart
@@ -247,14 +291,14 @@ Mount_Samba_Devices() {
 
 AutoInstall_UI() {
 while :
-	do
+do
 		clear
 		echo -e "安装软件包\n"
-		echo "1.更新软件包列表"
-		AutoInstall_UI_Mod 2 block-mount
-		AutoInstall_UI_Mod 3 e2fsprogs
-		echo "x.自定义软件包名"
-		echo -e "\nq.返回\n"
+		echo "1. 更新软件包列表"
+		AutoInstall_UI_mod 2 block-mount
+		AutoInstall_UI_mod 3 e2fsprogs
+		echo "x. 自定义软件包名"
+		echo -e "\nq. 返回\n"
 		read -p "请从上方选择一个操作:" Choose
 		echo ""
 		case $Choose in
@@ -282,7 +326,63 @@ while :
 	done
 }
 
-AutoInstall_UI_Mod() {
+AutoUpdate_UI() {
+while :
+do
+	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
+	clear
+	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n"
+	echo "1. 更新固件[保留配置]"
+	echo "2. 强制更新固件(跳过版本号验证,自动安装缺失的软件包) [保留配置]"
+	echo "3. 不保留配置更新固件[全新安装]"
+	echo "4. 列出固件信息"
+	echo "5. 清除固件下载缓存"
+	echo "6. 更改 Github API 地址"
+	echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
+	
+	echo -e "\nx. 更新 [AutoUpdate] 脚本"
+	echo -e "q. 返回\n"
+	read -p "请从上方选择一个操作:" Choose
+	case ${Choose} in
+	q)
+		break
+	;;
+	x)
+		wget -q https://github.com/Hyy2001X/AutoBuild-Actions/Scripts/AutoUpdate.sh -O ${AutoBuild_Tools_Temp}/AutoUpdate.sh
+		[[ $? == 0 ]] && {
+			echo -e "\n脚本更新成功!"
+			rm -f /bin/AutoUpdate.sh
+			mv -f ${AutoBuild_Tools_Temp}/AutoUpdate.sh.sh /bin
+			chmod +x /bin/AutoUpdate.sh
+		} || echo -e "\n脚本更新失败!"
+		sleep 2
+	;;
+	1)
+		bash /bin/AutoUpdate.sh
+	;;
+	2)
+		bash /bin/AutoUpdate.sh -f
+	;;
+	3)
+		bash /bin/AutoUpdate.sh -n
+	;;
+	4)
+		bash /bin/AutoUpdate.sh -l
+	;;
+	5)
+		bash /bin/AutoUpdate.sh -d
+	;;
+	6)
+		bash /bin/AutoUpdate.sh -c
+	;;
+	7)
+		bash /bin/AutoUpdate.sh -b
+	;;
+	esac
+done
+}
+
+AutoInstall_UI_mod() {
 	[[ "$(opkg list | awk '{print $1}')" =~ "${2}" ]] > /dev/null 2>&1 && {
 		echo "${1}.安装 [${2}] [已安装]"
 	} ||  echo "${1}.未安装 [${2}] [已安装]"
@@ -300,17 +400,31 @@ Enter() {
 	echo "" && read -p "按下[回车]键以继续..." Key
 }
 
-AutoExpend_Tmp="/tmp/AutoExpand"
-Disk_List="${AutoExpend_Tmp}/Disk_List"
-Block_Info="${AutoExpend_Tmp}/Block_Info"
-Disk_Processed_List="${AutoExpend_Tmp}/Disk_Processed_List"
-[ ! -d "${AutoExpend_Tmp}" ] && mkdir -p ${AutoExpend_Tmp}
-Samba_Config_File="/etc/config/samba"
-Samba_Tmp="/tmp/AutoSamba"
-Samba_Disk_List="${Samba_Tmp}/Disk_List"
-UCI_Show_List="${Samba_Tmp}/UCI_List"
-[ ! -d "${Samba_Tmp}" ] && mkdir -p "${Samba_Tmp}"
-which block > /dev/null 2>&1
-[[ $? -eq 0 ]] && AutoBuild_Tools || {
-	echo -e "\nAutoBuild_Tools 不适用于此固件,请先安装 [block-mount] !"
+PKG_Finder() {
+	[[ $# -ne 3 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
+	unset PKG_RESULT
+	_PKG_TYPE=${1}
+	_PKG_DIR=${2}
+	_PKG_NAME=${3}
+	[[ -z ${_PKG_TYPE} ]] && [[ -z ${_PKG_NAME} ]] || [[ -z ${_PKG_DIR} ]] && return
+	_PKG_RESULT=$(find ${_PKG_DIR} -name ${_PKG_NAME} -type ${_PKG_TYPE} -exec echo {} \;)
+	[[ -n "${_PKG_RESULT}" ]] && echo "${_PKG_RESULT}"
+	unset _PKG_TYPE _PKG_DIR _PKG_NAME
 }
+
+unset -u
+AutoBuild_Tools_Temp="/tmp/AutoBuild_Tools"
+AutoExpend_Temp="${AutoBuild_Tools_Temp}/AutoExpand"
+Disk_List="${AutoExpend_Temp}/Disk_List"
+Block_Info="${AutoExpend_Temp}/Block_Info"
+Disk_Processed_List="${AutoExpend_Temp}/Disk_Processed_List"
+[ ! -d "${AutoExpend_Temp}" ] && mkdir -p "${AutoExpend_Temp}"
+Samba_Config="/etc/config/samba"
+Samba_Temp="${AutoBuild_Tools_Temp}/AutoSamba"
+Samba_Disk_List="${Samba_Temp}/Disk_List"
+Samba_UCI_List="${Samba_Temp}/UCI_List"
+[ ! -d "${Samba_Temp}" ] && mkdir -p "${Samba_Temp}"
+AutoBuild_Tools
