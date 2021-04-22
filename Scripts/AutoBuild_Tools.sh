@@ -3,81 +3,84 @@
 # AutoBuild Module by Hyy2001
 # AutoBuild_Tools for Openwrt
 
-Version=V1.2.2
+Version=V1.2.3
 
 AutoBuild_Tools() {
-	while :
-	do
+while :
+do
+	clear
+	cat /etc/banner
+	echo -e "\n\nAutoBuild 固件工具箱 ${Version}\n"
+	echo "1. USB 空间扩展"
+	echo "2. Samba 一键共享"
+	echo "3. 软件包安装"
+	echo "4. 查找文件(夹)"
+	echo "u. 固件更新"
+	echo -e "\nx. 更新脚本"
+	echo -e "q. 退出\n"
+	read -p "请从上方选择一个操作:" Choose
+	case $Choose in
+	q)
+		rm -rf ${AutoBuild_Tools_Temp}
 		clear
-		echo -e "$(cat /etc/banner)\n\n"
-		echo -e "AutoBuild 固件工具箱 ${Version}\n"
-		echo "1. USB 空间扩展"
-		echo "2. Samba 一键共享"
-		echo "3. 软件包安装"
-		echo "4. 查找文件(夹)"
-		echo "u. 固件更新"
+		exit 0
+	;;
+	u)
+		[ -f /bin/AutoUpdate.sh ] && {
+			AutoUpdate_UI
+		} || {
+			echo "未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
+		}
+	;;
+	x)
 		
-		echo -e "\nx. 更新 [AutoBuild_Tools] 脚本"
-		echo -e "q. 退出\n"
-		read -p "请从上方选择一个操作:" Choose
-		case $Choose in
-		q)
-			rm -rf ${AutoBuild_Tools_Temp}
-			clear
-			exit 0
-		;;
-		u)
-			[ -f /bin/AutoUpdate.sh ] && {
-				AutoUpdate_UI
-			} || {
-				echo "未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
-			}
-		;;
-		x)
-			wget -q https://github.com/Hyy2001X/AutoBuild-Actions/Scripts/AutoBuild_Tools.sh -O ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh
-			[[ $? == 0 ]] && {
-				echo -e "\n脚本更新成功!"
-				rm -f /bin/AutoBuild_Tools.sh.sh
-				mv -f ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh /bin
-				chmod +x /bin/AutoBuild_Tools.sh.sh
-			} || echo -e "\n脚本更新失败!"
-			sleep 2
-		;;
-		1)
-			which block > /dev/null 2>&1
-			[[ ! $? -eq 0 ]] && {
-				echo -e "\n缺少相应依赖包,请先安装 [block-mount] !"
-				sleep 3
-			} || {
-				uci set fstab.@global[0].auto_mount='0'
-				uci set fstab.@global[0].auto_swap='0'
-				uci commit fstab
-				AutoExpand_UI
-			}
-		;;
-		2)
-			AutoSamba_UI
-		;;
-		3)
-			AutoInstall_UI
-		;;
-		4)
-			read -p "请选择要查找的类型[1.文件/*.文件夹]:" _Type
-			[[ "${_Type}" == 1 ]] && _Type="f" || _Type="d"
-			read -p "请输入要查找的路径:" _Path
-			[[ -z "${_Path}" ]] && _Path="/"
+		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh
+		if [[ $? == 0 ]];then
+			echo -e "\n[AutoBuild_Tools] 脚本更新成功!"
+			rm -f /bin/AutoBuild_Tools.sh.sh
+			mv -f ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh /bin
+			chmod +x /bin/AutoBuild_Tools.sh
+		else
+			echo -e "\n[AutoBuild_Tools] 脚本更新失败!"
+		fi
+		sleep 2
+	;;
+	1)
+		which block > /dev/null 2>&1
+		[[ ! $? -eq 0 ]] && {
+			echo -e "\n缺少相应依赖包,请先安装 [block-mount] !"
+			sleep 3
+		} || {
+			uci set fstab.@global[0].auto_mount='0'
+			uci set fstab.@global[0].auto_swap='0'
+			uci commit fstab
+			AutoExpand_UI
+		}
+	;;
+	2)
+		AutoSamba_UI
+	;;
+	3)
+		AutoInstall_UI
+	;;
+	4)
+		echo ""
+		read -p "请选择要查找的类型[1.文件/*.文件夹]:" _Type
+		[[ "${_Type}" == 1 ]] && _Type="f" || _Type="d"
+		read -p "请输入要查找的路径:" _Path
+		[[ -z "${_Path}" ]] && _Path="/"
+		read -p "请输入要查找的文件(夹)名称:" _Name
+		while [[ -z "${_Name}" ]]
+		do
+			echo -e "\n文件(夹)名称不能为空!\n"
 			read -p "请输入要查找的文件(夹)名称:" _Name
-			while [[ -z "${_Name}" ]]
-			do
-				echo -e "\n文件(夹)名称不能为空!\n"
-				read -p "请输入要查找的文件(夹)名称:" _Name
-			done
-			echo -e "\n开始从 [${_Path}] 中查找 [${_Name}],请耐心等待 ...\n"
-			PKG_Finder ${_Type} ${_Path} ${_Name}
-			Enter
-		;;
-		esac
-	done
+		done
+		echo -e "\n开始从 [${_Path}] 中查找 [${_Name}],请耐心等待 ...\n"
+		PKG_Finder ${_Type} ${_Path} ${_Name}
+		Enter
+	;;
+	esac
+done
 }
 
 AutoExpand_UI() {
@@ -292,38 +295,39 @@ Mount_Samba_Devices() {
 AutoInstall_UI() {
 while :
 do
-		clear
-		echo -e "安装软件包\n"
-		echo "1. 更新软件包列表"
-		AutoInstall_UI_mod 2 block-mount
-		AutoInstall_UI_mod 3 e2fsprogs
-		echo "x. 自定义软件包名"
-		echo -e "\nq. 返回\n"
-		read -p "请从上方选择一个操作:" Choose
-		echo ""
-		case $Choose in
-		q)
-			break
-		;;
-		x)
-			echo "常用的附加参数:"
-			echo "--force-depends		在安装、删除软件包时无视失败的依赖"
-			echo "--force-downgrade	允许降级安装软件包"
-			echo -e "--force-reinstall	重新安装软件包\n"
-			read -p "请输入你想安装的软件包名:" PKG_NAME
-			Install_opkg_mod $PKG_NAME
-		;;
-		1)
-			opkg update
-		;;
-		2)
-			Install_opkg_mod block-mount	
-		;;
-		3)
-			Install_opkg_mod e2fsprogs
-		;;
-		esac
-	done
+	clear
+	echo -e "安装软件包\n"
+	echo "1. 更新软件包列表"
+	AutoInstall_UI_mod 2 block-mount
+	AutoInstall_UI_mod 3 e2fsprogs
+	echo "x. 自定义软件包名"
+	echo -e "\nq. 返回\n"
+	read -p "请从上方选择一个操作:" Choose
+	echo ""
+	case $Choose in
+	q)
+		break
+	;;
+	x)
+		echo -e "常用的附加参数:\n"
+		echo "--force-depends		在安装、删除软件包时无视失败的依赖"
+		echo "--force-downgrade	允许降级安装软件包"
+		echo -e "--force-reinstall	重新安装软件包\n"
+		read -p "请输入你想安装的软件包名和附加参数:" PKG_NAME
+		Install_opkg_mod $PKG_NAME
+	;;
+	1)
+		opkg update
+		sleep 1
+	;;
+	2)
+		Install_opkg_mod block-mount	
+	;;
+	3)
+		Install_opkg_mod e2fsprogs
+	;;
+	esac
+done
 }
 
 AutoUpdate_UI() {
@@ -332,14 +336,13 @@ do
 	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	clear
 	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n"
-	echo "1. 更新固件[保留配置]"
-	echo "2. 强制更新固件(跳过版本号验证,自动安装缺失的软件包) [保留配置]"
-	echo "3. 不保留配置更新固件[全新安装]"
+	echo "1. 更新固件 [保留配置]"
+	echo "2. 强制更新固件 (跳过版本号验证,自动安装缺失的软件包) [保留配置]"
+	echo "3. 不保留配置更新固件 [全新安装]"
 	echo "4. 列出固件信息"
 	echo "5. 清除固件下载缓存"
 	echo "6. 更改 Github API 地址"
 	echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
-	
 	echo -e "\nx. 更新 [AutoUpdate] 脚本"
 	echo -e "q. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -348,11 +351,11 @@ do
 		break
 	;;
 	x)
-		wget -q https://github.com/Hyy2001X/AutoBuild-Actions/Scripts/AutoUpdate.sh -O ${AutoBuild_Tools_Temp}/AutoUpdate.sh
+		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${AutoBuild_Tools_Temp}/AutoUpdate.sh
 		[[ $? == 0 ]] && {
 			echo -e "\n脚本更新成功!"
 			rm -f /bin/AutoUpdate.sh
-			mv -f ${AutoBuild_Tools_Temp}/AutoUpdate.sh.sh /bin
+			mv -f ${AutoBuild_Tools_Temp}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoUpdate.sh
 		} || echo -e "\n脚本更新失败!"
 		sleep 2
@@ -368,15 +371,27 @@ do
 	;;
 	4)
 		bash /bin/AutoUpdate.sh -l
+		Enter
 	;;
 	5)
 		bash /bin/AutoUpdate.sh -d
+		sleep 1
 	;;
 	6)
-		bash /bin/AutoUpdate.sh -c
+		echo ""
+		read -p "请输入新的 Github 地址:" _API
+		[[ -n ${_API} ]] && bash /bin/AutoUpdate.sh -c ${_API} || {
+			echo "Github 地址不能为空!"
+		}
+		sleep 2
 	;;
 	7)
-		bash /bin/AutoUpdate.sh -b
+		echo ""
+		read -p "请输入你想要的启动方式[UEFI/Legacy]:" _BOOT
+		[[ -n ${_BOOT} ]] && bash /bin/AutoUpdate.sh -b ${_BOOT} || {
+			echo -e "\n启动方式不能为空!"
+		}
+		sleep 2
 	;;
 	esac
 done
@@ -384,8 +399,8 @@ done
 
 AutoInstall_UI_mod() {
 	[[ "$(opkg list | awk '{print $1}')" =~ "${2}" ]] > /dev/null 2>&1 && {
-		echo "${1}.安装 [${2}] [已安装]"
-	} ||  echo "${1}.未安装 [${2}] [已安装]"
+		echo "${1}. 安装 [${2}] [已安装]"
+	} ||  echo "${1}. 未安装 [${2}] [已安装]"
 }
 
 Install_opkg_mod() {
@@ -415,7 +430,6 @@ PKG_Finder() {
 	unset _PKG_TYPE _PKG_DIR _PKG_NAME
 }
 
-unset -u
 AutoBuild_Tools_Temp="/tmp/AutoBuild_Tools"
 AutoExpend_Temp="${AutoBuild_Tools_Temp}/AutoExpand"
 Disk_List="${AutoExpend_Temp}/Disk_List"
@@ -427,4 +441,5 @@ Samba_Temp="${AutoBuild_Tools_Temp}/AutoSamba"
 Samba_Disk_List="${Samba_Temp}/Disk_List"
 Samba_UCI_List="${Samba_Temp}/UCI_List"
 [ ! -d "${Samba_Temp}" ] && mkdir -p "${Samba_Temp}"
+Github_Raw="https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
 AutoBuild_Tools
