@@ -42,22 +42,24 @@
    Default_Device 设备的官方名称,例如 [d-team_newifi-d2]、[x86_64]
    
    Short_Firmware_Date 固件日期样式,当设置为 true: [20210420] false: [202104202359]
+   
+   Default_IP_Address 固件后台 IP 地址,默认为 [192.168.1.1]
 
    INCLUDE_AutoUpdate 启用后,将自动添加 Scripts/AutoUpdate.sh 和 luci-app-autoupdate 到固件
 
    INCLUDE_AutoBuild_Tools 添加 Scripts/AutoBuild_Tools.sh 到固件
 
-   INCLUDE_DRM_I915 添加 Intel Graphics 驱动(仅部分平台可用)
+   INCLUDE_DRM_I915 自动启用 Intel Graphics 驱动 (测试特性)
 
-   INCLUDE_Theme_Argon 自动识别并添加适用源码的 luci-theme-argon 主题包
+   INCLUDE_Theme_Argon 自动添加适用于当前源码的 luci-theme-argon 主题
 
-   INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持(测试特性)
+   INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
 ```
 **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
-   [使用 git clone 拉取文件]  ExtraPackages git 存放位置 软件包名 仓库地址 分支
+   [使用 git clone 拉取文件]  AddPackage git 存放位置 软件包名 仓库地址 分支
 
-   [使用 svn co 拉取文件]  ExtraPackages svn 存放位置 软件包名 仓库地址/branches/分支/路径
+   [使用 svn co 拉取文件]  AddPackage svn 存放位置 软件包名 仓库地址/branches/分支/路径
 
    [替换 /CustomFiles 文件到源码] Replace_File 文件(夹)名称 目标路径 新名称[可选]
    
