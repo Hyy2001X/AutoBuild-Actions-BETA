@@ -38,7 +38,7 @@ GET_TARGET_INFO() {
 		x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
 		[[ -n "${x86_Test}" ]] && break
 		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" .config | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
-		[[ -z "${x86_Test}" ]] && TIME "Can not obtain the TARGET_PROFILE !" && exit 1
+		[[ -z "${x86_Test}" ]] && TIME "[ERROR] Can not obtain the TARGET_PROFILE !" && exit 1
 	done
 	[[ "${x86_Test}" == "x86_64" ]] && {
 		TARGET_PROFILE="x86_64"
@@ -63,7 +63,7 @@ GET_TARGET_INFO() {
 	;;
 	esac
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
-	
+
 	echo "Firmware_Type=${Firmware_Type}" > ${Home}/TARGET_INFO
 	echo "TARGET_PROFILE=${TARGET_PROFILE}" >> ${Home}/TARGET_INFO
 	echo "Openwrt_Version=${Openwrt_Version}" >> ${Home}/TARGET_INFO
@@ -72,12 +72,12 @@ GET_TARGET_INFO() {
 	echo "TARGET_SUBTARGET=${TARGET_SUBTARGET}" >> ${Home}/TARGET_INFO
 	echo "Home=${Home}" >> ${Home}/TARGET_INFO
 	echo "Current_Branch=${Current_Branch}" >> ${Home}/TARGET_INFO
-	
+
 	echo "${Openwrt_Version}" > ${AB_Firmware_Info}
 	echo "${Owner_Repo}" >> ${AB_Firmware_Info}
 	echo "${TARGET_PROFILE}" >> ${AB_Firmware_Info}
 	echo "${Firmware_Type}" >> ${AB_Firmware_Info}
-	
+
 	echo "Author: ${Author}"
 	echo "Author Github: ${Owner_Repo}"
 	echo "Firmware Version: ${Openwrt_Version}"
@@ -88,13 +88,13 @@ GET_TARGET_INFO() {
 	echo "TARGET_PROFILE: ${TARGET_PROFILE}"
 	echo "TARGET_BOARD: ${TARGET_BOARD}"
 	echo "TARGET_SUBTARGET: ${TARGET_SUBTARGET}"
-	
+
 	TIME "[Preload Info] All done !"
 }
 
 Firmware-Diy_Base() {
 	GET_TARGET_INFO
-	Auto_ExtraPackages
+	Auto_AddPackage
 	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
 	chmod +x -R ${GITHUB_WORKSPACE}/CustomFiles
 	chmod +x -R ${GITHUB_WORKSPACE}/CustomPackages
@@ -102,24 +102,24 @@ Firmware-Diy_Base() {
 		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 	}
 	[[ "${INCLUDE_AutoUpdate}" == true ]] && {
-		ExtraPackages git lean luci-app-autoupdate https://github.com/Hyy2001X main
+		AddPackage git lean luci-app-autoupdate https://github.com/Hyy2001X main
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
 	}
 	[[ "${INCLUDE_Theme_Argon}" == true ]] && {
 		case ${Source_Owner} in
 		coolsnowwolf)
-				ExtraPackages git lean luci-theme-argon https://github.com/jerrykuku 18.06
+				AddPackage git lean luci-theme-argon https://github.com/jerrykuku 18.06
 		;;
 		*)
 			case ${Current_Branch} in
 			19.07)
-				ExtraPackages git other luci-theme-argon https://github.com/jerrykuku v2.2.5
+				AddPackage git other luci-theme-argon https://github.com/jerrykuku v2.2.5
 			;;
 			21.02)
-				ExtraPackages git other luci-theme-argon https://github.com/jerrykuku
+				AddPackage git other luci-theme-argon https://github.com/jerrykuku
 			;;
 			18.06)
-				ExtraPackages git other luci-theme-argon https://github.com/jerrykuku 18.06
+				AddPackage git other luci-theme-argon https://github.com/jerrykuku 18.06
 			;;
 			*)
 				TIME "[ERROR] Unknown source branch: [${Current_Branch}] !"
@@ -127,6 +127,17 @@ Firmware-Diy_Base() {
 			esac
 		;;
 		esac
+	}	
+	[[ -n "${Default_IP_Address}" ]] && {
+		if [[ "${Default_IP_Address}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
+			Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
+			if [[ ! "${Default_IP_Address}" == "${Old_IP_Address}" ]];then
+				TIME "Setting default IP Address to ${Default_IP_Address} ..."
+				sed -i "s/${Old_IP_Address}/${Default_IP_Address}/g" package/base-files/files/bin/config_generate
+			fi
+		else
+			TIME "[ERROR] ${Default_IP_Address} is not an IP Address !"
+		fi
 	}
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
 		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
@@ -137,7 +148,7 @@ Firmware-Diy_Base() {
 	coolsnowwolf)
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
-		ExtraPackages git other helloworld https://github.com/fw876 master
+		AddPackage git other helloworld https://github.com/fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" ${Version_File}
@@ -173,7 +184,7 @@ Firmware-Diy_Base() {
 			19.07 | 21.02)
 				Replace_File CustomFiles/Patches/0003-upx-ucl-${Current_Branch}.patch ./
 				cat 0003-upx-ucl-${Current_Branch}.patch | patch -p1 > /dev/null 2>&1
-				ExtraPackages svn ../feeds/packages/lang golang https://github.com/coolsnowwolf/packages/trunk/lang
+				AddPackage svn ../feeds/packages/lang golang https://github.com/coolsnowwolf/packages/trunk/lang
 				TIME "Start to convert zh-cn translation files to zh_Hans ..."
 				Replace_File Scripts/Convert_Translation.sh package
 				cd ./package
@@ -193,7 +204,6 @@ Firmware-Diy_Base() {
 
 PS_Firmware() {
 	. TARGET_INFO
-	ls bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}
 	case ${Source_Owner} in
 	immortalwrt)
 		_Firmware=immortalwrt
@@ -306,14 +316,14 @@ PKG_Finder() {
 	unset _PKG_TYPE _PKG_DIR _PKG_NAME
 }
 
-Auto_ExtraPackages() {
+Auto_AddPackage() {
 	COMMON_FILE="${GITHUB_WORKSPACE}/CustomPackages/Common"
 	TARGET_FILE="${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}"
-	Auto_ExtraPackages_mod ${COMMON_FILE}
-	Auto_ExtraPackages_mod ${TARGET_FILE}
+	Auto_AddPackage_mod ${COMMON_FILE}
+	Auto_AddPackage_mod ${TARGET_FILE}
 }
 
-Auto_ExtraPackages_mod() {
+Auto_AddPackage_mod() {
 	[[ $# != 1 ]] && {
 		TIME "[ERROR] Error options: [$#] [$*] !"
 		return 0
@@ -324,14 +334,14 @@ Auto_ExtraPackages_mod() {
 	    TIME "Loading Custom Packages list: [${_FILENAME}]..."
 	    cat ${_FILENAME} | sed '/^$/d' | while read X
 	    do
-	    	[[ "${X}" != "" ]] && [[ -n ${X} ]] && ExtraPackages ${X}
+	    	[[ "${X}" != "" ]] && [[ -n ${X} ]] && AddPackage ${X}
 	    	unset X
 	    done
 	}
 	unset _FILENAME
 }
 
-ExtraPackages() {
+AddPackage() {
 	[[ $# -lt 4 ]] && {
 		TIME "[ERROR] Error options: [$#] [$*] !"
 		return 0
