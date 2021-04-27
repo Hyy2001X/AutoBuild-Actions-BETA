@@ -1,4 +1,4 @@
 git other OpenClash https://github.com/vernesong master
-svn other luci-app-usb3disable https://github.com/immortalwrt/luci/trunk/applications
-svn other luci-app-eqos https://github.com/immortalwrt/luci/trunk/applications
+git other luci-app-usb3disable https://github.com/rufengsuixing
+svn other luci-app-eqos https://github.com/kenzok8/openwrt-packages/trunk
 git other luci-app-bearDropper https://github.com/NateLol
