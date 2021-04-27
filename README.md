@@ -5,7 +5,7 @@
 
 测试通过的设备: `d-team_newifi-d2(bin)`、`x86_64(img、img.gz)`
 
-测试通过的源码: `coolsnowwolf/lede:master`、`immortalwrt/immortalwrt:all`、`openwrt/openwrt:!lede-17.01`
+测试通过的源码: `coolsnowwolf/lede:master`、`immortalwrt/immortalwrt`、`openwrt/openwrt`
 
 ## 部署环境(STEP 1):
 
@@ -19,7 +19,7 @@
 
 4. 点击上方菜单中的`Settings`,依次点击`Secrets`-`New repository secret`
 
-   其中`Name`项填写`GITHUB_TOKEN`,然后将你的 **Token** 粘贴到`Value`项,完成后点击`Add secert`
+   其中`Name`项随意填写,然后将你的 **Token** 粘贴到`Value`项,完成后点击`Add secert`
 
 ## 定制固件(STEP 2):
 
@@ -35,7 +35,7 @@
 
    **软件包列表** 编辑`CustomPackages`下对应**设备名称**的文件,按照现有语法为**特定设备**添加软件包
 
-**AutoBuild_DiyScript.sh: Diy_Core() 的赋值解释:**
+**AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
    Author 作者名称,这个名称将在 OpenWrt 首页显示
 
@@ -63,7 +63,7 @@
 
    [替换 /CustomFiles 文件到源码] Replace_File 文件(夹)名称 目标路径 新名称[可选]
    
-   [查找文件/文件夹] PKG_Finder f/d(意为 文件/文件夹) 文件(夹)名称 查找路径
+   [查找文件/文件夹] PKG_Finder f/d(文件/文件夹) 文件(夹)名称 查找路径
 ```
 ## 编译固件(STEP 3):
 
@@ -75,17 +75,23 @@
    
    **SSH 连接** 使用方法参见 [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
 
-## 使用一键更新固件脚本:
+## 使用固件更新脚本:
 
    首先需要打开`TTYD 终端`或者在浏览器输入`IP地址:7681`,按需输入下方指令:
    
-   检查并更新固件(保留配置): `bash /bin/AutoUpdate.sh`
+   检查并更新固件(保留配置): `AutoUpdate`或`autoupdate`
 
-   检查并更新固件(不保留配置): `bash /bin/AutoUpdate.sh -n`
+   检查并更新固件(不保留配置): `AutoUpdate -n`
    
-   更多使用方法: `bash /bin/AutoUpdate.sh -help`
+   查看更多使用方法: `AutoUpdate -help`
    
-   **注意: 一键更新固件需要在 Diy-Core() 函数中启用`INCLUDE_AutoUpdate`**
+   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoUpdate`为`true`**
+
+## 使用固件工具箱:
+   
+   打开`TTYD 终端`,输入`Tools`或`tools`,请自行摸索,功能持续开发中...
+
+   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Tools`为`true`**
    
 ## 鸣谢
 
