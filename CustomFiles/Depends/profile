@@ -5,15 +5,17 @@ Sysinfo() {
 	IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
 	CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	[ -z "${CoreMark}" ] && CoreMark=Unknown
-	Srartup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
+	Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
 	Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
-
-	echo -e "\n\n           设备名称:		${Target}"
+	echo -e "\n"
+	echo "           设备名称:		$(uname -n) / ${Target}"
 	echo "           固件版本:		${Version}"
-	echo "           IP 地址: 		${IP_Address}"
-	echo "           运行时间: 		${Srartup}"
-	echo "           CoreMark: 		${CoreMark}"
-	echo -e "           可用空间:		${Overlay_Available}\n"
+	echo "           内核版本:		$(uname -rs)"
+	echo "           IP 地址 : 		${IP_Address}"
+	echo "           运行时间: 		${Startup}"
+	echo "           性能得分:		${CoreMark}"
+	echo "           可用空间:		${Overlay_Available}"
+	echo ""
 }
 
 [ -e /tmp/.failsafe ] && export FAILSAFE=1
