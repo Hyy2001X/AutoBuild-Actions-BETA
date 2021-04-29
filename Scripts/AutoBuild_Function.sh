@@ -143,6 +143,7 @@ Firmware-Diy_Base() {
 		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	} || AutoUpdate_Version=OFF
 	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
+	sed -i '/profile/d' package/base-files/lib/upgrade/keep.d/base-files-essential
 	case ${Source_Owner} in
 	coolsnowwolf)
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
