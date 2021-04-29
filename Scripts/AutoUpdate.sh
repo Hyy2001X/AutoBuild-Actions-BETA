@@ -6,37 +6,51 @@
 Version=V5.6
 
 Shell_Helper() {
-	echo -e "\n使用方法: bash /bin/AutoUpdate.sh [参数1] [参数2]"
-	echo -e "\n支持下列参数:\n"
-	echo "	-q	更新固件,不打印备份信息日志 [保留配置]"
-	echo "	-n	更新固件 [不保留配置]"
-	echo "	-f	强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]"
-	echo "	-u	适用于定时更新 LUCI 的参数 [保留配置]"
-	echo "	-c	[参数2:<Github 地址>] 更换 Github 检查更新以及固件下载地址"
-	echo "	-b	[参数2:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]"
-	echo "	-l	列出所有信息"
-	echo "	-d	清除固件下载缓存"
-	echo -e "	-h	打印帮助信息\n"
-	exit
+cat <<EOF
+
+使用方法:   $0 [<更新参数>...]
+            $0 [<设置参数>...] [-c] [-b] <额外参数>
+            $0 [<其他>...] [-l] [-d]
+
+更新参数:
+	-q              更新固件,不打印备份信息日志 [保留配置]
+	-n              更新固件 [不保留配置]
+	-f              强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
+	-u              适用于定时更新 LUCI 的参数 [保留配置]
+
+设置参数:
+	-c              [额外参数:<Github 地址>] 更换 Github 检查更新以及固件下载地址
+	-b              [额外参数:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]
+
+其他:
+	-l              列出所有信息
+	-d              清除固件下载缓存
+	-h | -help      打印帮助信息
+	
+EOF
+exit 1
 }
 
 List_Info() {
-	echo -e "\n/overlay 可用:	${Overlay_Available}"
-	echo "/tmp 可用:	${TMP_Available}M"
-	echo "固件下载位置:	/tmp/Downloads"
-	echo "当前设备:	${CURRENT_Device}"
-	echo "默认设备:	${DEFAULT_Device}"
-	echo "当前固件版本:	${CURRENT_Version}"
-	echo "固件名称:	AutoBuild-${CURRENT_Device}-${CURRENT_Version}${Firmware_SFX}"
-	echo "Github 地址:	${Github}"
-	echo "解析 API 地址:	${Github_Tags}"
-	echo "固件下载地址:	${Github_Download}"
-	echo "作者/仓库:	${Author}"
+cat <<EOF
+
+/overlay 可用:		${Overlay_Available}
+/tmp 可用:		${TMP_Available}M
+固件下载位置:		/tmp/Downloads
+当前设备:		${CURRENT_Device}
+默认设备:		${DEFAULT_Device}
+当前固件版本:		${CURRENT_Version}
+固件名称:		AutoBuild-${CURRENT_Device}-${CURRENT_Version}${Firmware_SFX}
+Github 地址:		${Github}
+解析 API 地址:		${Github_Tags}
+固件下载地址:		${Github_Download}
+作者/仓库:		${Author}"
+固件格式:		${Firmware_SFX}
+EOF
 	if [[ ${DEFAULT_Device} == "x86_64" ]];then
-		echo "EFI 引导: 	${EFI_Boot}"
-		echo "固件压缩:	${Compressed_x86}"
+		echo "EFI 引导:		${EFI_Boot}"
+		echo "固件压缩:		${Compressed_x86}"
 	fi
-	echo "固件格式:	${Firmware_SFX}"
 	exit
 }
 
@@ -153,7 +167,7 @@ else
 		else
 			Shell_Helper
 		fi
-		exit
+		exit 0
 	;;
 	-l | -L)
 		List_Info
@@ -162,7 +176,7 @@ else
 		rm -f /tmp/Downloads/* /tmp/Github_Tags
 		TIME && echo "固件下载缓存清理完成!"
 		sleep 1
-		exit
+		exit 0
 	;;
 	-h | -H | --help)
 		Shell_Helper
@@ -175,12 +189,13 @@ else
 			sed -i '/openwrt_boot/d' /etc/sysupgrade.conf
 			echo -e "\n/etc/openwrt_boot" >> /etc/sysupgrade.conf
 			TIME && echo "固件引导方式已指定为: ${Input_Other}!"
+			exit 0
 		;;
 		*)
 			echo -e "\n错误的参数: [${Input_Other}],当前支持的选项: [UEFI/Legacy] !"
+			exit 1
 		;;
 		esac
-		exit
 	;;
 	*)
 		echo -e "\nERROR INPUT: [$*]"
