@@ -108,7 +108,7 @@ Firmware-Diy_Base() {
 	[[ "${INCLUDE_Theme_Argon}" == true ]] && {
 		case ${Source_Owner} in
 		coolsnowwolf)
-				AddPackage git lean luci-theme-argon https://github.com/jerrykuku 18.06
+			AddPackage git lean luci-theme-argon https://github.com/jerrykuku 18.06
 		;;
 		*)
 			case ${Current_Branch} in
@@ -142,7 +142,6 @@ Firmware-Diy_Base() {
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
 		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	} || AutoUpdate_Version=OFF
-
 	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
 	case ${Source_Owner} in
 	coolsnowwolf)
@@ -150,7 +149,7 @@ Firmware-Diy_Base() {
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		AddPackage git other helloworld https://github.com/fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
-		sed -i "s?iptables?#iptables?g" ${Version_File} > /dev/null 2>&1
+		sed -i "s?iptables?#iptables?g" ${Version_File}
 		sed -i "s?${Old_Version}?${Old_Version} Compiled by ${Author} [${Display_Date}]?g" ${Version_File}
 		[[ "${INCLUDE_DRM_I915}" == true ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
 	;;
@@ -163,7 +162,6 @@ Firmware-Diy_Base() {
 		[[ "${INCLUDE_DRM_I915}" == true ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
 	;;
 	esac
-	
 	case ${Source_Owner} in
 	immortalwrt)
 		Replace_File CustomFiles/Depends/banner package/lean/default-settings/files openwrt_banner
@@ -176,7 +174,6 @@ Firmware-Diy_Base() {
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
 	;;
 	esac
-
 	[[ "${INCLUDE_Obsolete_PKG_Compatible}" == true ]] && {
 		TIME "Start to run Obsolete_Package_Compatible Scripts ..."
 		[[ ${Source_Owner} == openwrt ]] && {
@@ -241,26 +238,26 @@ PS_Firmware() {
 		echo "[Preload Info] Legacy_Firmware: ${Legacy_Firmware}"
 		echo "[Preload Info] UEFI_Firmware: ${EFI_Firmware}"
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
-		[ -f "${Legacy_Firmware}" ] && {
+		if [ -f "${Legacy_Firmware}" ];then
 			_MD5=$(md5sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
 			mv -f ${Legacy_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.${Firmware_Type}
 			TIME "Legacy Firmware is detected !"
-		} || {
+		else
 			TIME "[ERROR] Legacy Firmware is not detected !"
-		}
-		[ -f "${EFI_Firmware}" ] && {
+		fi
+		if [ -f "${EFI_Firmware}" ];then
 			_MD5=$(md5sum ${EFI_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${EFI_Firmware} | cut -d ' ' -f1)
 			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			cp ${EFI_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.${Firmware_Type}
 			TIME "UEFI Firmware is detected !"
-		} || {
+		else
 			TIME "[ERROR] UEFI Firmware is not detected !"
-		}
+		fi
 	;;
 	*)
 		cd ${Home}
@@ -269,15 +266,15 @@ PS_Firmware() {
 		AutoBuild_Detail="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}.detail"
 		echo "[Preload Info] Default_Firmware: ${Default_Firmware}"
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
-		[ -f ${Firmware_Path}/${Default_Firmware} ] && {
+		if [ -f "${Firmware_Path}/${Default_Firmware}" ];then
 			mv -f ${Firmware_Path}/${Default_Firmware} bin/Firmware/${AutoBuild_Firmware}
 			_MD5=$(md5sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > bin/Firmware/${AutoBuild_Detail}
 			TIME "Firmware is detected !"
-		} || {
+		else
 			TIME "[ERROR] Firmware is not detected !"
-		}
+		fi
 	;;
 	esac
 	cd ${Home}
@@ -328,15 +325,15 @@ Auto_AddPackage_mod() {
 		TIME "[ERROR] Error options: [$#] [$*] !"
 		return 0
 	}
-    _FILENAME=${1}
+	_FILENAME=${1}
 	echo "" >> ${_FILENAME}
-    [ -f "${_FILENAME}" ] && {
-	    TIME "Loading Custom Packages list: [${_FILENAME}]..."
-	    cat ${_FILENAME} | sed '/^$/d' | while read X
-	    do
-	    	[[ "${X}" != "" ]] && [[ -n ${X} ]] && AddPackage ${X}
-	    	unset X
-	    done
+	[ -f "${_FILENAME}" ] && {
+		TIME "Loading Custom Packages list: [${_FILENAME}]..."
+		cat ${_FILENAME} | sed '/^$/d' | while read X
+		do
+			[[ "${X}" != "" ]] && [[ -n ${X} ]] && AddPackage ${X}
+			unset X
+		done
 	}
 	unset _FILENAME
 }
@@ -349,17 +346,15 @@ AddPackage() {
 	case ${1} in
 	git | svn)
 		PKG_PROTO=${1}
+		PKG_DIR=${2}
+		PKG_NAME=${3}
+		REPO_URL=${4}
+		REPO_BRANCH=${5}
 	;;
 	*)
 		return 0
 	;;
 	esac
-	
-	PKG_DIR=${2}
-	PKG_NAME=${3}
-	REPO_URL=${4}
-	REPO_BRANCH=${5}
-
 	Mkdir package/${PKG_DIR}
 	[ -d "package/${PKG_DIR}/${PKG_NAME}" ] && {
 		TIME "Removing old package: [${PKG_NAME}] ..."
@@ -392,7 +387,7 @@ Replace_File() {
 	FILE_NAME=${1}
 	PATCH_DIR=${GITHUB_WORKSPACE}/openwrt/${2}
 	FILE_RENAME=${3}
-	
+
 	Mkdir ${PATCH_DIR}
 	[ -f "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="f" && _TYPE2="File"
 	[ -d "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && _TYPE1="d" && _TYPE2="Folder"
