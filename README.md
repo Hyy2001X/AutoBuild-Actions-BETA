@@ -11,9 +11,9 @@
 
 1. 首先需要获取 **Github Token**: [点击这里](https://github.com/settings/tokens/new) 获取,
 
-   `Note`项填写一个名称,`Select scopes`不理解就**全部打勾**,操作完成后点击下方`Generate token`
+   `Note`项填写一个名称,`Select scopes`**全部打勾**,完成后点击下方`Generate token`
 
-2. 复制页面中生成的 **Token**,并保存到本地,**Token 只会显示一次!**
+2. 复制页面中生成的 **Token**,**并保存到本地,Token 只会显示一次!**
 
 3. **Fork** 我的`AutoBuild-Actions`仓库,然后进入你的`AutoBuild-Actions`仓库进行之后的设置
 
@@ -25,15 +25,15 @@
 
 1. 进入你的`AutoBuild-Actions`仓库,**下方所有操作都将在你的`AutoBuild-Actions`仓库下进行**
 
-2. 把本地的 '.config' 文件重命名为你的**设备名称**并上传到`/Configs`
+2. 把本地的 `.config` 文件重命名为你的**设备名称**并上传到`/Configs`目录
 
 3. 编辑`.github/workflows/*.yml`文件,修改`第 9 和 29 行`为你的**设备名称**
 
-   **更换源码与分支** 修改`第 27 行 REPO_URL:`为源码仓库地址,`第 28 行`为分支
+   **更换源码与分支** 修改`第 27 行 REPO_URL:`为源码仓库地址,`第 28 行`为分支 (可选)
 
 4. 按照需求编辑`Scripts/AutoBuild_DiyScript.sh`文件的 **Firmware-Diy() 函数**
 
-   **软件包列表** 编辑`CustomPackages`下对应**设备名称**的文件,按照现有语法为**特定设备**添加软件包
+   **软件包列表** 编辑`CustomPackages`目录下对应**设备名称**的文件,按照现有语法为**特定设备**添加软件包 (可选)
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
@@ -54,6 +54,8 @@
    INCLUDE_Theme_Argon 自动添加适用于当前源码的 luci-theme-argon 主题
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
+   
+   注: 若要启用某项功能,请将相关的值修改为 true,禁用某项功能则修改为 false
 ```
 **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
@@ -70,29 +72,29 @@
    **一键编译** 先删除`第 23-24 行 #`注释,单(双)击右上角 **Star** 重新点亮 **Star** 即可一键编译
 
    **定时编译** 先删除`第 20-21 行 #`注释,然后按需修改相关参数,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
-   
+
    **手动编译** 点击上方`Actions`,选择你要编译的设备,点击右方`Run workflow`,再次点击即可开始编译
-   
+
    **SSH 连接** 使用方法参见 [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
 
 ## 使用固件更新脚本:
 
-   首先需要打开`TTYD 终端`或者在浏览器输入`IP地址:7681`,按需输入下方指令:
-   
-   检查并更新固件(保留配置): `AutoUpdate`或`autoupdate`
+   首先需要打开`TTYD 终端`或者在浏览器输入`IP 地址:7681`,按需输入下方指令:
 
-   检查并更新固件(不保留配置): `AutoUpdate -n`
-   
+   检查并更新固件(保留配置),输入: `AutoUpdate`或`bash /bin/AutoUpdate.sh`
+
+   更新固件(不保留配置): `AutoUpdate -n`
+
    查看更多使用方法: `AutoUpdate -help`
-   
+
    **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoUpdate`为`true`**
 
 ## 使用固件工具箱:
-   
+
    打开`TTYD 终端`,输入`Tools`或`tools`,请自行摸索,功能持续开发中...
 
    **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Tools`为`true`**
-   
+
 ## 鸣谢
 
    - [Lean's Openwrt Source code](https://github.com/coolsnowwolf/lede)
