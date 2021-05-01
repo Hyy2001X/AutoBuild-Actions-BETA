@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoBuild_Tools for Openwrt
 
-Version=V1.2.3
+Version=V1.2.4
 
 AutoBuild_Tools() {
 while :
@@ -15,6 +15,7 @@ do
 	echo "2. Samba 一键共享"
 	echo "3. 软件包安装"
 	echo "4. 查找文件(夹)"
+	echo "5. 端口占用列表"
 	echo "u. 固件更新"
 	echo -e "\nx. 更新脚本"
 	echo -e "q. 退出\n"
@@ -77,6 +78,12 @@ do
 		done
 		echo -e "\n开始从 [${_Path}] 中查找 [${_Name}],请耐心等待 ...\n"
 		PKG_Finder ${_Type} ${_Path} ${_Name}
+		Enter
+	;;
+	5)
+		clear
+		echo -e "端口		服务名称\n"
+		netstat -tanp | egrep ":::[0-9].+|0.0.0.0:[0-9]+|127.0.0.1:[0-9]+" | awk '{print $4"\t     "$7}' | sed -r 's/:::/\1/' | sed -r 's/0.0.0.0:/\1/' | sed -r 's/127.0.0.1:/\1/'| sed -r 's/[0-9]+.\//\1/' | sort | uniq
 		Enter
 	;;
 	esac
