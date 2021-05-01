@@ -8,26 +8,29 @@ Version=V5.7
 Shell_Helper() {
 cat <<EOF
 
-使用方法:   $0 [<更新参数>...]
-            $0 [<设置参数>...] [-c] [-b] <额外参数>
-            $0 [<其他>...] [-l] [-d]
+使用方法:	$0 [<更新参数><更新附加参数>]
+		$0 [<设置参数>...] [-c] [-boot] <额外参数>
+		$0 [<其他>...] [-l] [-d] [-help]
 
 更新参数:
-	-n              更新固件 [不保留配置]
-	-f | -force	强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
-	-u              适用于定时更新 LUCI 的参数 [保留配置]
+	-n		更新固件 [不保留配置]
+	-f		强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
+	-u		适用于定时更新 LUCI 的参数 [保留配置]
+	
+更新附加参数:
+	-p		优先使用 [FastGit] 镜像加速
 
 设置参数:
-	-c              [额外参数:<Github 地址>] 更换 Github 检查更新以及固件下载地址
+	-c		[额外参数:<Github 地址>] 更换 Github 检查更新以及固件下载地址
 	-b | -boot	[额外参数:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]
 
 其他:
-	-l | -list	列出所有信息
+	-l | -list	列出设备信息
 	-d | -del	清除固件下载缓存
-	-h | -help      打印帮助信息
+	-h | -help	打印帮助信息
 	
 EOF
-exit 1
+exit 0
 }
 
 List_Info() {
@@ -50,7 +53,7 @@ EOF
 		echo "EFI 引导:		${EFI_Mode}"
 		echo "固件压缩:		${Compressed_Firmware}"
 	}
-	exit
+	exit 0
 }
 
 Install_Pkg() {
@@ -137,23 +140,32 @@ esac
 cd /etc
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
 if [[ -z "${Input_Option}" ]];then
-	Upgrade_Options="-q" && TIME && echo "执行: 保留配置更新固件[静默模式]"
+	Upgrade_Options="-q"
+	TIME && echo "执行: 保留配置更新固件"
 else
 	case ${Input_Option} in
-	-n | -f | -force | -u)
+	-n | -f | -u | -np | -pn | -fp | -pf | -up | -pu | -p)
+		[[ "${Input_Option}" =~ p ]] && {
+			PROXY_URL="${_PROXY_URL}"
+			PROXY_ECHO="[FastGit] "
+		} || PROXY_ECHO=""
 		case ${Input_Option} in
-		-n)
-			TIME && echo "执行: 更新固件(不保留配置)"
+		-n | -np | -pn)
+			TIME && echo "${PROXY_ECHO}执行: 更新固件(不保留配置)"
 			Upgrade_Options="-n"
 		;;
-		-f | -force)
+		-f | -pf | -fp)
 			Force_Update=1
 			Upgrade_Options="-q"
-			TIME && echo "执行: 强制更新固件(保留配置)"
+			TIME && echo "${PROXY_ECHO}执行: 强制更新固件(保留配置)"
 		;;
-		-u)
+		-u | -pu | -up)
 			AutoUpdate_Mode=1
 			Upgrade_Options="-q"
+		;;
+		-p | -pq | -qp)
+			Upgrade_Options="-q"
+			TIME && echo "${PROXY_ECHO}执行: 保留配置更新固件"
 		;;
 		esac
 	;;
@@ -175,14 +187,14 @@ else
 		TIME && echo "固件下载缓存清理完成!"
 		exit 0
 	;;
-	-h | --help)
+	-h | -help)
 		Shell_Helper
 	;;
 	-b | -boot)
 		[[ -z "${Input_Other}" ]] && Shell_Helper
 		case "${Input_Other}" in
 		UEFI | Legacy)
-			echo "${Input_Other}" > openwrt_boot
+			echo "${Input_Other}" > /etc/openwrt_boot
 			sed -i '/openwrt_boot/d' /etc/sysupgrade.conf
 			echo -e "\n/etc/openwrt_boot" >> /etc/sysupgrade.conf
 			TIME && echo "固件引导方式已指定为: ${Input_Other}!"
