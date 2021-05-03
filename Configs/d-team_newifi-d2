@@ -18,13 +18,14 @@ CONFIG_PACKAGE_kmod-crypto-gcm=y
 CONFIG_PACKAGE_kmod-crypto-md5=y
 CONFIG_PACKAGE_kmod-crypto-sha256=y
 
-# Wireless 驱动程序
+# Wireless 驱动程序(开源)
 CONFIG_PACKAGE_kmod-mt76=y
+
+# Wireless 驱动程序(闭源)
 # CONFIG_PACKAGE_luci-app-mtwifi is not set
 # CONFIG_PACKAGE_mt_wifi is not set
 # CONFIG_PACKAGE_kmod-mt7603e is not set
 # CONFIG_PACKAGE_kmod-mt76x2e is not set
-CONFIG_PACKAGE_wpad=y
 
 # USB 相关
 CONFIG_PACKAGE_automount=y
@@ -50,7 +51,7 @@ CONFIG_PACKAGE_autosamba=y
 CONFIG_PACKAGE_luci-app-samba=y
 CONFIG_PACKAGE_luci-app-vsftpd=y
 
-# 主题包
+# 主题包以及相关设置
 CONFIG_PACKAGE_luci-theme-argon=y
 CONFIG_PACKAGE_luci-app-argon-config=y
 
@@ -107,6 +108,7 @@ CONFIG_PACKAGE_luci-app-zerotier=y
 # Other Appliciations
 CONFIG_PACKAGE_ppp-mod-pppol2tp=y
 CONFIG_PACKAGE_ppp-mod-pptp=y
+CONFIG_PACKAGE_wpad=y
 CONFIG_PACKAGE_xz=y
 CONFIG_PACKAGE_xz-utils=y
 
