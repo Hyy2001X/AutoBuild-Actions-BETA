@@ -33,6 +33,8 @@
 
 4. 按照需求编辑`Scripts/AutoBuild_DiyScript.sh`文件的 **Firmware-Diy() 函数**
 
+   **注意: 定制固件建议只修改 AutoBuild_DiyScript.sh 文件,而不是修改 AutoBuild_Function.sh**
+
    **软件包列表** 编辑`CustomPackages`目录下对应**设备名称**的文件,按照现有语法为**特定设备**添加软件包 (可选)
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
