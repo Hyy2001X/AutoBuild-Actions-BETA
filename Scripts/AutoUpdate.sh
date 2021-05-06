@@ -25,6 +25,7 @@ cat <<EOF
 	-b | -boot	[额外参数:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]
 
 其他:
+	-x |		更新 AutoUpdate.sh 脚本
 	-l | -list	列出设备信息
 	-d | -del	清除固件下载缓存
 	-h | -help	打印帮助信息
@@ -36,20 +37,22 @@ exit 0
 List_Info() {
 cat <<EOF
 
+AutoUpdate 版本:	${Version}
 /overlay 可用:		${Overlay_Available}
 /tmp 可用:		${TMP_Available}M
-固件下载位置:		/tmp/Downloads
+固件下载位置:		${Download_Path}
 当前设备:		${CURRENT_Device}
 默认设备:		${DEFAULT_Device}
 当前固件版本:		${CURRENT_Version}
 固件名称:		AutoBuild-${CURRENT_Device}-${CURRENT_Version}${Firmware_SFX}
-Github 地址:		${Github}
-解析 API 地址:		${Github_Tags}
+Github:			${Github}
+Github Raw:		${Github_Raw}
+解析 API:		${Github_Tags}
 固件下载地址:		${Github_Download}
-作者/仓库:		${Author}"
+作者/仓库:		${Author}
 固件格式:		${Firmware_SFX}
 EOF
-	[[ ${DEFAULT_Device} == "x86_64" ]] && {
+	[[ "${DEFAULT_Device}" == x86_64 ]] && {
 		echo "EFI 引导:		${EFI_Mode}"
 		echo "固件压缩:		${Compressed_Firmware}"
 	}
@@ -92,11 +95,14 @@ TIME() {
 }
 Input_Option=$1
 Input_Other=$2
+Download_Path="/tmp/Downloads"
 opkg list | awk '{print $1}' > /tmp/Package_list
 CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
 Github="$(awk 'NR==2' /etc/openwrt_info)"
 Github_Download="${Github}/releases/download/AutoUpdate"
 Author="${Github##*com/}"
+Github_Raw="https://raw.githubusercontent.com/${Author}/master"
+CLOUD_Script="${Github_Raw}/Scripts/AutoUpdate.sh"
 Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
 DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
 Firmware_Type="$(awk 'NR==4' /etc/openwrt_info)"
@@ -104,6 +110,7 @@ _PROXY_URL="https://download.fastgit.org"
 TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 Retry_Times=4
+[ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 case ${DEFAULT_Device} in
 x86_64)
 	[[ -z "${Firmware_Type}" ]] && Firmware_Type=img
@@ -128,14 +135,14 @@ x86_64)
 	Firmware_SFX="${BOOT_Type}.${Firmware_Type}"
 	Detail_SFX="${BOOT_Type}.detail"
 	CURRENT_Device=x86_64
-	Space_Req=480
+	Space_Min=480
 ;;
 *)
 	CURRENT_Device="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
 	Firmware_SFX=".${Firmware_Type}"
 	[[ -z ${Firmware_SFX} ]] && Firmware_SFX=".bin"
 	Detail_SFX=.detail
-	Space_Req=0
+	Space_Min=0
 esac
 cd /etc
 clear && echo "Openwrt-AutoUpdate Script ${Version}"
@@ -183,7 +190,7 @@ else
 		List_Info
 	;;
 	-d | -del)
-		rm -f /tmp/Downloads/* /tmp/Github_Tags
+		rm -f ${Download_Path}/*
 		TIME && echo "固件下载缓存清理完成!"
 		exit 0
 	;;
@@ -206,6 +213,19 @@ else
 		;;
 		esac
 	;;
+	-x)
+		wget -q ${CLOUD_Script} -O ${Download_Path}/AutoUpdate.sh
+		if [[ $? == 0 ]];then
+			TIME && echo "AutoUpdate 脚本更新成功!"
+			rm -f /bin/AutoUpdate.sh
+			mv -f ${Download_Path}/AutoUpdate.sh /bin
+			chmod +x /bin/AutoUpdate.sh
+			exit 0
+		else
+			TIME && echo "AutoUpdate 脚本更新失败!"
+			exit 1
+		fi	
+	;;
 	*)
 		echo -e "\nERROR INPUT: [$*]"
 		Shell_Helper
@@ -222,8 +242,8 @@ else
 	TIME && echo "无法确定网络环境,默认使用 [FastGit] 镜像加速!"
 	PROXY_URL="${_PROXY_URL}"
 fi
-[[ "${TMP_Available}" -lt "${Space_Req}" ]] && {
-	TIME && echo "/tmp 空间不足: [${Space_Req}M],无法执行更新!"
+[[ "${TMP_Available}" -lt "${Space_Min}" ]] && {
+	TIME && echo "/tmp 空间不足: [${Space_Min}M],无法执行更新!"
 	exit 1
 }
 Install_Pkg wget
@@ -241,13 +261,13 @@ if [[ -z "${CURRENT_Device}" ]];then
 	}
 fi
 TIME && echo "正在检查版本更新..."
-wget -q ${Github_Tags} -O - > /tmp/Github_Tags
+wget -q ${Github_Tags} -O - > ${Download_Path}/Github_Tags
 [[ ! $? == 0 ]] && {
 	TIME && echo "检查更新失败,请稍后重试!"
 	exit 1
 }
 TIME && echo "正在获取云端固件版本..."
-CLOUD_Firmware=$(cat /tmp/Github_Tags | egrep -o "AutoBuild-${CURRENT_Device}-R[0-9].+-[0-9]+${Firmware_SFX}" | awk 'END {print}')
+CLOUD_Firmware=$(cat ${Download_Path}/Github_Tags | egrep -o "AutoBuild-${CURRENT_Device}-R[0-9].+-[0-9]+${Firmware_SFX}" | awk 'END {print}')
 CLOUD_Version=$(echo ${CLOUD_Firmware} | egrep -o "R[0-9].+-[0-9]+")
 [[ -z "${CLOUD_Version}" ]] && {
 	TIME && echo "云端固件版本获取失败!"
@@ -256,8 +276,8 @@ CLOUD_Version=$(echo ${CLOUD_Firmware} | egrep -o "R[0-9].+-[0-9]+")
 Firmware_Name="$(echo ${CLOUD_Firmware} | egrep -o "AutoBuild-${CURRENT_Device}-R[0-9].+-[0-9]+")"
 Firmware="${CLOUD_Firmware}"
 Firmware_Detail="${Firmware_Name}${Detail_SFX}"
-let X=$(grep -n "${Firmware}" /tmp/Github_Tags | tail -1 | cut -d : -f 1)-4
-let CLOUD_Firmware_Size=$(sed -n "${X}p" /tmp/Github_Tags | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1
+let X=$(grep -n "${Firmware}" ${Download_Path}/Github_Tags | tail -1 | cut -d : -f 1)-4
+let CLOUD_Firmware_Size=$(sed -n "${X}p" ${Download_Path}/Github_Tags | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1
 echo -e "\n固件作者: ${Author%/*}"
 echo "设备名称: ${CURRENT_Device}"
 echo "固件格式: ${Firmware_SFX}"
@@ -285,11 +305,11 @@ fi
 [[ -n "${PROXY_URL}" ]] && Github_Download=${PROXY_URL}/${Author}/releases/download/AutoUpdate
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Download}"
-echo "固件保存位置: /tmp/Downloads"
-[ ! -d "/tmp/Downloads" ] && mkdir -p /tmp/Downloads
-rm -f /tmp/Downloads/*
+echo "固件保存位置: ${Download_Path}"
+[ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
+rm -f ${Download_Path}/*
 TIME && echo "正在下载固件,请耐心等待..."
-cd /tmp/Downloads
+cd ${Download_Path}
 while [ "${Retry_Times}" -ge 0 ];
 do
 	if [[ "${Retry_Times}" == 3 ]];then
