@@ -1,10 +1,13 @@
 Sysinfo() {
-	Target=$([ -f /etc/openwrt_info ] && cat /etc/openwrt_info | awk 'NR==3')
-	Version=$([ -f /etc/openwrt_info ] && cat /etc/openwrt_info | awk 'NR==1' || Version=Unknown)
-	[ -z "${Target}" ] && Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
+	[ -f /etc/openwrt_info ] && {
+		source /etc/openwrt_info
+		Target=${DEFAULT_Device}
+	}
+	[[ -n "${CURRENT_Version}" ]] && Version="${CURRENT_Version}" || Version=Unknown
+	[[ -z "${Target}" ]] && Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
 	IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
 	CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
-	[ -z "${CoreMark}" ] && CoreMark=Unknown
+	[[ -z "${CoreMark}" ]] && CoreMark=Unknown
 	Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
 	Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 	echo -e "\n"
