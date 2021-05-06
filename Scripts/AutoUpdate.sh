@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.7.1
+Version=V5.7.2
 
 Shell_Helper() {
 cat <<EOF
@@ -91,7 +91,7 @@ TIME() {
 	echo -ne "\n[$(date "+%H:%M:%S")] "
 }
 
-[ ! -f /etc/openwrt_info ] && {
+[ -f /etc/openwrt_info ] && source /etc/openwrt_info || {
 	echo -e "\n未检测到 /etc/openwrt/info,无法运行更新程序!"
 	exit 1
 }
@@ -99,15 +99,11 @@ Input_Option=$1
 Input_Other=$2
 Download_Path="/tmp/Downloads"
 opkg list | awk '{print $1}' > /tmp/Package_list
-CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
-Github="$(awk 'NR==2' /etc/openwrt_info)"
 Github_Release="${Github}/releases/download/AutoUpdate"
 Author="${Github##*com/}"
 CLOUD_Script="Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh"
 Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
 Github_Raw="https://raw.githubusercontent.com"
-DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
-Firmware_Type="$(awk 'NR==4' /etc/openwrt_info)"
 _PROXY_Release="https://download.fastgit.org"
 TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
