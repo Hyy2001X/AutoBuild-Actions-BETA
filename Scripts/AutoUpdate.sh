@@ -3,33 +3,35 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.7
+Version=V5.7.1
 
 Shell_Helper() {
 cat <<EOF
 
-使用方法:	$0 [<更新参数><更新附加参数>]
-		$0 [<设置参数>...] [-c] [-boot] <额外参数>
-		$0 [<其他>...] [-l] [-d] [-help]
+使用方法:	$0 [<更新参数/复合参数] [-n] [-f] [-u] [-p] [-np] [-fp]
+		$0 [<设置参数>...] [-c] [-b] <额外参数>
+		$0 [<其他>...] [-x] [-xp] [-l] [-lp] [-d] [-h]
 
 更新参数:
 	-n		更新固件 [不保留配置]
+	-np		更新固件 [不保留配置] (镜像加速)
 	-f		强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
 	-u		适用于定时更新 LUCI 的参数 [保留配置]
-	
-更新附加参数:
-	-p		优先使用 [FastGit] 镜像加速
 
 设置参数:
-	-c		[额外参数:<Github 地址>] 更换 Github 检查更新以及固件下载地址
-	-b | -boot	[额外参数:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 [危险]
+	-c		[额外参数:<Github 地址>] 更换 Github 地址
+	-b		[额外参数:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 (危险)
 
 其他:
-	-x |		更新 AutoUpdate.sh 脚本
-	-l | -list	列出设备信息
-	-d | -del	清除固件下载缓存
-	-h | -help	打印帮助信息
+	-x		更新 AutoUpdate.sh 脚本
+	-xp		更新 AutoUpdate.sh 脚本 (镜像加速)
+	-l		列出系统信息
+	-d		清理固件下载缓存
+	-h		打印帮助信息
 	
+复合/单参数:
+	-p		使用 [FastGit] 镜像加速
+
 EOF
 exit 0
 }
@@ -48,7 +50,7 @@ AutoUpdate 版本:	${Version}
 Github:			${Github}
 Github Raw:		${Github_Raw}
 解析 API:		${Github_Tags}
-固件下载地址:		${Github_Download}
+固件下载地址:		${Github_Release}
 作者/仓库:		${Author}
 固件格式:		${Firmware_SFX}
 EOF
@@ -62,7 +64,7 @@ EOF
 Install_Pkg() {
 	PKG_NAME=$1
 	if [[ ! "$(cat /tmp/Package_list)" =~ "${PKG_NAME}" ]];then
-		[[ "${Force_Update}" == "1" ]] || [[ "${AutoUpdate_Mode}" == "1" ]] && {
+		[[ "${Force_Update}" == 1 ]] || [[ "${AutoUpdate_Mode}" == 1 ]] && {
 			Choose=Y
 		} || {
 			TIME && read -p "未安装[${PKG_NAME}],是否执行安装?[Y/n]:" Choose
@@ -99,14 +101,14 @@ Download_Path="/tmp/Downloads"
 opkg list | awk '{print $1}' > /tmp/Package_list
 CURRENT_Version="$(awk 'NR==1' /etc/openwrt_info)"
 Github="$(awk 'NR==2' /etc/openwrt_info)"
-Github_Download="${Github}/releases/download/AutoUpdate"
+Github_Release="${Github}/releases/download/AutoUpdate"
 Author="${Github##*com/}"
-Github_Raw="https://raw.githubusercontent.com/${Author}/master"
-CLOUD_Script="${Github_Raw}/Scripts/AutoUpdate.sh"
+CLOUD_Script="Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh"
 Github_Tags="https://api.github.com/repos/${Author}/releases/latest"
+Github_Raw="https://raw.githubusercontent.com"
 DEFAULT_Device="$(awk 'NR==3' /etc/openwrt_info)"
 Firmware_Type="$(awk 'NR==4' /etc/openwrt_info)"
-_PROXY_URL="https://download.fastgit.org"
+_PROXY_Release="https://download.fastgit.org"
 TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 Retry_Times=4
@@ -150,12 +152,15 @@ if [[ -z "${Input_Option}" ]];then
 	Upgrade_Options="-q"
 	TIME && echo "执行: 保留配置更新固件"
 else
+	[[ "${Input_Option}" =~ p ]] && {
+		PROXY_Release="${_PROXY_Release}"
+		Github_Raw="https://raw.fastgit.org"
+		PROXY_ECHO="[FastGit] "
+	} || {
+		PROXY_ECHO=""
+	}
 	case ${Input_Option} in
-	-n | -f | -u | -np | -pn | -fp | -pf | -up | -pu | -p)
-		[[ "${Input_Option}" =~ p ]] && {
-			PROXY_URL="${_PROXY_URL}"
-			PROXY_ECHO="[FastGit] "
-		} || PROXY_ECHO=""
+	-n | -f | -u | -p | -np | -pn | -fp | -pf | -up | -pu)
 		case ${Input_Option} in
 		-n | -np | -pn)
 			TIME && echo "${PROXY_ECHO}执行: 更新固件(不保留配置)"
@@ -186,18 +191,18 @@ else
 			Shell_Helper
 		fi
 	;;
-	-l | -list)
+	-l | -lp | -pl)
 		List_Info
 	;;
-	-d | -del)
+	-d)
 		rm -f ${Download_Path}/*
 		TIME && echo "固件下载缓存清理完成!"
 		exit 0
 	;;
-	-h | -help)
+	-h)
 		Shell_Helper
 	;;
-	-b | -boot)
+	-b)
 		[[ -z "${Input_Other}" ]] && Shell_Helper
 		case "${Input_Other}" in
 		UEFI | Legacy)
@@ -213,13 +218,17 @@ else
 		;;
 		esac
 	;;
-	-x)
+	-x | -xp | -px)
+		CLOUD_Script=${Github_Raw}/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
+		TIME && echo "${PROXY_ECHO}开始更新 AutoUpdate 脚本,请耐心等待..."
 		wget -q --tries 3 --timeout 5 ${CLOUD_Script} -O ${Download_Path}/AutoUpdate.sh
 		if [[ $? == 0 ]];then
-			TIME && echo "AutoUpdate 脚本更新成功!"
 			rm /bin/AutoUpdate.sh
 			mv -f ${Download_Path}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoUpdate.sh
+			NEW_Version=$(egrep -o "V[0-9]+.[0-9]+" /bin/AutoUpdate.sh | awk 'NR==1')
+			TIME && echo "AutoUpdate [${Version}] > [${NEW_Version}]"
+			TIME && echo "AutoUpdate 脚本更新成功!"
 			exit 0
 		else
 			TIME && echo "AutoUpdate 脚本更新失败,请检查网络后重试!"
@@ -236,11 +245,11 @@ if [[ "$(cat /tmp/Package_list)" =~ "curl" ]];then
 	Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 	[[ ! "$Google_Check" == 301 ]] && {
 		TIME && echo "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
-		PROXY_URL="${_PROXY_URL}"
+		PROXY_Release="${_PROXY_Release}"
 	}
 else
 	TIME && echo "无法确定网络环境,默认使用 [FastGit] 镜像加速!"
-	PROXY_URL="${_PROXY_URL}"
+	PROXY_Release="${_PROXY_Release}"
 fi
 [[ "${TMP_Available}" -lt "${Space_Min}" ]] && {
 	TIME && echo "/tmp 空间不足: [${Space_Min}M],无法执行更新!"
@@ -302,9 +311,9 @@ if [[ ! "${Force_Update}" == 1 ]];then
 		}
 	fi
 fi
-[[ -n "${PROXY_URL}" ]] && Github_Download=${PROXY_URL}/${Author}/releases/download/AutoUpdate
+[[ -n "${PROXY_Release}" ]] && Github_Release=${PROXY_Release}/${Author}/releases/download/AutoUpdate
 echo -e "\n云端固件名称: ${Firmware}"
-echo "固件下载地址: ${Github_Download}"
+echo "固件下载地址: ${Github_Release}"
 echo "固件保存位置: ${Download_Path}"
 [ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 rm -f ${Download_Path}/*
@@ -313,16 +322,16 @@ cd ${Download_Path}
 while [ "${Retry_Times}" -ge 0 ];
 do
 	if [[ "${Retry_Times}" == 3 ]];then
-		[[ -z "${PROXY_URL}" ]] && {
+		[[ -z "${PROXY_Release}" ]] && {
 			TIME && echo "正在尝试使用 [FastGit] 镜像加速下载..."
-			Github_Download=${_PROXY_URL}/${Author}/releases/download/AutoUpdate
+			Github_Release=${_PROXY_Release}/${Author}/releases/download/AutoUpdate
 		}
 	fi
 	if [[ "${Retry_Times}" == 0 ]];then
 		TIME && echo "固件下载失败,请检查网络后重试!"
 		exit 1
 	else
-		wget -q --tries 1 --timeout 5 "${Github_Download}/${Firmware}" -O ${Firmware}
+		wget -q --tries 1 --timeout 5 "${Github_Release}/${Firmware}" -O ${Firmware}
 		[[ $? == 0 ]] && break
 	fi
 	Retry_Times=$((${Retry_Times} - 1))
@@ -331,7 +340,7 @@ do
 done
 TIME && echo "固件下载成功!"
 TIME && echo "正在获取云端固件MD5,请耐心等待..."
-wget -q ${Github_Download}/${Firmware_Detail} -O ${Firmware_Detail}
+wget -q ${Github_Release}/${Firmware_Detail} -O ${Firmware_Detail}
 [[ ! $? == 0 ]] && {
 	TIME && echo "MD5 获取失败,请检查网络后重试!"
 	exit 1
