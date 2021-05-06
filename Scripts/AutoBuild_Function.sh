@@ -73,10 +73,10 @@ GET_TARGET_INFO() {
 	echo "Home=${Home}" >> ${Home}/TARGET_INFO
 	echo "Current_Branch=${Current_Branch}" >> ${Home}/TARGET_INFO
 
-	echo "${Openwrt_Version}" > ${AB_Firmware_Info}
-	echo "${Owner_Repo}" >> ${AB_Firmware_Info}
-	echo "${TARGET_PROFILE}" >> ${AB_Firmware_Info}
-	echo "${Firmware_Type}" >> ${AB_Firmware_Info}
+	echo "CURRENT_Version=${Openwrt_Version}" > ${AB_Firmware_Info}
+	echo "Github=${Owner_Repo}" >> ${AB_Firmware_Info}
+	echo "DEFAULT_Device=${TARGET_PROFILE}" >> ${AB_Firmware_Info}
+	echo "Firmware_Type=${Firmware_Type}" >> ${AB_Firmware_Info}
 
 	echo "Author: ${Author}"
 	echo "Author Github: ${Owner_Repo}"
