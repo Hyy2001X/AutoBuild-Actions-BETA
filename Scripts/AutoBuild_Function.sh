@@ -40,7 +40,7 @@ GET_TARGET_INFO() {
 		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" .config | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
 		[[ -z "${x86_Test}" ]] && TIME "[ERROR] Can not obtain the TARGET_PROFILE !" && exit 1
 	done
-	[[ "${x86_Test}" == "x86_64" ]] && {
+	[[ "${x86_Test}" == x86_64 ]] && {
 		TARGET_PROFILE="x86_64"
 	} || {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
@@ -140,7 +140,7 @@ Firmware-Diy_Base() {
 		fi
 	}
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
-		AutoUpdate_Version=$(awk 'NR==6' package/base-files/files/bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
+		AutoUpdate_Version=$(egrep -o "V[0-9]+.[0-9].+" package/base-files/files/bin/AutoUpdate.sh | awk 'NR==1')
 	} || AutoUpdate_Version=OFF
 	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
 	sed -i '/profile/d' package/base-files/files/lib/upgrade/keep.d/base-files-essential

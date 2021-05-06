@@ -226,7 +226,7 @@ else
 			rm /bin/AutoUpdate.sh
 			mv -f ${Download_Path}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoUpdate.sh
-			NEW_Version=$(egrep -o "V[0-9]+.[0-9]+" /bin/AutoUpdate.sh | awk 'NR==1')
+			NEW_Version=$(egrep -o "V[0-9]+.[0-9].+" /bin/AutoUpdate.sh | awk 'NR==1')
 			TIME && echo "AutoUpdate [${Version}] > [${NEW_Version}]"
 			TIME && echo "AutoUpdate 脚本更新成功!"
 			exit 0
