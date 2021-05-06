@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoBuild_Tools for Openwrt
 
-Version=V1.2.4
+Version=V1.2.5
 
 AutoBuild_Tools() {
 while :
@@ -348,7 +348,7 @@ do
 	echo "3. 不保留配置更新固件 [全新安装]"
 	echo "4. 列出固件信息"
 	echo "5. 清除固件下载缓存"
-	echo "6. 更改 Github API 地址"
+	echo "6. 更改 Github 地址"
 	echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
 	echo -e "\nx. 更新 [AutoUpdate] 脚本"
 	echo -e "q. 返回\n"
@@ -358,13 +358,7 @@ do
 		break
 	;;
 	x)
-		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${AutoBuild_Tools_Temp}/AutoUpdate.sh
-		[[ $? == 0 ]] && {
-			echo -e "\n脚本更新成功!"
-			rm -f /bin/AutoUpdate.sh
-			mv -f ${AutoBuild_Tools_Temp}/AutoUpdate.sh /bin
-			chmod +x /bin/AutoUpdate.sh
-		} || echo -e "\n脚本更新失败!"
+		bash /bin/AutoUpdate.sh -x
 		sleep 2
 	;;
 	1)
@@ -382,7 +376,7 @@ do
 	;;
 	5)
 		bash /bin/AutoUpdate.sh -d
-		sleep 1
+		sleep 2
 	;;
 	6)
 		echo ""
