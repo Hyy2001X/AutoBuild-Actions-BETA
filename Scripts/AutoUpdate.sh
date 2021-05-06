@@ -214,15 +214,15 @@ else
 		esac
 	;;
 	-x)
-		wget -q ${CLOUD_Script} -O ${Download_Path}/AutoUpdate.sh
+		wget -q --tries 3 --timeout 5 ${CLOUD_Script} -O ${Download_Path}/AutoUpdate.sh
 		if [[ $? == 0 ]];then
 			TIME && echo "AutoUpdate 脚本更新成功!"
-			rm -f /bin/AutoUpdate.sh
+			rm /bin/AutoUpdate.sh
 			mv -f ${Download_Path}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoUpdate.sh
 			exit 0
 		else
-			TIME && echo "AutoUpdate 脚本更新失败!"
+			TIME && echo "AutoUpdate 脚本更新失败,请检查网络后重试!"
 			exit 1
 		fi	
 	;;
