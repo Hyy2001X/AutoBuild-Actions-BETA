@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoBuild_Tools for Openwrt
 
-Version=V1.2.5
+Version=V1.3
 
 AutoBuild_Tools() {
 while :
@@ -16,6 +16,7 @@ do
 	echo "3. 软件包安装"
 	echo "4. 查找文件(夹)"
 	echo "5. 端口占用列表"
+	echo "6. 查看硬盘信息"
 	echo "u. 固件更新"
 	echo -e "\nx. 更新脚本"
 	echo -e "q. 退出\n"
@@ -85,6 +86,13 @@ do
 		echo -e "端口		服务名称\n"
 		netstat -tanp | egrep ":::[0-9].+|0.0.0.0:[0-9]+|127.0.0.1:[0-9]+" | awk '{print $4"\t     "$7}' | sed -r 's/:::/\1/' | sed -r 's/0.0.0.0:/\1/' | sed -r 's/127.0.0.1:/\1/'| sed -r 's/[0-9]+.\//\1/' | sort | uniq
 		Enter
+	;;
+	6)
+		which smartctl > /dev/null 2>&1
+		[[ ! $? -eq 0 ]] && {
+			echo -e "\n缺少相应依赖包,请先安装 [smartmontools] !"
+			sleep 3
+		} || Smart_Info
 	;;
 	esac
 done
@@ -157,6 +165,7 @@ USB_Check_Core() {
 				echo "${Disk_Name} ${Disk_Format}" >> ${Disk_Processed_List}
 			}
 		done
+		grep -o "/dev/sd[a-z]" ${Disk_List} | sort | uniq > ${Phy_Disk_List}
 	}
 }
 
@@ -307,6 +316,7 @@ do
 	echo "1. 更新软件包列表"
 	AutoInstall_UI_mod 2 block-mount
 	AutoInstall_UI_mod 3 e2fsprogs
+	AutoInstall_UI_mod 4 smartmontools
 	echo "x. 自定义软件包名"
 	echo -e "\nq. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -333,6 +343,9 @@ do
 	3)
 		Install_opkg_mod e2fsprogs
 	;;
+	4)
+		Install_opkg_mod smartmontools
+	;;
 	esac
 done
 }
@@ -348,7 +361,7 @@ do
 	echo "3. 不保留配置更新固件 [全新安装]"
 	echo "4. 列出固件信息"
 	echo "5. 清除固件下载缓存"
-	echo "6. 更改 Github 地址"
+	echo "6. 更改 Github API 地址"
 	echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
 	echo -e "\nx. 更新 [AutoUpdate] 脚本"
 	echo -e "q. 返回\n"
@@ -358,7 +371,13 @@ do
 		break
 	;;
 	x)
-		bash /bin/AutoUpdate.sh -x
+		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${AutoBuild_Tools_Temp}/AutoUpdate.sh
+		[[ $? == 0 ]] && {
+			echo -e "\n脚本更新成功!"
+			rm -f /bin/AutoUpdate.sh
+			mv -f ${AutoBuild_Tools_Temp}/AutoUpdate.sh /bin
+			chmod +x /bin/AutoUpdate.sh
+		} || echo -e "\n脚本更新失败!"
 		sleep 2
 	;;
 	1)
@@ -376,7 +395,7 @@ do
 	;;
 	5)
 		bash /bin/AutoUpdate.sh -d
-		sleep 2
+		sleep 1
 	;;
 	6)
 		echo ""
@@ -396,6 +415,78 @@ do
 	;;
 	esac
 done
+}
+
+Smart_Info() {
+	USB_Check_Core
+	clear
+	smartctl -v | awk 'NR==1'
+	cat ${Phy_Disk_List} | while read Phy_Disk
+	do
+		GET_Smart_Info ${Phy_Disk}
+	done
+	echo -e "\n==========================================="
+	Enter
+}
+
+getinf() {
+	grep "$1" $2 | sed "s/^[${1}]*//g" 2>/dev/null | sed 's/^[ \t]*//g' 2>/dev/null
+}
+
+GET_Smart_Info() {
+	smartctl -H -A -i $1 > ${Smart_Info1}
+	smartctl -H -A -i -d scsi $1 > ${Smart_Info2}
+	if [[ ! $(smartctl -H $1) =~ "Unknown" ]];then
+		#Phy_Health=$(getinf "SMART overall-health self-assessment test result:" ${Smart_Info1})
+		[[ $(smartctl -H $1) =~ "PASSED" ]] && Phy_Health=PASSED || Phy_Health=Failure
+	else
+		Phy_Health=$(getinf "SMART Health Status:" ${Smart_Info2})
+	fi
+	Phy_Name=$(getinf "Device Model:" ${Smart_Info1})
+	Phy_ID=$(getinf "Serial number:" ${Smart_Info2})
+	Phy_Capacity=$(getinf "User Capacity:" ${Smart_Info2})
+	Phy_Sata_Version=$(getinf "SATA Version is:" ${Smart_Info1})
+	[[ -z ${Phy_Sata_Version} ]] && Phy_Sata_Version=不可用
+	Phy_TRIM=$(getinf "TRIM Command:" ${Smart_Info1})
+	[[ -z "${Phy_TRIM}" ]] && Phy_TRIM=未知
+	Power_On=$(grep "Power_On" ${Smart_Info1} | awk '{print $NF}')
+	Power_Cycle=$(grep "Power_Cycle_Count" ${Smart_Info1} | awk '{print $NF}')
+	[[ -z ${Power_On} ]] && Power_On=未知 && Power_Cycle=未知
+	if [[ "$(getinf "Rotation Rate:" ${Smart_Info2})" =~ "Solid State" ]];then
+		Phy_Type="固态硬盘"
+		Phy_RPM="不可用"
+	else
+		Phy_Type="普通硬盘"
+		if [[ "$(getinf "Rotation Rate:" ${Smart_Info2})" =~ "rpm" ]];then
+			Phy_RPM="$(getinf "Rotation Rate:" ${Smart_Info2})"
+		else
+			Phy_RPM="不可用"
+		fi
+	fi
+	[[ -z "${Phy_Name}" ]] && {
+		Phy_Name="$(getinf Vendor: ${Smart_Info2})$(getinf Product: ${Smart_Info2})"
+	}
+	Phy_LB=$(getinf "Logical block size:" ${Smart_Info2})
+	Phy_PB=$(getinf "Physical block size:" ${Smart_Info2})
+	if [[ -n "${Phy_PB}" ]];then
+		Phy_BS="${Phy_LB} / ${Phy_PB}"
+	else
+		Phy_BS="${Phy_LB}"
+	fi
+	Phy_Localtime=$(getinf "Local Time is:" ${Smart_Info2})
+	echo -e "\n===========================================\n"
+	echo "硬盘型号: ${Phy_Name}"
+	echo "硬盘 ID : ${Phy_ID}"
+	echo "健康状况: ${Phy_Health}"
+	echo "硬盘容量: ${Phy_Capacity}"
+	echo "SATA版本: ${Phy_Sata_Version}"
+	echo "TRIM指令: ${Phy_TRIM}"
+	echo "硬盘类型: ${Phy_Type}"
+	echo "硬盘转速: ${Phy_RPM}"
+	echo "扇区大小: ${Phy_BS}"
+	echo "通电时间: ${Power_On}"
+	echo "通电次数: ${Power_Cycle}"
+	echo "本地时间: ${Phy_Localtime}"
 }
 
 AutoInstall_UI_mod() {
@@ -436,6 +527,9 @@ AutoExpend_Temp="${AutoBuild_Tools_Temp}/AutoExpand"
 Disk_List="${AutoExpend_Temp}/Disk_List"
 Block_Info="${AutoExpend_Temp}/Block_Info"
 Disk_Processed_List="${AutoExpend_Temp}/Disk_Processed_List"
+Phy_Disk_List="${AutoExpend_Temp}/Phy_Disk_List"
+Smart_Info1="${AutoExpend_Temp}/Smart_Info1"
+Smart_Info2="${AutoExpend_Temp}/Smart_Info2"
 [ ! -d "${AutoExpend_Temp}" ] && mkdir -p "${AutoExpend_Temp}"
 Samba_Config="/etc/config/samba"
 Samba_Temp="${AutoBuild_Tools_Temp}/AutoSamba"
