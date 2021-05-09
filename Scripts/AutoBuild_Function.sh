@@ -8,18 +8,21 @@ GET_TARGET_INFO() {
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	[ -f "${GITHUB_WORKSPACE}/Openwrt.info" ] && . ${GITHUB_WORKSPACE}/Openwrt.info
 	[[ "${Short_Firmware_Date}" == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
-	Owner_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
-	Source_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
-	Source_Owner="$(echo "${Source_Repo}" | egrep -o "[a-z]+" | awk 'NR==4')"
-	Current_Branch="$(git branch | sed 's/* //g')"
-	AB_Firmware_Info=package/base-files/files/etc/openwrt_info
+	User_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
+	[[ -z "${Author}" ]] && {
+		Author="$(echo "${User_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
+	}
+	Openwrt_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
+	Openwrt_Author="$(echo "${Openwrt_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
+	Current_Branch="$(git branch | sed 's/* //g' | sed 's/^[ \t]*//g')"
+	In_Firmware_Info=package/base-files/files/etc/openwrt_info
 	[[ ! ${Current_Branch} == master ]] && {
 		Current_Branch="$(echo ${Current_Branch} | egrep -o "[0-9]+.[0-9]+")"
 		Openwrt_Version_="R${Current_Branch}-"
 	} || {
 		Openwrt_Version_="R18.06-"
 	}
-	case ${Source_Owner} in
+	case ${Openwrt_Author} in
 	coolsnowwolf)
 		Version_File=package/lean/default-settings/files/zzz-default-settings
 		Old_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
@@ -67,24 +70,24 @@ GET_TARGET_INFO() {
 	echo "Firmware_Type=${Firmware_Type}" > ${Home}/TARGET_INFO
 	echo "TARGET_PROFILE=${TARGET_PROFILE}" >> ${Home}/TARGET_INFO
 	echo "Openwrt_Version=${Openwrt_Version}" >> ${Home}/TARGET_INFO
-	echo "Source_Owner=${Source_Owner}" >> ${Home}/TARGET_INFO
+	echo "Openwrt_Author=${Openwrt_Author}" >> ${Home}/TARGET_INFO
 	echo "TARGET_BOARD=${TARGET_BOARD}" >> ${Home}/TARGET_INFO
 	echo "TARGET_SUBTARGET=${TARGET_SUBTARGET}" >> ${Home}/TARGET_INFO
 	echo "Home=${Home}" >> ${Home}/TARGET_INFO
 	echo "Current_Branch=${Current_Branch}" >> ${Home}/TARGET_INFO
 
-	echo "CURRENT_Version=${Openwrt_Version}" > ${AB_Firmware_Info}
-	echo "Github=${Owner_Repo}" >> ${AB_Firmware_Info}
-	echo "DEFAULT_Device=${TARGET_PROFILE}" >> ${AB_Firmware_Info}
-	echo "Firmware_Type=${Firmware_Type}" >> ${AB_Firmware_Info}
+	echo "CURRENT_Version=${Openwrt_Version}" > ${In_Firmware_Info}
+	echo "Github=${User_Repo}" >> ${In_Firmware_Info}
+	echo "DEFAULT_Device=${TARGET_PROFILE}" >> ${In_Firmware_Info}
+	echo "Firmware_Type=${Firmware_Type}" >> ${In_Firmware_Info}
 
 	echo "Author: ${Author}"
-	echo "Author Github: ${Owner_Repo}"
+	echo "User Repo: ${User_Repo}"
 	echo "Firmware Version: ${Openwrt_Version}"
 	echo "Firmware Type: ${Firmware_Type}"
-	echo "Source: ${Source_Repo}"
-	echo "Source Author: ${Source_Owner}"
-	echo "Source Branch: ${Current_Branch}"
+	echo "Openwrt Repo: ${Openwrt_Repo}"
+	echo "Openwrt Author: ${Openwrt_Author}"
+	echo "Openwrt Branch: ${Current_Branch}"
 	echo "TARGET_PROFILE: ${TARGET_PROFILE}"
 	echo "TARGET_BOARD: ${TARGET_BOARD}"
 	echo "TARGET_SUBTARGET: ${TARGET_SUBTARGET}"
@@ -106,7 +109,7 @@ Firmware-Diy_Base() {
 		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
 	}
 	[[ "${INCLUDE_Theme_Argon}" == true ]] && {
-		case ${Source_Owner} in
+		case ${Openwrt_Author} in
 		coolsnowwolf)
 			AddPackage git lean luci-theme-argon https://github.com/jerrykuku 18.06
 		;;
@@ -127,8 +130,14 @@ Firmware-Diy_Base() {
 			esac
 		;;
 		esac
-	}	
-	[[ -n "${Default_IP_Address}" ]] && {
+	}
+	if [[ -n "${Defined_IP_Address}" ]];then
+		TIME "Using defined IP Address [${Defined_IP_Address}] ..."
+		Default_IP_Address="${Defined_IP_Address}"
+	else
+		TIME "Using default IP Address [${Default_IP_Address}] ..."
+	fi
+	[[ -n "${Default_IP_Address}" ]] && [[ "${Default_IP_Address}" != false ]] && {
 		if [[ "${Default_IP_Address}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
 			Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
 			if [[ ! "${Default_IP_Address}" == "${Old_IP_Address}" ]];then
@@ -144,7 +153,7 @@ Firmware-Diy_Base() {
 	} || AutoUpdate_Version=OFF
 	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
 	sed -i '/profile/d' package/base-files/files/lib/upgrade/keep.d/base-files-essential
-	case ${Source_Owner} in
+	case ${Openwrt_Author} in
 	coolsnowwolf)
 		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
@@ -163,7 +172,7 @@ Firmware-Diy_Base() {
 		[[ "${INCLUDE_DRM_I915}" == true ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
 	;;
 	esac
-	case ${Source_Owner} in
+	case ${Openwrt_Author} in
 	immortalwrt)
 		Replace_File CustomFiles/Depends/banner package/lean/default-settings/files openwrt_banner
 		sed -i "s?By?By ${Author}?g" package/lean/default-settings/files/openwrt_banner
@@ -177,7 +186,7 @@ Firmware-Diy_Base() {
 	esac
 	[[ "${INCLUDE_Obsolete_PKG_Compatible}" == true ]] && {
 		TIME "Start to run Obsolete_Package_Compatible Scripts ..."
-		[[ ${Source_Owner} == openwrt ]] && {
+		[[ ${Openwrt_Author} == openwrt ]] && {
 			case ${Current_Branch} in
 			19.07 | 21.02)
 				Replace_File CustomFiles/Patches/0003-upx-ucl-${Current_Branch}.patch ./
@@ -194,7 +203,7 @@ Firmware-Diy_Base() {
 			;;
 			esac
 		} || {
-			TIME "[ERROR] Current source: [${Source_Owner}] is not supported !"
+			TIME "[ERROR] Current source: [${Openwrt_Author}] is not supported !"
 		}
 	}
 	TIME "[Firmware-Diy_Base] All done !"
@@ -202,7 +211,7 @@ Firmware-Diy_Base() {
 
 PS_Firmware() {
 	. TARGET_INFO
-	case ${Source_Owner} in
+	case ${Openwrt_Author} in
 	immortalwrt)
 		_Firmware=immortalwrt
 	;;
@@ -212,7 +221,7 @@ PS_Firmware() {
 	esac
 	case ${Current_Branch} in
 	19.07 | 18.06)
-		case ${Source_Owner} in
+		case ${Openwrt_Author} in
 		immortalwrt)
 			_Legacy_Firmware=combined-squashfs
 			_EFI_Firmware=uefi-gpt-squashfs
