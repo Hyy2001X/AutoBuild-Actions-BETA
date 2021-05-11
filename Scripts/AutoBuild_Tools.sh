@@ -9,7 +9,7 @@ AutoBuild_Tools() {
 while :
 do
 	clear
-	cat /etc/banner
+	echo "" && cat /etc/banner
 	echo -e "\n\nAutoBuild 固件工具箱 ${Version}\n"
 	echo "1. USB 空间扩展"
 	echo "2. Samba 一键共享"
