@@ -8,11 +8,11 @@ GET_TARGET_INFO() {
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	[ -f "${GITHUB_WORKSPACE}/Openwrt.info" ] && . ${GITHUB_WORKSPACE}/Openwrt.info
 	[[ "${Short_Firmware_Date}" == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
-	User_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100)"
+	User_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	[[ -z "${Author}" ]] && {
 		Author="$(echo "${User_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
 	}
-	Openwrt_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100)"
+	Openwrt_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	Openwrt_Author="$(echo "${Openwrt_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
 	Current_Branch="$(git branch | sed 's/* //g' | sed 's/^[ \t]*//g')"
 	In_Firmware_Info=package/base-files/files/etc/openwrt_info
@@ -75,9 +75,9 @@ GET_TARGET_INFO() {
 	echo "TARGET_SUBTARGET=${TARGET_SUBTARGET}" >> ${Home}/TARGET_INFO
 	echo "Home=${Home}" >> ${Home}/TARGET_INFO
 	echo "Current_Branch=${Current_Branch}" >> ${Home}/TARGET_INFO
-
-	echo "CURRENT_Version=${Openwrt_Version}" > ${In_Firmware_Info}
-	echo "Github=${User_Repo}" >> ${In_Firmware_Info}
+	
+	echo "Github=${User_Repo}" > ${In_Firmware_Info}
+	echo "CURRENT_Version=${Openwrt_Version}" >> ${In_Firmware_Info}
 	echo "DEFAULT_Device=${TARGET_PROFILE}" >> ${In_Firmware_Info}
 	echo "Firmware_Type=${Firmware_Type}" >> ${In_Firmware_Info}
 

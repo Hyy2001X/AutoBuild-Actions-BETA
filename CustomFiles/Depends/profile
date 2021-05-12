@@ -1,5 +1,5 @@
 Sysinfo() {
-	[ -f /etc/openwrt_info ] && source /etc/openwrt_info
+	[ -f /etc/openwrt_info ] && source /etc/openwrt_info > /dev/null 2>&1
 	export Target=${DEFAULT_Device}
 	[ -n "${CURRENT_Version}" ] && export Version="${CURRENT_Version}" || Version=Unknown
 	[ -z "${Target}" ] && export Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
@@ -8,8 +8,7 @@ Sysinfo() {
 	export Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
 	export Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 	export TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
-	echo -e "\n"
-	echo -e "           设备名称:		${Yellow}$(uname -n) / ${Target}${White}"
+	echo -e "\n           设备名称:		${Yellow}$(uname -n) / ${Target}${White}"
 	[ -n "${TEMP}" ] && echo "           核心温度:		${TEMP}"
 	echo "           内核版本:		$(uname -rs)"
 	echo -e "           固件版本:		${Skyb}${Version}${White}"
@@ -20,11 +19,11 @@ Sysinfo() {
 	echo ""
 }
 
-export White="\e[0m"
-export Yellow="\e[33m"
-export Red="\e[31m"
-export Blue="\e[34m"
-export Skyb="\e[36m"
+White="\e[0m"
+Yellow="\e[33m"
+Red="\e[31m"
+Blue="\e[34m"
+Skyb="\e[36m"
 
 clear
 [ -e /tmp/.failsafe ] && export FAILSAFE=1

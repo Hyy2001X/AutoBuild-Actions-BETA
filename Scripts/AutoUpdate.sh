@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.7.2
+Version=V5.7.3
 
 Shell_Helper() {
 cat <<EOF
@@ -237,15 +237,17 @@ else
 	;;
 	esac
 fi
-if [[ "$(cat /tmp/Package_list)" =~ "curl" ]];then
-	Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
-	[[ ! "$Google_Check" == 301 ]] && {
-		TIME && echo "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
+if [ -z "${PROXY_Release}" ];then
+	if [[ "$(cat /tmp/Package_list)" =~ "curl" ]];then
+		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
+		[[ ! "$Google_Check" == 301 ]] && {
+			TIME && echo "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
+			PROXY_Release="${_PROXY_Release}"
+		}
+	else
+		TIME && echo "无法确定网络环境,默认开启 [FastGit] 镜像加速!"
 		PROXY_Release="${_PROXY_Release}"
-	}
-else
-	TIME && echo "无法确定网络环境,默认使用 [FastGit] 镜像加速!"
-	PROXY_Release="${_PROXY_Release}"
+	fi
 fi
 [[ "${TMP_Available}" -lt "${Space_Min}" ]] && {
 	TIME && echo "/tmp 空间不足: [${Space_Min}M],无法执行更新!"
