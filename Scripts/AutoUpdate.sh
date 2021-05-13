@@ -326,7 +326,7 @@ fi
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Release}"
 echo "固件保存位置: ${Download_Path}"
-rm -f ${Download_Path}/*
+rm -f ${Download_Path}/AutoBuild-*
 TIME "正在下载固件,请耐心等待..."
 cd ${Download_Path}
 while [ "${Retry_Times}" -ge 0 ];
@@ -374,14 +374,13 @@ if [[ "${Compressed_Firmware}" == 1 ]];then
 	Install_Pkg gzip
 	gzip -dk ${Firmware} > /dev/null 2>&1
 	export Firmware="${Firmware_Name}${BOOT_Type}.img"
-	[ -f "${Firmware}" ] && {
-		TIME y "固件解压成功,名称: ${Firmware}"
+	[[ $? == 0 ]] && {
+		TIME y "解压成功,固件名称: ${Firmware}"
 	} || {
-		TIME r "固件解压失败!"
+		TIME r "解压失败,请检查系统可用空间!"
 		exit 1
 	}
 fi
-TIME "固件准备就绪,3s 后开始更新..."
 sleep 3
 TIME "正在更新固件,期间请耐心等待..."
 sysupgrade ${Upgrade_Options} ${Firmware}
