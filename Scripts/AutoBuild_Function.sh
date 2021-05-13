@@ -125,27 +125,34 @@ Firmware-Diy_Base() {
 				AddPackage git other luci-theme-argon https://github.com/jerrykuku 18.06
 			;;
 			*)
-				TIME "[ERROR] Unknown source branch: [${Current_Branch}] !"
+				TIME "[ERROR] Unknown Openwrt branch: [${Current_Branch}] !"
 			;;
 			esac
 		;;
 		esac
 	}
+	New_IP_Address="{Default_IP_Address}"
 	if [[ -n "${Defined_IP_Address}" ]];then
 		TIME "Using defined IP Address [${Defined_IP_Address}] ..."
-		Default_IP_Address="${Defined_IP_Address}"
+		New_IP_Address="${Defined_IP_Address}"
 	else
-		TIME "Using default IP Address [${Default_IP_Address}] ..."
+		TIME "Using default IP Address [${New_IP_Address}] ..."
 	fi
-	[[ -n "${Default_IP_Address}" ]] && [[ "${Default_IP_Address}" != false ]] && {
-		if [[ "${Default_IP_Address}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
+	[[ -n "${New_IP_Address}" ]] && [[ "${New_IP_Address}" != false ]] && {
+		if [[ "${New_IP_Address}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
 			Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
-			if [[ ! "${Default_IP_Address}" == "${Old_IP_Address}" ]];then
-				TIME "Setting default IP Address to ${Default_IP_Address} ..."
-				sed -i "s/${Old_IP_Address}/${Default_IP_Address}/g" package/base-files/files/bin/config_generate
+			if [[ ! "${New_IP_Address}" == "${Old_IP_Address}" ]];then
+				TIME "Setting default IP Address to ${New_IP_Address} ..."
+				sed -i "s/${Old_IP_Address}/${New_IP_Address}/g" package/base-files/files/bin/config_generate
+				a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+.")
+				b=$(echo ${New_IP_Address} | egrep -o "[0-9]+.[0-9]+.")
+				c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
+				d=")).$(echo ${New_IP_Address} | egrep -o "[0-9]+" | awk 'END {print}')"
+				sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
+				sed -i "s/${c}/${d}/g" package/base-files/files/bin/config_generate
 			fi
 		else
-			TIME "[ERROR] ${Default_IP_Address} is not an IP Address !"
+			TIME "[ERROR] ${New_IP_Address} is not an IP Address !"
 		fi
 	}
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
