@@ -120,6 +120,7 @@ export _PROXY_Release="https://download.fastgit.org"
 export TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 export Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 export Retry_Times=4
+[ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 opkg list | awk '{print $1}' > /${Download_Path}/Installed_PKG_List
 [ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 case ${DEFAULT_Device} in
@@ -326,7 +327,6 @@ fi
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Release}"
 echo "固件保存位置: ${Download_Path}"
-[ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 rm -f ${Download_Path}/*
 TIME "正在下载固件,请耐心等待..."
 cd ${Download_Path}
