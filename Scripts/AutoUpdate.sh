@@ -63,7 +63,7 @@ EOF
 
 Install_Pkg() {
 	export PKG_NAME=$1
-	if [[ ! "$(cat /${Download_Path}/Installed_PKG_List)" =~ "${PKG_NAME}" ]];then
+	if [[ ! "$(cat ${Download_Path}/Installed_PKG_List)" =~ "${PKG_NAME}" ]];then
 		[[ "${Force_Update}" == 1 ]] || [[ "${AutoUpdate_Mode}" == 1 ]] && {
 			export Choose=Y
 		} || {
@@ -121,8 +121,7 @@ export TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | a
 export Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 export Retry_Times=4
 [ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
-opkg list | awk '{print $1}' > /${Download_Path}/Installed_PKG_List
-[ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
+opkg list | awk '{print $1}' > ${Download_Path}/Installed_PKG_List
 case ${DEFAULT_Device} in
 x86_64)
 	[[ -z "${Firmware_Type}" ]] && Firmware_Type=img
@@ -252,7 +251,7 @@ else
 	esac
 fi
 if [[ -z "${PROXY_Release}" ]];then
-	if [[ "$(cat /${Download_Path}/Installed_PKG_List)" =~ curl ]];then
+	if [[ "$(cat ${Download_Path}/Installed_PKG_List)" =~ curl ]];then
 		export Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 		[[ ! "$Google_Check" == 301 ]] && {
 			TIME r "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
