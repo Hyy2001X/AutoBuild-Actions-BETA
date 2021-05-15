@@ -64,6 +64,16 @@ esac
 	unset FILE
 }
 
+alias ll='ls -alF --color=auto'
+service() {
+	[ -f "/etc/init.d/$1" ] || {
+		echo "service "'"'"$1"'"'" not found, the following services are available:"
+		ls "/etc/init.d"
+		return 1
+	}
+	/etc/init.d/$@
+}
+
 Sysinfo
 alias autoupdate='bash /bin/AutoUpdate.sh'
 alias AutoUpdate='bash /bin/AutoUpdate.sh'
