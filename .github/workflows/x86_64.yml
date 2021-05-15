@@ -74,7 +74,7 @@ jobs:
         sudo -E apt-get -y autoremove --purge
         sudo -E apt-get clean
       
-    - name: Clone Openwrt source code
+    - name: Clone source code
       run: |
         git clone -b $REPO_BRANCH $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
@@ -84,22 +84,17 @@ jobs:
         }
         cd openwrt
         ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        make defconfig
 
-    - name: Run Customize Diy-Scripts
+    - name: Run Custom Firmware-Diy Scripts
       run: |
         chmod +x $DIY_SCRIPT
         chmod +x $FUNCTION_SCRIPT
         cd openwrt
         source $GITHUB_WORKSPACE/$DIY_SCRIPT
-        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT
-        Firmware-Diy_Base
+        source $GITHUB_WORKSPACE/$FUNCTION_SCRIPT && Firmware-Diy_Base
         Firmware-Diy
-
-    - name: Process Openwrt source code
-      run: |
-        cd openwrt
-        ./scripts/feeds install -a
-        make defconfig
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -108,10 +103,14 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: Compile the Openwrt
+    - name: Preload and Compile the Openwrt
       run: |
+        cp Configs/$CONFIG_FILE openwrt/.config
+        cd openwrt
+        ./scripts/feeds install -a
+        make defconfig
         make download -j$(nproc)
-        echo "Start to compile OpenWrt for $CONFIG_FILE..."
+        echo "Start to compile OpenWrt ..."
         make -j$(nproc) || make -j1 V=s
 
     - name: Process the AutoBuild Firmware
