@@ -3,14 +3,15 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.7.4
+Version=V5.7.5
 
 Shell_Helper() {
 cat <<EOF
 
-使用方法:	$0 [<更新参数/复合参数] [-n] [-f] [-u] [-p] [-np] [-fp]
+使用方法:	$0 [<更新参数] [-n] [-f] [-u] [-p] [-np] [-fp]
 		$0 [<设置参数>...] [-c] [-b] <额外参数>
 		$0 [<其他>...] [-x] [-xp] [-l] [-lp] [-d] [-h]
+		$0 [<更新参数>...] [<测试模式>...] 
 
 更新参数:
 	-n		更新固件 [不保留配置]
@@ -22,15 +23,17 @@ cat <<EOF
 	-c		[额外参数:<Github 地址>] 更换 Github 地址
 	-b		[额外参数:<引导方式 UEFI/Legacy>] 指定 x86 设备下载使用 UEFI/Legacy 引导的固件 (危险)
 
-其他:
+更新脚本:
 	-x		更新 AutoUpdate.sh 脚本
 	-xp		更新 AutoUpdate.sh 脚本 (镜像加速)
+
+测试模式:
+	-t		测试模式 (仅运行流程,不更新固件)
+
+其他:
 	-l		列出系统信息
 	-d		清理固件下载缓存
 	-h		打印帮助信息
-	
-复合/单参数:
-	-p		使用 [FastGit] 镜像加速
 
 EOF
 exit 0
@@ -110,6 +113,7 @@ TIME() {
 
 export Input_Option=$1
 export Input_Other=$2
+export Input_All="$*"
 export Download_Path="/tmp/Downloads"
 export Github_Release="${Github}/releases/download/AutoUpdate"
 export Author="${Github##*com/}"
@@ -120,6 +124,7 @@ export _PROXY_Release="https://download.fastgit.org"
 export TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 export Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 export Retry_Times=4
+[[ -z "${CURRENT_Version}" ]] && export CURRENT_Version="$(egrep -o "R[0-9].+-[0-9]+" /etc/banner)" || export CURRENT_Version="$(egrep -o "R[0-9].+-[0-9]+" /rom/etc/openwrt_info)"
 [ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 opkg list | awk '{print $1}' > ${Download_Path}/Installed_PKG_List
 case ${DEFAULT_Device} in
@@ -161,7 +166,7 @@ if [[ -z "${Input_Option}" ]];then
 	export Upgrade_Options="-q"
 	TIME g "执行: 保留配置更新固件"
 else
-	[[ "${Input_Option}" =~ p ]] && {
+	[[ "${Input_All}" =~ p ]] && {
 		export PROXY_Release="${_PROXY_Release}"
 		export Github_Raw="https://raw.fastgit.org"
 		export PROXY_ECHO="[FastGit] "
@@ -169,8 +174,11 @@ else
 		export PROXY_ECHO=""
 	}
 	case ${Input_Option} in
-	-n | -f | -u | -p | -np | -pn | -fp | -pf | -up | -pu)
+	-t | -n | -f | -u | -p | -np | -pn | -fp | -pf | -up | -pu)
 		case ${Input_Option} in
+		-t)
+			Input_Other="-t"
+		;;
 		-n | -np | -pn)
 			TIME g "${PROXY_ECHO}执行: 更新固件(不保留配置)"
 			export Upgrade_Options="-n"
@@ -191,7 +199,13 @@ else
 		esac
 	;;
 	-c)
-		if [[ -n "${Input_Other}" ]];then
+		if [[ -n "${Input_Other}" ]] && [[ ! "${Input_Other}" == "-t" ]];then
+			[[ ! "${Input_Other}" =~ "https://github.com/" ]] && {
+				TIME r "${Input_Other}"
+				TIME r "错误的 Github 地址,请重新输入!"
+				TIME b "正确示例: https://github.com/Hyy2001X/AutoBuild-Actions"
+				exit 1
+			}
 			sed -i "s?${Github}?${Input_Other}?g" /etc/openwrt_info
 			TIME y "Github 地址已更换为: ${Input_Other}"
 			unset Input_Other
@@ -212,20 +226,23 @@ else
 		Shell_Helper
 	;;
 	-b)
-		[[ -z "${Input_Other}" ]] && Shell_Helper
-		case "${Input_Other}" in
-		UEFI | Legacy)
-			echo "${Input_Other}" > /etc/openwrt_boot
-			sed -i '/openwrt_boot/d' /etc/sysupgrade.conf
-			echo -e "\n/etc/openwrt_boot" >> /etc/sysupgrade.conf
-			TIME y "固件引导方式已指定为: ${Input_Other}!"
-			exit 0
-		;;
-		*)
-			TIME r "错误的参数: [${Input_Other}],当前支持的选项: [UEFI/Legacy] !"
-			exit 1
-		;;
-		esac
+		if [[ -n "${Input_Other}" ]];then
+			case "${Input_Other}" in
+			UEFI | Legacy)
+				echo "${Input_Other}" > /etc/openwrt_boot
+				sed -i '/openwrt_boot/d' /etc/sysupgrade.conf
+				echo -e "\n/etc/openwrt_boot" >> /etc/sysupgrade.conf
+				TIME y "固件引导方式已指定为: ${Input_Other}!"
+				exit 0
+			;;
+			*)
+				TIME r "错误的参数: [${Input_Other}],当前支持的选项: [UEFI/Legacy] !"
+				exit 1
+			;;
+			esac
+		else
+			Shell_Helper
+		fi
 	;;
 	-x | -xp | -px)
 		export CLOUD_Script=${Github_Raw}/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
@@ -236,7 +253,9 @@ else
 			mv -f ${Download_Path}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoUpdate.sh
 			NEW_Version=$(egrep -o "V[0-9]+.[0-9].+" /bin/AutoUpdate.sh | awk 'NR==1')
-			TIME y "AutoUpdate [${Version}] > [${NEW_Version}]"
+			export Banner_Version=$(egrep -o "V[0-9]+.[0-9].+" /etc/banner)
+			[[ -n "${Banner_Version}" ]] && sed -i "s?${Banner_Version}?${NEW_Version}?g" /etc/banner
+			TIME "AutoUpdate.sh: [${Version}] > [${NEW_Version}]"
 			TIME y "AutoUpdate 脚本更新成功!"
 			exit 0
 		else
@@ -250,6 +269,7 @@ else
 	;;
 	esac
 fi
+[[ "${Input_All}" =~ "t" ]] && TIME b "测试模式"
 if [[ -z "${PROXY_Release}" ]];then
 	if [[ "$(cat ${Download_Path}/Installed_PKG_List)" =~ curl ]];then
 		export Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
@@ -325,7 +345,6 @@ fi
 [[ -n "${PROXY_Release}" ]] && export Github_Release="${PROXY_Release}/${Author}/releases/download/AutoUpdate"
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Release}"
-echo "固件保存位置: ${Download_Path}"
 rm -f ${Download_Path}/AutoBuild-*
 TIME "正在下载固件,请耐心等待..."
 cd ${Download_Path}
@@ -361,28 +380,30 @@ CURRENT_MD5=$(md5sum ${Firmware} | cut -d ' ' -f1)
 	TIME r "MD5 获取失败!"
 	exit 1
 }
-[[ "${CLOUD_MD5}" == "${CURRENT_MD5}" ]] && {
-	TIME y "MD5 对比通过!"
-} || {
+[[ "${CLOUD_MD5}" != "${CURRENT_MD5}" ]] && {
 	echo -e "\n本地固件MD5: ${CURRENT_MD5}"
 	echo "云端固件MD5: ${CLOUD_MD5}"
 	TIME r "MD5 对比失败,请检查网络后重试!"
 	exit 1
 }
 if [[ "${Compressed_Firmware}" == 1 ]];then
-	TIME "检测到固件为 [.gz] 格式,开始解压固件..."
 	Install_Pkg gzip
 	gzip -dk ${Firmware} > /dev/null 2>&1
 	export Firmware="${Firmware_Name}${BOOT_Type}.img"
 	[[ $? == 0 ]] && {
-		TIME y "解压成功,固件名称: ${Firmware}"
+		TIME y "固件解压成功,固件名称: ${Firmware}"
 	} || {
-		TIME r "解压失败,请检查系统可用空间!"
+		TIME r "固件解压失败,请检查系统可用空间!"
 		exit 1
 	}
 fi
+[[ "${Input_Other}" == "-t" ]] && {
+	TIME b "测试模式运行完毕!"
+	exit 0
+}
 sleep 3
-TIME "正在更新固件,期间请耐心等待..."
+TIME g "正在更新固件,更新期间请耐心等待..."
+sleep 1
 sysupgrade ${Upgrade_Options} ${Firmware}
 [[ $? -ne 0 ]] && {
 	TIME r "固件刷写失败,请尝试手动更新固件!"
