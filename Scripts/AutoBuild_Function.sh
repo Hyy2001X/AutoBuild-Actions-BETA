@@ -131,7 +131,7 @@ Firmware-Diy_Base() {
 		;;
 		esac
 	}
-	New_IP_Address="{Default_IP_Address}"
+	New_IP_Address="${Default_IP_Address}"
 	if [[ -n "${Defined_IP_Address}" ]];then
 		TIME "Using defined IP Address [${Defined_IP_Address}] ..."
 		New_IP_Address="${Defined_IP_Address}"
