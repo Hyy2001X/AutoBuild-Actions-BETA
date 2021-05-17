@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoUpdate for Openwrt
 
-Version=V5.7.5
+Version=V5.7.6
 
 Shell_Helper() {
 cat <<EOF
@@ -15,7 +15,7 @@ cat <<EOF
 
 更新参数:
 	-n		更新固件 [不保留配置]
-	-np		更新固件 [不保留配置] (镜像加速)
+	-np		更新固件 [不保留配置] (强制镜像加速)
 	-f		强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
 	-u		适用于定时更新 LUCI 的参数 [保留配置]
 
@@ -25,7 +25,7 @@ cat <<EOF
 
 更新脚本:
 	-x		更新 AutoUpdate.sh 脚本
-	-xp		更新 AutoUpdate.sh 脚本 (镜像加速)
+	-xp		更新 AutoUpdate.sh 脚本 (强制镜像加速)
 
 测试模式:
 	-t		测试模式 (仅运行流程,不更新固件)
@@ -91,18 +91,23 @@ Install_Pkg() {
 }
 
 TIME() {
+	[ ! -f /tmp/AutoUpdate.log ] && touch /tmp/AutoUpdate.log
 	[[ -z "$1" ]] && {
-		echo -ne "\n[$(date "+%H:%M:%S")] "
+		echo -ne "\n\e[36m[$(date "+%H:%M:%S")]\e[0m "
 	} || {
-	    case $1 in
+	case $1 in
 		r) export Color="\e[31m";;
 		g) export Color="\e[32m";;
 		b) export Color="\e[34m";;
 		y) export Color="\e[33m";;
-	    esac
-		[[ $# -lt 2 ]] && echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m ${1}" || {
+	esac
+		[[ $# -lt 2 ]] && {
+			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m ${1}"
+			echo "[$(date "+%H:%M:%S")] ${1}" >> /tmp/AutoUpdate.log
+		} || {
 			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m ${Color}${2}\e[0m"
-	    }
+			echo "[$(date "+%H:%M:%S")] ${2}" >> /tmp/AutoUpdate.log
+		}
 	}
 }
 
@@ -123,7 +128,7 @@ export Github_Raw="https://raw.githubusercontent.com"
 export _PROXY_Release="https://download.fastgit.org"
 export TMP_Available="$(df -m | grep "/tmp" | awk '{print $4}' | awk 'NR==1' | awk -F. '{print $1}')"
 export Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
-export Retry_Times=4
+export Retry_Times=5
 [[ -z "${CURRENT_Version}" ]] && export CURRENT_Version="$(egrep -o "R[0-9].+-[0-9]+" /etc/banner)" || export CURRENT_Version="$(egrep -o "R[0-9].+-[0-9]+" /rom/etc/openwrt_info)"
 [ ! -d "${Download_Path}" ] && mkdir -p ${Download_Path}
 opkg list | awk '{print $1}' > ${Download_Path}/Installed_PKG_List
@@ -168,6 +173,7 @@ if [[ -z "${Input_Option}" ]];then
 else
 	[[ "${Input_All}" =~ p ]] && {
 		export PROXY_Release="${_PROXY_Release}"
+		export PROXY_Mode=1
 		export Github_Raw="https://raw.fastgit.org"
 		export PROXY_ECHO="[FastGit] "
 	} || {
@@ -201,15 +207,27 @@ else
 	-c)
 		if [[ -n "${Input_Other}" ]] && [[ ! "${Input_Other}" == "-t" ]];then
 			[[ ! "${Input_Other}" =~ "https://github.com/" ]] && {
-				TIME r "${Input_Other}"
+				TIME r "INPUT: ${Input_Other}"
 				TIME r "错误的 Github 地址,请重新输入!"
 				TIME b "正确示例: https://github.com/Hyy2001X/AutoBuild-Actions"
 				exit 1
 			}
-			sed -i "s?${Github}?${Input_Other}?g" /etc/openwrt_info
-			TIME y "Github 地址已更换为: ${Input_Other}"
-			unset Input_Other
-			exit 0
+			Github_uci=$(uci get autoupdate.@login[0].github 2>/dev/null)
+			[[ -n "${Github_uci}" ]] && [[ "${Github_uci}" != "${Input_Other}" ]] && {
+				uci set autoupdate.@login[0].github=${Input_Other}
+				uci commit autoupdate
+				TIME y "UCI 设置已更新!"
+			}
+			[[ "${Github}" != "${Input_Other}" ]] && {
+				sed -i "s?${Github}?${Input_Other}?g" /etc/openwrt_info
+				TIME y "Github 地址已更换为: ${Input_Other}"
+				unset Input_Other
+				exit 0
+			} || {
+				TIME r "INPUT: ${Input_Other}"
+				TIME r "输入的 Github 地址相同,无需修改!"
+				exit 1
+			}
 		else
 			Shell_Helper
 		fi
@@ -306,7 +324,6 @@ wget -q --timeout 5 ${Github_Tags} -O - > ${Download_Path}/Github_Tags
 	TIME r "检查更新失败,请稍后重试!"
 	exit 1
 }
-TIME "正在获取云端固件信息..."
 export CLOUD_Firmware=$(egrep -o "AutoBuild-${CURRENT_Device}-R[0-9].+-[0-9]+${Firmware_SFX}" ${Download_Path}/Github_Tags | awk 'END {print}')
 export CLOUD_Version=$(echo ${CLOUD_Firmware} | egrep -o "R[0-9].+-[0-9]+")
 [[ -z "${CLOUD_Version}" ]] && {
@@ -319,7 +336,7 @@ export Firmware_Detail="${Firmware_Name}${Detail_SFX}"
 let X="$(grep -n "${Firmware}" ${Download_Path}/Github_Tags | tail -1 | cut -d : -f 1)-4"
 let CLOUD_Firmware_Size="$(sed -n "${X}p" ${Download_Path}/Github_Tags | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1"
 echo -e "\n固件作者: ${Author%/*}"
-echo "设备名称: ${CURRENT_Device}"
+echo "设备名称: $(uname -n) / ${CURRENT_Device}"
 echo "固件格式: ${Firmware_SFX}"
 echo -e "\n当前固件版本: ${CURRENT_Version}"
 echo "云端固件版本: ${CLOUD_Version}"
@@ -334,10 +351,10 @@ if [[ ! "${Force_Update}" == 1 ]];then
 		[[ "${AutoUpdate_Mode}" == 1 ]] && exit 0
 		TIME && read -p "已是最新版本,是否强制更新固件?[Y/n]:" Choose
 		[[ "${Choose}" == Y ]] || [[ "${Choose}" == y ]] && {
-			TIME "开始强制更新固件..."
+			TIME g "开始强制更新固件..."
 		} || {
-			TIME "已取消强制更新,即将退出更新程序..."
-			sleep 2
+			TIME y "已取消强制更新,退出更新程序..."
+			sleep 1
 			exit 0
 		}
 	fi
@@ -346,44 +363,43 @@ fi
 echo -e "\n云端固件名称: ${Firmware}"
 echo "固件下载地址: ${Github_Release}"
 rm -f ${Download_Path}/AutoBuild-*
-TIME "正在下载固件,请耐心等待..."
+TIME "正在下载固件和云端固件信息,请耐心等待..."
 cd ${Download_Path}
 while [ "${Retry_Times}" -ge 0 ];
 do
-	if [[ "${Retry_Times}" == 3 ]];then
+	if [[ "${Retry_Times}" == 4 ]];then
 		[[ -z "${PROXY_Release}" ]] && {
 			TIME "正在尝试使用 [FastGit] 镜像加速下载..."
 			export Github_Release="${_PROXY_Release}/${Author}/releases/download/AutoUpdate"
+		}
+	fi
+	if [[ "${PROXY_Mode}" != 1 ]];then
+		[[ "${Retry_Times}" == 2 ]] && {
+			export Github_Release="https://github.com/${Author}/releases/download/AutoUpdate"
 		}
 	fi
 	if [[ "${Retry_Times}" == 0 ]];then
 		TIME r "固件下载失败,请检查网络后重试!"
 		exit 1
 	else
-		wget -q --tries 1 --timeout 5 "${Github_Release}/${Firmware}" -O ${Firmware}
-		[[ $? == 0 ]] && break
+		[[ "${A}" != 1 ]] && wget -q --tries 2 --timeout 5 "${Github_Release}/${Firmware}" -O ${Firmware}
+		[[ $? == 0 ]] && export A=1 && TIME y "固件下载成功!"
+		[[ "${B}" != 1 ]] && wget -q --tries 1 --timeout 5 ${Github_Release}/${Firmware_Detail} -O ${Firmware_Detail}
+		[[ $? == 0 ]] && export B=1 && TIME y "云端固件信息下载成功!"
+		let C=${A}+${B}
+		[[ "${C}" == 2 ]] && break
 	fi
 	export Retry_Times=$((${Retry_Times} - 1))
 	TIME r "下载失败,剩余尝试次数: [${Retry_Times}]"
 	sleep 1
 done
-TIME y "固件下载成功!"
-TIME "正在获取云端 MD5,请耐心等待..."
-wget -q --tries 3 --timeout 5 ${Github_Release}/${Firmware_Detail} -O ${Firmware_Detail}
-[[ ! $? == 0 ]] && {
-	TIME r "云端 MD5 获取失败,请检查网络后重试!"
-	exit 1
-}
+unset C
 CLOUD_MD5=$(awk -F '[ :]' '/MD5/ {print $2;exit}' ${Firmware_Detail})
 CURRENT_MD5=$(md5sum ${Firmware} | cut -d ' ' -f1)
-[[ -z "${CLOUD_MD5}" ]] || [[ -z "${CURRENT_MD5}" ]] && {
-	TIME r "MD5 获取失败!"
-	exit 1
-}
 [[ "${CLOUD_MD5}" != "${CURRENT_MD5}" ]] && {
 	echo -e "\n本地固件MD5: ${CURRENT_MD5}"
 	echo "云端固件MD5: ${CLOUD_MD5}"
-	TIME r "MD5 对比失败,请检查网络后重试!"
+	TIME r "MD5 对比失败,请重新尝试执行更新!"
 	exit 1
 }
 if [[ "${Compressed_Firmware}" == 1 ]];then
