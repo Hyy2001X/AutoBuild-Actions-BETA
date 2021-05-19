@@ -72,7 +72,7 @@ Install_Pkg() {
 		} || {
 			TIME && read -p "未安装[${PKG_NAME}],是否执行安装?[Y/n]:" Choose
 		}
-		if [[ "${Choose}" == Y ]] || [[ "${Choose}" == y ]];then
+		if [[ "${Choose}" == [Yy] ]];then
 			TIME "开始安装[${PKG_NAME}],请耐心等待...\n"
 			opkg update > /dev/null 2>&1
 			opkg install ${PKG_NAME}
@@ -350,7 +350,7 @@ if [[ ! "${Force_Update}" == 1 ]];then
 	if [[ "${CURRENT_Version}" == "${CLOUD_Version}" ]];then
 		[[ "${AutoUpdate_Mode}" == 1 ]] && exit 0
 		TIME && read -p "已是最新版本,是否强制更新固件?[Y/n]:" Choose
-		[[ "${Choose}" == Y ]] || [[ "${Choose}" == y ]] && {
+		[[ "${Choose}" == [Yy] ]] && {
 			TIME g "开始强制更新固件..."
 		} || {
 			TIME y "已取消强制更新,退出更新程序..."

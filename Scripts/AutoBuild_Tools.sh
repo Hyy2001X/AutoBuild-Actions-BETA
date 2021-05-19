@@ -3,7 +3,7 @@
 # AutoBuild Module by Hyy2001
 # AutoBuild_Tools for Openwrt
 
-Version=V1.3
+Version=V1.3.1
 
 AutoBuild_Tools() {
 while :
@@ -174,7 +174,7 @@ AutoExpand_Core() {
 	echo "警告: 本次操作将把硬盘: '${Choosed_Disk}' 格式化为 'ext4' 格式,请提前做好数据备份工作!"
 	echo "注意: 操作开始后请不要中断任务或进行其他操作,否则可能导致设备数据丢失!"
 	read -p "是否继续本次操作?[Y/n]:" Choose
-	[[ "${Choose}" == Y ]] || [[ "${Choose}" == y ]] && sleep 3 && echo "" || {
+	[[ "${Choose}" == [Yy] ]] && sleep 3 && echo "" || {
 		sleep 3
 		echo "用户已取消操作."
 		break
@@ -213,7 +213,7 @@ AutoExpand_Core() {
 	umount -l /mnt/bak
 	echo -e "操作结束,外接硬盘: '${Choosed_Disk}' 已挂载到 '/'.\n"
 	read -p "挂载完成后需要重启生效,是否立即重启路由器?[Y/n]:" Choose
-	[[ ${Choose} == Y ]] || [[ ${Choose} == y ]] && {
+	[[ ${Choose} == [Yy] ]] && {
 		sleep 3 && echo -e "\n正在重启路由器,请耐心等待 ..."
 		sync
 		reboot
@@ -362,7 +362,7 @@ do
 	echo "4. 列出固件信息"
 	echo "5. 清除固件下载缓存"
 	echo "6. 更改 Github API 地址"
-	echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
+	[[ "${DEFAULT_Device}" == x86_64 ]] && echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
 	echo -e "\nx. 更新 [AutoUpdate] 脚本"
 	echo -e "q. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -537,4 +537,5 @@ Samba_Disk_List="${Samba_Temp}/Disk_List"
 Samba_UCI_List="${Samba_Temp}/UCI_List"
 [ ! -d "${Samba_Temp}" ] && mkdir -p "${Samba_Temp}"
 Github_Raw="https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
+[ -f /etc/openwrt_info ] && source /etc/openwrt_info
 AutoBuild_Tools
