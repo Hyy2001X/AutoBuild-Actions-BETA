@@ -15,7 +15,7 @@ Diy_Core() {
 	INCLUDE_Theme_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
 	
-	Upload_VM_Firmware=true
+	Upload_VM_Firmware=false
 }
 
 Firmware-Diy() {
