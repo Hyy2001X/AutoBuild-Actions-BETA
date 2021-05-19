@@ -14,13 +14,13 @@ GET_TARGET_INFO() {
 	}
 	Openwrt_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	Openwrt_Author="$(echo "${Openwrt_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
-	Current_Branch="$(git branch | sed 's/* //g' | sed 's/^[ \t]*//g')"
+	Current_Branch="$(GET_BRANCH)"
 	In_Firmware_Info=package/base-files/files/etc/openwrt_info
 	[[ ! ${Current_Branch} == master ]] && {
 		Current_Branch="$(echo ${Current_Branch} | egrep -o "[0-9]+.[0-9]+")"
 		Openwrt_Version_="R${Current_Branch}-"
 	} || {
-		Openwrt_Version_="R18.06-"
+		Openwrt_Version_="R$(date +%y.%m)-"
 	}
 	case ${Openwrt_Author} in
 	coolsnowwolf)
@@ -75,6 +75,7 @@ GET_TARGET_INFO() {
 	echo "TARGET_SUBTARGET=${TARGET_SUBTARGET}" >> ${Home}/TARGET_INFO
 	echo "Home=${Home}" >> ${Home}/TARGET_INFO
 	echo "Current_Branch=${Current_Branch}" >> ${Home}/TARGET_INFO
+	echo "Upload_VM_Firmware=${Upload_VM_Firmware}" >> ${Home}/TARGET_INFO
 	
 	echo "Github=${User_Repo}" > ${In_Firmware_Info}
 	echo "CURRENT_Version=${Openwrt_Version}" >> ${In_Firmware_Info}
@@ -119,7 +120,7 @@ Firmware-Diy_Base() {
 				AddPackage git other luci-theme-argon jerrykuku v2.2.5
 			;;
 			21.02)
-				AddPackage git other luci-theme-argon jerrykuku master
+				AddPackage git other luci-theme-argon jerrykuku
 			;;
 			18.06)
 				AddPackage git other luci-theme-argon jerrykuku 18.06
@@ -244,10 +245,12 @@ PS_Firmware() {
 	;;
 	esac
 	Firmware_Path="bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
+	rm -rf ${Firmware_Path}/packages
 	Mkdir bin/Firmware
 	case "${TARGET_PROFILE}" in
 	x86_64)
 		cd ${Firmware_Path}
+		Default_Firmware="${_Firmware}-${TARGET_BOARD}-${TARGET_SUBTARGET}"
 		Legacy_Firmware="${_Firmware}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${_Legacy_Firmware}.${Firmware_Type}"
 		EFI_Firmware="${_Firmware}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${_EFI_Firmware}.${Firmware_Type}"
 		AutoBuild_Firmware="AutoBuild-${TARGET_PROFILE}-${Openwrt_Version}"
@@ -257,23 +260,31 @@ PS_Firmware() {
 		if [ -f "${Legacy_Firmware}" ];then
 			_MD5=$(md5sum ${Legacy_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${Legacy_Firmware} | cut -d ' ' -f1)
-			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}.detail
-			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
-			mv -f ${Legacy_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.${Firmware_Type}
+			echo -e "MD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
+			cp ${Legacy_Firmware} ${AutoBuild_Firmware}-Legacy.${Firmware_Type}
 			TIME "Legacy Firmware is detected !"
-		else
-			TIME "[ERROR] Legacy Firmware is not detected !"
 		fi
 		if [ -f "${EFI_Firmware}" ];then
 			_MD5=$(md5sum ${EFI_Firmware} | cut -d ' ' -f1)
 			_SHA256=$(sha256sum ${EFI_Firmware} | cut -d ' ' -f1)
-			touch ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
-			cp ${EFI_Firmware} ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.${Firmware_Type}
+			cp ${EFI_Firmware} ${AutoBuild_Firmware}-UEFI.${Firmware_Type}
 			TIME "UEFI Firmware is detected !"
-		else
-			TIME "[ERROR] UEFI Firmware is not detected !"
 		fi
+		if [[ "${Upload_VM_Firmware}" == true ]];then
+			TIME "Converting vmdk firmware to vhdx ..."
+			[ -f "${Default_Firmware}-${_Legacy_Firmware}.vmdk" ] && {
+				qemu-img convert -O vhdx ${Default_Firmware}-${_Legacy_Firmware}.vmdk ${AutoBuild_Firmware}-Legacy.vhdx
+				cp ${Default_Firmware}-${_Legacy_Firmware}.vmdk ${AutoBuild_Firmware}-Legacy.vmdk
+				cp ${Default_Firmware}-${_Legacy_Firmware}.vdi ${AutoBuild_Firmware}-Legacy.vdi
+			}
+			[ -f "${Default_Firmware}-${_UEFI_Firmware}.vmdk" ] && {
+				qemu-img convert -O vhdx ${Default_Firmware}-${_Legacy_Firmware}.vmdk ${AutoBuild_Firmware}-UEFI.vhdx
+				cp ${Default_Firmware}-${_UEFI_Firmware}.vmdk ${AutoBuild_Firmware}-UEFI.vmdk
+				cp ${Default_Firmware}-${_Legacy_Firmware}.vdi ${AutoBuild_Firmware}-Legacy.vdi
+			}
+		fi
+		mv -f AutoBuild-* ${Home}/bin/Firmware
 	;;
 	*)
 		cd ${Home}
@@ -295,6 +306,14 @@ PS_Firmware() {
 	esac
 	cd ${Home}
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
+}
+
+GET_BRANCH() {
+    local Folder="$(pwd)"
+    [ -n "$1" ] && Folder="$1"
+    git -C "${Folder}" rev-parse --abbrev-ref HEAD | grep -v HEAD || \
+    git -C "${Folder}" describe --exact-match HEAD || \
+    git -C "${Folder}" rev-parse HEAD
 }
 
 TIME() {
@@ -343,7 +362,7 @@ Auto_AddPackage_mod() {
 	}
 	_FILENAME=${1}
 	echo "" >> ${_FILENAME}
-	[ -f "${_FILENAME}" ] && {
+	[ -f "${_FILENAME}" ] && [ -s "${_FILENAME}" ] && {
 		TIME "Loading Custom Packages list: [${_FILENAME}]..."
 		cat ${_FILENAME} | sed '/^$/d' | while read X
 		do
