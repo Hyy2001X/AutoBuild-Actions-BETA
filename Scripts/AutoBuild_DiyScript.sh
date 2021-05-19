@@ -14,6 +14,8 @@ Diy_Core() {
 	INCLUDE_DRM_I915=true
 	INCLUDE_Theme_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
+	
+	Upload_VM_Firmware=true
 }
 
 Firmware-Diy() {
