@@ -145,8 +145,8 @@ Firmware-Diy_Base() {
 			if [[ ! "${New_IP_Address}" == "${Old_IP_Address}" ]];then
 				TIME "Setting default IP Address to ${New_IP_Address} ..."
 				sed -i "s/${Old_IP_Address}/${New_IP_Address}/g" package/base-files/files/bin/config_generate
-				a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+.")
-				b=$(echo ${New_IP_Address} | egrep -o "[0-9]+.[0-9]+.")
+				a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
+				b=$(echo ${New_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
 				c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
 				d=")).$(echo ${New_IP_Address} | egrep -o "[0-9]+" | awk 'END {print}')"
 				sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
