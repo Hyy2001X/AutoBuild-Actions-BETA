@@ -39,23 +39,25 @@
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
-   Author 作者名称,若该项留空将自动设置为你的 Github 用户名
+   Author 作者名称,若该项留空将自动获取
 
-   Default_Device 设备的官方名称,例如 d-team_newifi-d2、x86_64
+   Default_Device 设备的 TARGET_PROFILE 名称,例如 d-team_newifi-d2、x86_64
    
    Short_Firmware_Date 固件日期样式,当设置为 true: [20210501] false: [202105012300]
    
-   Default_IP_Address 固件 LAN IP 地址,默认为: [192.168.1.1] false: [不做任何修改]
+   Default_IP_Address 固件 LAN IP 地址,默认为: [192.168.1.1] false/留空: [不修改]
 
    INCLUDE_AutoUpdate 启用后,将自动添加 Scripts/AutoUpdate.sh 和 luci-app-autoupdate 到固件
 
    INCLUDE_AutoBuild_Tools 添加 AutoBuild 工具箱: AutoBuild_Tools.sh 到固件
 
-   INCLUDE_DRM_I915 自动启用 Intel Graphics 驱动 (测试特性)
+   INCLUDE_DRM_I915 自动勾选 Intel Graphics 驱动 (测试特性)
 
    INCLUDE_Theme_Argon 自动添加适用于当前源码的 luci-theme-argon 主题
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
+
+   Upload_VM_Firmware 上传虚拟磁盘 vmdk vhdx vdi 固件到 Release (仅支持 x86_64)
    
    注: 若要启用某项功能,请将该值修改为 true,禁用某项功能则修改为 false 或留空
 ```
@@ -77,7 +79,7 @@
 
    **手动编译** 点击上方`Actions`,选择你要编译的设备名称,点击右方`Run workflow`,点击绿色按钮即可开始编译
    
-   **临时修改 IP 地址** 该功能仅在**手动编译**时生效,点击`Run workflow`后即可输入 IP 地址(优先级**高于** Diy_Core 函数)
+   **临时修改 IP 地址** 该功能仅在**手动编译**时生效,点击`Run workflow`后即可输入 IP 地址(优先级**高于** Diy_Core 中的定义)
 
    **SSH 连接** 使用方法参见 [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
 
