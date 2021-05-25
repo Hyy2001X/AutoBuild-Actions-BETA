@@ -113,12 +113,6 @@ jobs:
         Firmware-Diy_Base
         Firmware-Diy
 
-    - name: Process Openwrt source code
-      run: |
-        cd openwrt
-        ./scripts/feeds install -a
-        make defconfig
-
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -129,6 +123,8 @@ jobs:
     - name: Compile the Openwrt
       run: |
         cd openwrt
+        ./scripts/feeds install -a
+        make defconfig
         make download -j8
         echo "Start to compile OpenWrt for $CONFIG_FILE..."
         make -j$(nproc) || make -j1 V=s
