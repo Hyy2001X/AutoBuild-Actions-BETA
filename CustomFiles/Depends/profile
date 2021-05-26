@@ -1,13 +1,13 @@
 Sysinfo() {
 	[ -f /etc/openwrt_info ] && source /etc/openwrt_info > /dev/null 2>&1
-	export Target=${DEFAULT_Device}
-	[ -n "${CURRENT_Version}" ] && export Version="${CURRENT_Version}" || Version=未知
-	[ -z "${Target}" ] && export Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
-	export IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
-	export CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
-	export Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
-	export Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
-	export TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
+	local Target=${DEFAULT_Device}
+	[ -n "${CURRENT_Version}" ] && local Version="${CURRENT_Version}" || Version=未知
+	[ -z "${Target}" ] && local Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
+	local IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
+	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
+	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
+	local Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
+	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
 	echo -e "\n           设备名称:		${Yellow}$(uname -n) / ${Target}${White}"
 	[ -n "${TEMP}" ] && echo "           核心温度:		${TEMP}"
 	echo "           内核版本:		$(uname -rs)"
@@ -19,11 +19,11 @@ Sysinfo() {
 	echo ""
 }
 
-White="\e[0m"
-Yellow="\e[33m"
-Red="\e[31m"
-Blue="\e[34m"
-Skyb="\e[36m"
+export White="\e[0m"
+export Yellow="\e[33m"
+export Red="\e[31m"
+export Blue="\e[34m"
+export Skyb="\e[36m"
 
 clear
 [ -e /tmp/.failsafe ] && export FAILSAFE=1
@@ -79,5 +79,12 @@ alias autoupdate='bash /bin/AutoUpdate.sh'
 alias tools='bash /bin/AutoBuild_Tools.sh'
 alias run_coremark='bash /etc/coremark.sh'
 alias shutdown='sync && poweroff'
-alias ll='ls -alF --color=auto'
+alias ls='ls --color=auto'
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
 alias cls='clear'
+alias dh='df -h'
+alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'
