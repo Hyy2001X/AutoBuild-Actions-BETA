@@ -14,13 +14,13 @@ Diy_Core() {
 	INCLUDE_DRM_I915=true
 	INCLUDE_Theme_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
-	
+
 	Upload_VM_Firmware=false
 }
 
 Firmware-Diy() {
 	Update_Makefile exfat $(PKG_Finder d package exfat)
-	AddPackage svn ../feeds/packages/admin netdata openwrt/packages/trunk/admin
+	AddPackage svn feeds/packages/admin netdata openwrt/packages/trunk/admin
 
 	case ${TARGET_PROFILE} in
 	d-team_newifi-d2)
