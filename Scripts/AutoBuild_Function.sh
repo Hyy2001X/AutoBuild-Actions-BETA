@@ -12,7 +12,6 @@ GET_TARGET_INFO() {
 	[[ -z "${Author}" ]] && {
 		Author="$(echo "${User_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
 	}
-	Openwrt_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${Home}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	Openwrt_Author="$(echo "${Openwrt_Repo}" | egrep -o "[a-zA-Z0-9]+" | awk 'NR==4')"
 	Current_Branch="$(GET_BRANCH)"
 	In_Firmware_Info=package/base-files/files/etc/openwrt_info
@@ -67,7 +66,11 @@ GET_TARGET_INFO() {
 	esac
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 
-	echo "Firmware_Type=${Firmware_Type}" > ${Home}/TARGET_INFO
+	echo "Author=${Author}" > ${Home}/TARGET_INFO
+	echo "Default_Device=${Default_Device}" >> ${Home}/TARGET_INFO
+	echo "INCLUDE_Obsolete_PKG_Compatible=${INCLUDE_Obsolete_PKG_Compatible}" >> ${Home}/TARGET_INFO
+	echo "Upload_VM_Firmware=${Upload_VM_Firmware}" >> ${Home}/TARGET_INFO
+	echo "Firmware_Type=${Firmware_Type}" >> ${Home}/TARGET_INFO
 	echo "TARGET_PROFILE=${TARGET_PROFILE}" >> ${Home}/TARGET_INFO
 	echo "Openwrt_Version=${Openwrt_Version}" >> ${Home}/TARGET_INFO
 	echo "Openwrt_Author=${Openwrt_Author}" >> ${Home}/TARGET_INFO
@@ -120,7 +123,7 @@ Firmware-Diy_Base() {
 				AddPackage git other luci-theme-argon jerrykuku v2.2.5
 			;;
 			21.02)
-				AddPackage git other luci-theme-argon jerrykuku
+				AddPackage git other luci-theme-argon jerrykuku master
 			;;
 			18.06)
 				AddPackage git other luci-theme-argon jerrykuku 18.06
@@ -136,8 +139,6 @@ Firmware-Diy_Base() {
 	if [[ -n "${Defined_IP_Address}" ]];then
 		TIME "Using defined IP Address [${Defined_IP_Address}] ..."
 		New_IP_Address="${Defined_IP_Address}"
-	else
-		TIME "Using default IP Address [${New_IP_Address}] ..."
 	fi
 	[[ -n "${New_IP_Address}" ]] && [[ "${New_IP_Address}" != false ]] && {
 		if [[ "${New_IP_Address}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
@@ -191,29 +192,46 @@ Firmware-Diy_Base() {
 		sed -i "s?Openwrt?Openwrt ${Openwrt_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
 	;;
 	esac
-	[[ "${INCLUDE_Obsolete_PKG_Compatible}" == true ]] && {
+	TIME "[Firmware-Diy_Base] All done !"
+}
+
+Other_Scripts() {
+	[ -f TARGET_INFO ] && . TARGET_INFO || {
+		TIME "[ERROR] No variable_define file detected!"
+		exit 1
+	}
+	case ${INCLUDE_Obsolete_PKG_Compatible} in
+	19.07)
+		Current_Branch=19.07
+		Force_mode=1
+		INCLUDE_Obsolete_PKG_Compatible=true
+	;;
+	21.02)
+		Current_Branch=21.02
+		Force_mode=1
+		INCLUDE_Obsolete_PKG_Compatible=true
+	;;
+	esac
+	if [[ "${INCLUDE_Obsolete_PKG_Compatible}" == true ]];then
 		TIME "Start to run Obsolete_Package_Compatible Scripts ..."
-		[[ ${Openwrt_Author} == openwrt ]] && {
+		if [[ ${Openwrt_Author} == openwrt ]] || [[ "${Force_mode}" == 1 ]];then
 			case ${Current_Branch} in
 			19.07 | 21.02)
 				Replace_File CustomFiles/Patches/0003-upx-ucl-${Current_Branch}.patch ./
 				cat 0003-upx-ucl-${Current_Branch}.patch | patch -p1 > /dev/null 2>&1
-				AddPackage svn ../feeds/packages/lang golang coolsnowwolf/packages/trunk/lang
+				# AddPackage svn feeds/packages/lang golang coolsnowwolf/packages/trunk/lang
 				TIME "Start to convert zh-cn translation files to zh_Hans ..."
 				Replace_File Scripts/Convert_Translation.sh package
-				cd ./package
-				bash ./Convert_Translation.sh
-				cd ..
+				cd ./package && bash ./Convert_Translation.sh && cd ..
 			;;
 			*)
-				TIME "[ERROR] Current branch: [${Current_Branch}] is not supported !"
+				TIME "Current branch: [${Current_Branch}] is not supported,skip..."
 			;;
 			esac
-		} || {
-			TIME "[ERROR] Current source: [${Openwrt_Author}] is not supported !"
-		}
-	}
-	TIME "[Firmware-Diy_Base] All done !"
+		else
+			TIME "Current source: [${Openwrt_Author}] is not supported,skip..."
+		fi
+	fi
 }
 
 PS_Firmware() {
