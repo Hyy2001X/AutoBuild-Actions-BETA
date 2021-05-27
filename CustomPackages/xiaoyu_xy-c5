@@ -1,3 +1,4 @@
 git other OpenClash vernesong master
 svn other luci-app-eqos kenzok8/openwrt-packages/trunk
 git other luci-app-bearDropper NateLol
+git other luci-app-dnsfilter garypang13 main
