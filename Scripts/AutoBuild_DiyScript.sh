@@ -5,7 +5,7 @@
 
 Diy_Core() {
 	Author=Hyy2001
-	Default_Device=x86_64
+	Default_Device=
 	Short_Firmware_Date=true
 	Default_IP_Address=192.168.1.1
 
@@ -19,8 +19,8 @@ Diy_Core() {
 }
 
 Firmware-Diy() {
-	Update_Makefile exfat $(PKG_Finder d package exfat)
-	AddPackage svn feeds/packages/admin netdata openwrt/packages/trunk/admin
+	TIME "Starting run Firmware-Diy commands..."
+	AddPackage git other luci-app-adguardhome Hyy2001X
 
 	case ${TARGET_PROFILE} in
 	d-team_newifi-d2)
