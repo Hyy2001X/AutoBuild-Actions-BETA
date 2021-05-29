@@ -276,12 +276,16 @@ PS_Firmware() {
 		echo "[Preload Info] UEFI_Firmware: ${EFI_Firmware}"
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
 		if [ -f "${Legacy_Firmware}" ];then
-			CALC_MD5 "${Legacy_Firmware}" "${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail"
+			_MD5=$(md5sum ${Legacy_Firmware} | cut -d ' ' -f1)
+			_SHA256=$(sha256sum ${Legacy_Firmware} | cut -d ' ' -f1)
+			echo -e "MD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-Legacy.detail
 			cp ${Legacy_Firmware} ${AutoBuild_Firmware}-Legacy.${Firmware_Type}
 			TIME "Legacy Firmware is detected !"
 		fi
 		if [ -f "${EFI_Firmware}" ];then
-			CALC_MD5 "${EFI_Firmware}" "${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail"
+			_MD5=$(md5sum ${EFI_Firmware} | cut -d ' ' -f1)
+			_SHA256=$(sha256sum ${EFI_Firmware} | cut -d ' ' -f1)
+			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > ${Home}/bin/Firmware/${AutoBuild_Firmware}-UEFI.detail
 			cp ${EFI_Firmware} ${AutoBuild_Firmware}-UEFI.${Firmware_Type}
 			TIME "UEFI Firmware is detected !"
 		fi
@@ -309,7 +313,9 @@ PS_Firmware() {
 		echo "[Preload Info] AutoBuild_Firmware: ${AutoBuild_Firmware}"
 		if [ -f "${Firmware_Path}/${Default_Firmware}" ];then
 			mv -f ${Firmware_Path}/${Default_Firmware} bin/Firmware/${AutoBuild_Firmware}
-			CALC_MD5 "bin/Firmware/${AutoBuild_Firmware}" "bin/Firmware/${AutoBuild_Detail}"
+			_MD5=$(md5sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
+			_SHA256=$(sha256sum bin/Firmware/${AutoBuild_Firmware} | cut -d ' ' -f1)
+			echo -e "\nMD5:${_MD5}\nSHA256:${_SHA256}" > bin/Firmware/${AutoBuild_Detail}
 			TIME "Firmware is detected !"
 		else
 			TIME "[ERROR] Firmware is not detected !"
@@ -318,18 +324,6 @@ PS_Firmware() {
 	esac
 	cd ${Home}
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
-}
-
-CALC_MD5() {
-	MD5=$(md5sum $1 | cut -d ' ' -f1)
-	SHA256=$(sha256sum $1 | cut -d ' ' -f1)
-	MD5_TMP=$(md5sum $1 | cut -d ' ' -f1)
-	SHA256_TMP=$(sha256sum $1 | cut -d ' ' -f1)
-	[[ ${MD5} == ${TMP} ]] && [[ ${SHA256} == ${SHA256_TMP} ]] && {
-		TIME "_MD5: ${MD5}\nSHA256: ${SHA256}"
-		echo -e "\nMD5:${MD5}\nSHA256:${SHA256}" > $2
-		return 0
-	} || return 0
 }
 
 GET_BRANCH() {
@@ -363,18 +357,13 @@ PKG_Finder() {
 		return 0
 	}
 	unset PKG_RESULT
-	PKG_TYPE=$1
-	PKG_DIR=$2
-	PKG_NAME=$3
-	DIR_SKIP=$4
-
-	[[ -z ${PKG_TYPE} ]] && [[ -z ${PKG_NAME} ]] || [[ -z ${PKG_DIR} ]] && return
-	if [[ -n "${DIR_SKIP}" ]];then
-		PKG_RESULT=$(find ${PKG_DIR} -name ${PKG_NAME} -type ${PKG_TYPE} -depth -exec echo {} \;)
-	else
-		PKG_RESULT=$(find ${PKG_DIR} -path ${DIR_SKIP} -prune -o -type ${PKG_TYPE} -name ${PKG_NAME} -exec echo {} \;)
-	fi
-	[[ -n "${PKG_RESULT}" ]] && echo "${PKG_RESULT}"
+	_PKG_TYPE=${1}
+	_PKG_DIR=${2}
+	_PKG_NAME=${3}
+	[[ -z ${_PKG_TYPE} ]] && [[ -z ${_PKG_NAME} ]] || [[ -z ${_PKG_DIR} ]] && return
+	_PKG_RESULT=$(find ${_PKG_DIR} -name ${_PKG_NAME} -type ${_PKG_TYPE} -exec echo {} \;)
+	[[ -n "${_PKG_RESULT}" ]] && echo "${_PKG_RESULT}"
+	unset _PKG_TYPE _PKG_DIR _PKG_NAME
 }
 
 Auto_AddPackage() {
@@ -465,4 +454,47 @@ Replace_File() {
 		}
 	}
 	unset FILE_NAME PATCH_DIR FILE_RENAME
+}
+
+Update_Makefile() {
+	[[ $# -ne 2 ]] && {
+		TIME "[ERROR] Error options: [$#] [$*] !"
+		return 0
+	}
+	PKG_NAME=${1}
+	Makefile=${2}/Makefile
+	[ -f "/tmp/tmp_file" ] && rm -f /tmp/tmp_file
+	[ -f "${Makefile}" ] && {
+		PKG_URL_MAIN="$(grep "PKG_SOURCE_URL:=" ${Makefile} | cut -c17-100)"
+		_process1=${PKG_URL_MAIN##*com/}
+		_process2=${_process1%%/tar*}
+		api_URL="https://api.github.com/repos/${_process2}/releases"
+		PKG_SOURCE_URL="$(grep "PKG_SOURCE_URL:=" ${Makefile} | cut -c17-100)"
+		PKG_DL_URL="${PKG_SOURCE_URL%\$(\PKG_VERSION*}"
+		Offical_Version="$(curl -s ${api_URL} 2>/dev/null | grep 'tag_name' | egrep -o '[0-9].+[0-9.]+' | awk 'NR==1')"
+		[[ -z "${Offical_Version}" ]] && {
+			TIME "[ERROR] Failed to obtain the Offical version of [${PKG_NAME}] !"
+			return
+		}
+		Source_Version="$(grep "PKG_VERSION:=" ${Makefile} | cut -c14-20)"
+		Source_HASH="$(grep "PKG_HASH:=" ${Makefile} | cut -c11-100)"
+		[[ -z "${Source_Version}" ]] || [[ -z "${Source_HASH}" ]] && {
+			TIME "[ERROR] Failed to obtain the Source version or Hash !"
+			return
+		}
+		[[ ! "${Source_Version}" == "${Offical_Version}" ]] && {
+			TIME "Updating package ${PKG_NAME} [${Source_Version}] to [${Offical_Version}] ..."
+			sed -i "s?PKG_VERSION:=${Source_Version}?PKG_VERSION:=${Offical_Version}?g" ${Makefile}
+			wget -q "${PKG_DL_URL}${Offical_Version}?" -O /tmp/tmp_file
+			[[ "$?" -eq 0 ]] && {
+				Offical_HASH="$(sha256sum /tmp/tmp_file | cut -d ' ' -f1)"
+				sed -i "s?PKG_HASH:=${Source_HASH}?PKG_HASH:=${Offical_HASH}?g" ${Makefile}
+			} || {
+				TIME "[ERROR] Failed to update the package [${PKG_NAME}] !"
+			}
+		}
+	} || {
+		TIME "[ERROR] Package ${PKG_NAME} is not detected !"
+	}
+	unset _process1 _process2 Offical_Version Source_Version
 }
