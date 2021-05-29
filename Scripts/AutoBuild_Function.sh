@@ -232,6 +232,11 @@ Other_Scripts() {
 			TIME "Current source: [${Openwrt_Author}] is not supported,skip..."
 		fi
 	fi
+	if [ -s $GITHUB_WORKSPACE/Configs/Common ];then
+		TIME "Merging Common_Config to .config ..."
+		echo -e "\n$(cat $GITHUB_WORKSPACE/Configs/Common)" >> .config
+		cat .config
+	fi
 }
 
 PS_Firmware() {
