@@ -1,17 +1,17 @@
 Sysinfo() {
-	[ -f /etc/openwrt_info ] && source /etc/openwrt_info > /dev/null 2>&1
-	local Target=${DEFAULT_Device}
-	[ -n "${CURRENT_Version}" ] && local Version="${CURRENT_Version}" || Version=未知
-	[ -z "${Target}" ] && local Target=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
+	source /etc/AutoBuild/Default_Variable > /dev/null 2>&1
+	source /etc/AutoBuild/Custom_Variable > /dev/null 2>&1
+	[ -z "${CURRENT_Version}" ] && CURRENT_Version=未知
+	[ -z "${TARGET_PROFILE}" ] && local TARGET_PROFILE=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
 	local IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
 	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
 	local Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
-	echo -e "\n           设备名称:		${Yellow}$(uname -n) / ${Target}${White}"
+	echo -e "\n           设备名称:		${Yellow}$(uname -n) / ${TARGET_PROFILE}${White}"
 	[ -n "${TEMP}" ] && echo "           核心温度:		${TEMP}"
 	echo "           内核版本:		$(uname -rs)"
-	echo -e "           固件版本:		${Skyb}${Version}${White}"
+	echo -e "           固件版本:		${Skyb}${CURRENT_Version}${White}"
 	echo "           IP 地址 : 		${IP_Address}"
 	echo "           可用空间:		${Overlay_Available}"
 	[ -n "${CoreMark}" ] && echo "           性能得分:		${CoreMark}"

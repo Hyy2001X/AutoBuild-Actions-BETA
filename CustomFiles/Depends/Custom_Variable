@@ -1,0 +1,3 @@
+## 请在下方输入你的自定义变量,一行写一个
+## 该文件将在运行 AutoUpdate.sh 时读取,变量优先级高于 Default_Variable
+## 示例: TARGET_PROFILE=x86_64
