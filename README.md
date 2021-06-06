@@ -3,7 +3,7 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Forks&logo=github)
 
-测试通过的设备: `d-team_newifi-d2`、`x86_64(img、img.gz)`
+测试通过的设备: `d-team_newifi-d2`、`x86_64`
 
 测试通过的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt`
 
@@ -27,9 +27,9 @@
 
 2. 把本地的 `.config` 文件重命名为你的**设备名称**并上传到`/Configs`目录
 
-3. 编辑`.github/workflows/*.yml`文件,修改`第 7 和 36 行`为你的**设备名称**
+3. 编辑`.github/workflows/*.yml`文件,修改`第 7 和 32 行`为你的**设备名称**
 
-   **使用其他源码** 修改`第 38 行`为源码的仓库地址:分支
+   **使用其他源码** 修改`第 34 行`为源码的仓库地址:分支
 
 4. 按照需求编辑并定制`Scripts/AutoBuild_DiyScript.sh`文件
 
@@ -43,7 +43,7 @@
 
    Default_Device 设备的 TARGET_PROFILE 名称,例如 d-team_newifi-d2、x86_64
    
-   Short_Firmware_Date 固件日期样式,当设置为 true: [20210501] false: [202105012300]
+   Short_Firmware_Date 固件日期样式,当设置为 true: [20210601] false: [202106012359]
    
    Default_IP_Address 固件 LAN IP 地址,默认为: [192.168.1.1] false/留空: [不修改]
 
@@ -56,8 +56,6 @@
    INCLUDE_Theme_Argon 自动添加适用于当前源码的 luci-theme-argon 主题
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
-
-   Upload_VM_Firmware 上传虚拟磁盘 vmdk vhdx vdi 固件到 Release (仅支持 x86_64)
    
    注: 若要启用某项功能,请将该值修改为 true,禁用某项功能则修改为 false 或留空
 ```
@@ -80,8 +78,6 @@
    **手动编译** 点击上方`Actions`,选择你要编译的设备名称,点击右方`Run workflow`,点击绿色按钮即可开始编译
    
    **临时修改 IP 地址** 该功能仅在**手动编译**时生效,点击`Run workflow`后即可输入 IP 地址(优先级**高于** Diy_Core 中的定义)
-
-   **SSH 连接** 使用方法参考 [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
 
 ## 使用 AutoUpdate 一键更新脚本:
 
