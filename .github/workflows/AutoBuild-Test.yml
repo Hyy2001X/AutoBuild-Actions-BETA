@@ -36,13 +36,13 @@ env:
 # 上传固件到 Github Artifacts
   UPLOAD_ARTIFACTS: false
 # 上传 bin 文件夹到 Github Artifacts
-  UPLOAD_BIN_ARTIFACTS: false
+  UPLOAD_BIN_ARTIFACTS: true
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: true
 ### END
 
 jobs:
-  build:
+  Compile:
     runs-on: ubuntu-latest
 
     steps:
@@ -106,7 +106,8 @@ jobs:
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware-Diy_Base && Firmware-Diy
+        Firmware-Diy_Base
+        source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
         rm -f .config && cp $GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET .config
 
     - name: SSH Connection to Actions
