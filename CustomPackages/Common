@@ -5,3 +5,4 @@ svn feeds/packages netdata openwrt/packages/trunk/admin
 git other luci-app-serverchan tty228
 svn other luci-app-socat Lienol/openwrt-package/trunk
 git other luci-app-onliner rufengsuixing
+git other luci-app-adguardhome Hyy2001X
