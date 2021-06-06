@@ -11,10 +11,6 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      ssh:
-        description: 'SSH 连接到 Actions'
-        required: true
-        default: 'false'
       ip_addr:
         description: '固件 IP 地址 [可选]'
         default: ''
@@ -113,15 +109,9 @@ jobs:
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware-Diy_Base && Firmware-Diy
+        Firmware-Diy_Base
+        source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
         rm -f .config && cp $GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET .config
-
-    - name: SSH Connection to Actions
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.SSH == 'true' && github.event.inputs.SSH  != 'false') || contains(github.event.action, 'SSH')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
     - name: Compile
       run: |
