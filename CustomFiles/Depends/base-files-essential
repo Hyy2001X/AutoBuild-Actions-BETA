@@ -1,0 +1,11 @@
+# 更新固件时默认保留的文件,请不要删除其中的内容
+/etc/hosts
+/etc/inittab
+/etc/group
+/etc/passwd
+/etc/shadow
+/etc/shells
+/etc/shinit
+/etc/sysctl.conf
+/etc/rc.local
+/etc/AutoBuild/Custom_Variable
