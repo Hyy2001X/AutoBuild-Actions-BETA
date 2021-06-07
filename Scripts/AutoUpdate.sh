@@ -11,37 +11,36 @@ SHELL_HELP() {
 	TITLE
 	cat <<EOF
 
-使用方法:	$0 [none] [<path=>] [-P] [-n] [-f] [-u]
+使用方法:	$0 [<path=>] [-P] [-n] [-f] [-u]
 		$0 [<更新脚本>] [-x/-x <path=>/-x <url=>]
 
 更新固件:
-	[none]		更新固件 [保留配置]
 	-n		更新固件 [不保留配置]
 	-f		强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
 	-u		适用于定时更新 LUCI 的参数 [保留配置]
 	-? <path=>	更新固件 (保存固件到用户提供的目录)
 
-设置参数:
-	-C <Github URL>		更换 Github 地址
-	-B <UEFI/Legacy>	指定 x86_64 设备下载 UEFI 或 Legacy 的固件 (危险)
-	--corn <task=> <time>	设置定时任务
-	--del-corn		删除所有 AutoUpdate 定时任务
-
 更新脚本:
 	-x		更新 AutoUpdate.sh 脚本
-	-x <path=>	更新 AutoUpdate.sh 脚本 (保存脚本到用户提供的目录)
+	-x <path=>	更新 AutoUpdate.sh 脚本 (保存脚本到用户指定的目录)
 	-x <url=>	更新 AutoUpdate.sh 脚本 (使用用户提供的脚本地址更新)
 
 其他参数:
-	-P,--proxy	强制镜像加速
-	-T,--test	测试模式 (仅运行流程,不更新固件)
-	-H,--help	打印帮助信息
-	-L,--list	打印系统信息
-	-U		检查版本更新
-	-U <path=>	检查版本更新并输出信息到指定文件
-	--clean		清理固件下载缓存
-	--check		检查 AutoUpdate 依赖
-	--var <var>	打印定义
+	-C <Github URL>		更换 Github 地址
+	-B <UEFI/Legacy>	指定 x86_64 设备下载 UEFI 或 Legacy 的固件 (危险)
+	-P,--proxy		强制镜像加速
+	-T,--test		测试模式 (仅运行流程,不更新固件)
+	-H,--help		打印帮助信息
+	-L,--list		打印系统信息
+	-U			仅检查版本更新
+	-U <path=>		检查版本更新 (输出信息到用户指定文件)
+	--corn <task=> <time>	设置定时任务
+	--del-corn		删除所有 AutoUpdate 相关定时任务
+	--bak <path> <name>	备份配置文件到用户指定的目录
+	--clean			清理固件下载缓存
+	--check			检查 AutoUpdate 依赖
+	--var <variable>	打印定义
+
 EOF
 	exit 0
 }
@@ -68,6 +67,10 @@ EOF
 		echo "引导模式:		${x86_64_Boot}"
 	}
 	exit 0
+}
+
+RANDOM() {
+	openssl rand -base64 $1 | md5sum | cut -c 1-$1
 }
 
 TIME() {
@@ -512,6 +515,27 @@ while [[ $1 ]];do
 		SHOW_VARIABLE=$(GET_VARIABLE "$1=" /etc/AutoBuild/Custom_Variable)
 		[[ -z ${SHOW_VARIABLE} ]] && SHOW_VARIABLE=$(GET_VARIABLE "$1=" /etc/AutoBuild/Default_Variable)
 		echo "${SHOW_VARIABLE}"
+		exit
+	;;
+	--bak)
+		shift
+		[[ $# -lt 1 || $# -gt 2 ]] && TIME r "格式错误,示例: [bash $0 --bak /mnt/sda1 Openwrt_Backups.tar.gz]" && exit 1
+		[[ $# == 2 ]] && {
+			[[ ! -d $1 ]] && mkdir -p $1
+			FILE="$1/$2"
+			if [[ -f ${FILE} ]];then
+				FILE="${FILE}-$(RANDOM 5)"
+			fi
+		} || {
+			[[ ! -d $1 ]] && mkdir -p $1
+			FILE="$1/Openwrt-Backups-$(date +%Y-%m-%d)-$(RANDOM 5)"
+		}
+		[[ ! ${FILE} =~ tar.gz ]] && FILE="${FILE}.tar.gz"
+		TIME "Saving config files to [${FILE}] ..."
+		sysupgrade -b "${FILE}" >/dev/null 2>&1
+		[ $? == 0 ] && {
+			TIME y "备份成功!"
+		} || TIME r "备份文件创建失败,请更换保存目录!"
 		exit
 	;;
 	*)
