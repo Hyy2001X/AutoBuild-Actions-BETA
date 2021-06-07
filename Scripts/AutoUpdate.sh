@@ -419,7 +419,7 @@ REMOVE_FW_CACHE() {
 	esac
 }
 
-export Version=V6.0
+export Version=V6.0.1
 export FW_SAVE_PATH=/tmp/Downloads
 export Upgrade_Command=sysupgrade
 [ ! -f /etc/AutoBuild/Custom_Variable ] && touch /etc/AutoBuild/Custom_Variable
