@@ -122,7 +122,6 @@ Openwrt_Branch=${Openwrt_Branch}
 AutoBuild_Firmware=${AutoBuild_Firmware}
 Openwrt_Repo_Name=${Openwrt_Repo_Name}
 Egrep_Firmware=${Egrep_Firmware}
-Egrep_Firmware=${Egrep_Firmware}
 FW_SAVE_PATH=/tmp/Downloads
 EOF
 	cat >> VARIABLE_FILE_Sec <<EOF
