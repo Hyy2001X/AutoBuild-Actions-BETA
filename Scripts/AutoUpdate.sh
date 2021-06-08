@@ -73,7 +73,7 @@ Release API:		${Github_Tag_URL}
 默认下载地址:		${Github_Release_URL}
 固件保存位置:           ${FW_SAVE_PATH}
 固件格式:		${Firmware_Type}
-log 文件:		${log_File}
+log 文件:		${log_Path}/AutoUpdate.log
 EOF
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
 		echo "引导模式:		${x86_64_Boot}"
@@ -86,7 +86,8 @@ RANDOM() {
 }
 
 TIME() {
-	[[ ! -f ${log_File} ]] && touch ${log_File}
+	[[ ! -d ${log_Path} ]] && mkdir -p "${log_Path}"
+	[[ ! -f ${log_Path}/AutoUpdate.log ]] && touch "${log_Path}/AutoUpdate.log"
 	[[ -z $1 ]] && {
 		echo -ne "\n\e[36m[$(date "+%H:%M:%S")]\e[0m "
 	} || {
@@ -99,10 +100,10 @@ TIME() {
 	esac
 		[[ $# -lt 2 ]] && {
 			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m $1"
-			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $1" >> ${log_File}
+			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $1" >> ${log_Path}/AutoUpdate.log
 		} || {
 			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m ${Color}$2\e[0m"
-			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $2" >> ${log_File}
+			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $2" >> ${log_Path}/AutoUpdate.log
 		}
 	}
 }
@@ -211,7 +212,7 @@ CHANGE_BOOT() {
 GET_VARIABLE() {
 	[[ $# != 2 ]] && SHELL_HELP 1 $*
 	[[ ! -f $2 ]] && TIME "未检测到定义文件: [$2] !" && exit 1
-	echo -e "$(grep "$1" $2 | cut -c$(echo $1 | wc -c)-200)"
+	echo -e "$(grep "$1" $2 | cut -c$(echo $1 | wc -c)-200 | awk 'NR==1')"
 }
 
 UPDATE_SCRIPT() {
@@ -262,7 +263,6 @@ CHECK_UPDATES() {
 	[[ ! $? == 0 ]] || [[ ! -f ${FW_SAVE_PATH}/Github_Tags ]] && {
 		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
 		TIME r "检查更新失败,请稍后重试!"
-		exit 1
 		exit 1
 	}
 	eval X=$(GET_VARIABLE Egrep_Firmware= ${Default_Variable})
@@ -338,7 +338,7 @@ PREPARE_UPGRADES() {
 		exit 1
 	}
 	[[ ${Proxy_Mode} == 1 ]] && {
-        FW_URL="${FW_Proxy_URL}"
+		FW_URL="${FW_Proxy_URL}"
 	} || FW_URL="${FW_NoProxy_URL}"
 	cat <<EOF
 
@@ -433,8 +433,8 @@ REMOVE_FW_CACHE() {
 	esac
 }
 
-export Version=V6.0.3
-export log_File=/tmp/AutoUpdate.log
+export Version=V6.0.4
+export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
 export Custom_Variable=/etc/AutoBuild/Custom_Variable
@@ -555,12 +555,13 @@ while [[ $1 ]];do
 		exit
 	;;
 	--log)
-		TITLE && echo && cat ${log_File}
+		TITLE && echo && cat ${log_Path}/AutoUpdate.log
 	;;
 	--log-path)
 		shift
 		[[ -z $* ]] && SHELL_HELP 1 $*
-		EDIT_VARIABLE edit ${Custom_Variable} log_File $1/AutoUpdate.log
+		EDIT_VARIABLE rm ${Custom_Variable} log_Path
+		EDIT_VARIABLE edit ${Custom_Variable} log_Path $1
 		[[ ! -d $1 ]] && mkdir -p $1
 		TIME y "AutoUpdate 日志位置已修改为: $1/AutoUpdate.log"
 	;;
