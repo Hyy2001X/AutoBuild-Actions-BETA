@@ -154,9 +154,9 @@ CHANGE_GITHUB() {
 		TIME y "错误的 Github 地址,示例: https://github.com/Hyy2001X/AutoBuild-Actions"
 		exit 1
 	}
-	UCI_Github_URL=$(uci get autoupdate.@login[0].github 2>/dev/null)
+	UCI_Github_URL=$(uci get autoupdate.@common[0].github 2>/dev/null)
 	[[ -n ${UCI_Github_URL} && ! ${UCI_Github_URL} == $1 ]] && {
-		uci set autoupdate.@login[0].github=$1
+		uci set autoupdate.@common[0].github=$1
 		uci commit autoupdate
 		TIME y "UCI 设置已更新!"
 	}
@@ -419,7 +419,7 @@ REMOVE_FW_CACHE() {
 	esac
 }
 
-export Version=V6.0.1
+export Version=V6.0.2
 export FW_SAVE_PATH=/tmp/Downloads
 export Upgrade_Command=sysupgrade
 [ ! -f /etc/AutoBuild/Custom_Variable ] && touch /etc/AutoBuild/Custom_Variable
