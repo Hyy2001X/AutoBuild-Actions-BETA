@@ -401,7 +401,7 @@ EOF
 	esac
 	[[ ! ${Test_Mode} == 1 ]] && {
 		sleep 3
-		chmod 777${FW_SAVE_PATH}/${FW_Name}
+		chmod 777 ${FW_SAVE_PATH}/${FW_Name}
 		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}
 	} || {
 		TIME b "[Test Mode] 执行: ${Upgrade_Option} ${FW_Name}"
@@ -435,7 +435,7 @@ REMOVE_FW_CACHE() {
 	esac
 }
 
-export Version=V6.0.4
+export Version=V6.0.5
 export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
