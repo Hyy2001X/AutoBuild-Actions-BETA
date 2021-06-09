@@ -307,6 +307,7 @@ PREPARE_UPGRADES() {
 		}
 	done
 	REMOVE_FW_CACHE quiet ${FW_SAVE_PATH}
+	Upgrade_Option="${Upgrade_Command} -q"
 	case $1 in
 	-n)
 		Upgrade_Option="${Upgrade_Command} -n"
@@ -400,7 +401,8 @@ EOF
 	esac
 	[[ ! ${Test_Mode} == 1 ]] && {
 		sleep 3
-		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name} 
+		chmod 777${FW_SAVE_PATH}/${FW_Name}
+		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}
 	} || {
 		TIME b "[Test Mode] 执行: ${Upgrade_Option} ${FW_Name}"
 		TIME b "[Test Mode] 测试模式运行完毕!"
