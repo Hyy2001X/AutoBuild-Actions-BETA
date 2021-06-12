@@ -293,7 +293,7 @@ PREPARE_UPGRADES() {
 	while [[ $1 ]];do
 		[[ $1 == -T || $1 == --test ]] && {
 			Test_Mode=1
-			TAIL_MSG=" [Test Mode]"
+			TAIL_MSG=" [测试模式]"
 		} ||
 		[[ $1 == -P || $1 == --proxy ]] && {
 			Proxy_Mode=1
@@ -305,7 +305,7 @@ PREPARE_UPGRADES() {
 		[[ $1 =~ path= ]] && {
 			[ -z "$(echo $1 | cut -d "=" -f2)" ] && TIME r "固件保存目录不能为空!" && exit 1
 			FW_SAVE_PATH=$(echo $1 | cut -d "=" -f2)
-			TIME g "自定义固件保存位置: ${FW_SAVE_PATH}"
+			TIME g "自定义固件保存目录: ${FW_SAVE_PATH}"
 		}
 		[[ $1 == -F || $1 == --force ]] && Force_Write=1
 		case $1 in
@@ -340,6 +340,7 @@ PREPARE_UPGRADES() {
 		MSG_2=" [强制刷写]"
 		Upgrade_Option="${Upgrade_Option} -F"
 	}
+	[[ ! $Test_Mode == 1 ]] && Wget_Head="wget -q" || Wget_Head="wget"
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
 	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
@@ -363,7 +364,7 @@ PREPARE_UPGRADES() {
 $([[ ${TARGET_PROFILE} == x86_64 ]] && echo "固件格式: ${Firmware_Type} / ${x86_64_Boot}" || echo "固件格式: ${Firmware_Type}")
 
 当前固件版本: ${CURRENT_Version}
-$([[ ! ${CLOUD_Firmware_Version} == ${CURRENT_Version} ]] && echo "云端固件版本: ${CLOUD_Firmware_Version} [可更新]" || echo "云端固件版本: ${CLOUD_Firmware_Version} [无需更新]")
+$([[ ! ${CLOUD_Firmware_Version} == ${CURRENT_Version} ]] && echo "云端固件版本: ${CLOUD_Firmware_Version} [可更新]" || echo "云端固件版本: ${CLOUD_Firmware_Version} [已是更新]")
 云端固件体积: ${CLOUD_Firmware_Size}MB
 
 云端固件名称: ${FW_Name}
@@ -375,10 +376,9 @@ EOF
 			exit 0
 		}
 		[[ ! ${Force_Mode} == 1 ]] && {
-			TIME && read -p "已是最新版本,是否重新刷写固件?[Y/n]:" Choose
+			TIME && read -p "已是最新版本,是否继续更新固件?[Y/n]:" Choose
 		} || Choose=Y
 		[[ ! ${Choose} =~ [Yy] ]] && exit 0
-		TIME g "开始强制更新固件..."
 	fi
 	Retry_Times=5
 	TIME "正在下载固件,请耐心等待..."
@@ -396,7 +396,7 @@ EOF
 			TIME r "固件下载失败,请检查网络后重试!"
 			exit 1
 		else
-			wget -q --tries 3 --timeout 5 "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
+			${Wget_Head} --tries 3 --timeout 5 "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
 			[[ $? == 0 ]] && TIME y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
