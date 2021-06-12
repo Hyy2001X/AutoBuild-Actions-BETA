@@ -202,8 +202,8 @@ CHANGE_BOOT() {
 		EDIT_VARIABLE edit ${Custom_Variable} x86_64_Boot $1
 		echo "ON" > /force_dump
 		TIME r "警告: 更换引导方式后更新固件后可能导致设备无法正常启动!"
-		TIME y "已创建临时文件 /force_dump,AutoUpdate 将在下一次更新时强制刷写固件!"
-		TIME y "固件引导格式已指定为: $1"
+		TIME y "已创建临时文件 /force_dump"
+		TIME y "固件引导格式已指定为: [$1],AutoUpdate 将在下一次更新时执行强制刷写固件!"
 	;;
 	*)
 		TIME r "错误的参数: [$1],当前支持的选项: [UEFI/Legacy] !"
@@ -341,7 +341,6 @@ PREPARE_UPGRADES() {
 		Upgrade_Option="${Upgrade_Option} -F"
 	}
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
-	exit
 	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 		[[ ! ${Google_Check} == 301 ]] && {
