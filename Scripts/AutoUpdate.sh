@@ -25,7 +25,7 @@ SHELL_HELP() {
 
 更新固件:
 	-n		更新固件 [不保留配置]
-	-f		强制更新固件,即跳过版本号验证,自动下载以及安装必要软件包 [保留配置]
+	-f		强制更新固件,即跳过版本号验证,以及强制刷写固件 [保留配置]
 	-u		适用于定时更新 LUCI 的参数 [保留配置]
 	-? <path=>	更新固件 (保存固件到用户提供的目录)
 
@@ -36,7 +36,7 @@ SHELL_HELP() {
 
 其他参数:
 	-C <Github URL>		更改 Github 地址
-	-B <UEFI/Legacy>	指定 x86_64 设备下载 UEFI 或 Legacy 的固件 (危险)
+	-B <UEFI/Legacy>	指定 x86_64 设备下载 UEFI 或 Legacy 引导的固件 (危险)
 	-P,--proxy		强制镜像加速
 	-T,--test		测试模式 (仅运行流程,不更新固件)
 	-H,--help		打印帮助信息
@@ -199,7 +199,8 @@ CHANGE_BOOT() {
 	case "$1" in
 	UEFI | Legacy)
 		EDIT_VARIABLE edit ${Custom_Variable} x86_64_Boot $1
-		TIME y "新固件引导格式已指定为: $1"
+		TIME r "警告: 更换引导方式后更新固件后可能导致设备无法正常启动!"
+		TIME y "固件引导格式已指定为: $1"
 	;;
 	*)
 		TIME r "错误的参数: [$1],当前支持的选项: [UEFI/Legacy] !"
@@ -315,6 +316,7 @@ PREPARE_UPGRADES() {
 	;;
 	-f)
 		Force_Mode=1
+		Upgrade_Option="${Upgrade_Command} -q -F"
 		MSG="强制更新固件 (保留配置)"
 	;;
 	-u)
@@ -322,8 +324,8 @@ PREPARE_UPGRADES() {
 		MSG="定时更新 (保留配置)"
 	;;
 	*)
-		MSG="更新固件 (保留配置)"
 		Upgrade_Option="${Upgrade_Command} -q"
+		MSG="更新固件 (保留配置)"
 	esac
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}"
 	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
@@ -404,7 +406,7 @@ EOF
 		chmod 777 ${FW_SAVE_PATH}/${FW_Name}
 		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}
 	} || {
-		TIME b "[Test Mode] 执行: ${Upgrade_Option} ${FW_Name}"
+		TIME b "[Test Mode] 执行: ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}"
 		TIME b "[Test Mode] 测试模式运行完毕!"
 		exit 0
 	}
@@ -435,7 +437,7 @@ REMOVE_FW_CACHE() {
 	esac
 }
 
-export Version=V6.0.5
+export Version=V6.0.6
 export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
