@@ -25,9 +25,9 @@ SHELL_HELP() {
 
 更新固件:
 	-n		更新固件 [不保留配置]
-	-f		强制更新固件,即跳过版本号验证,以及强制刷写固件 [保留配置]
+	-f		跳过版本号验证,并强制刷写固件 [保留配置]
 	-u		适用于定时更新 LUCI 的参数 [保留配置]
-	-? <path=>	更新固件 (保存固件到用户提供的目录)
+	-? <path=>	更新固件 (保存固件到用户指定的目录)
 
 更新脚本:
 	-x		更新 AutoUpdate.sh 脚本
@@ -35,22 +35,23 @@ SHELL_HELP() {
 	-x <url=>	更新 AutoUpdate.sh 脚本 (使用用户提供的脚本地址更新)
 
 其他参数:
+	-F,--force		强制刷写固件 (可附加)
+	-T,--test		测试模式 (可附加)
+	-P,--proxy		强制使用 [FastGit] 加速 (可附加)
 	-C <Github URL>		更改 Github 地址
 	-B <UEFI/Legacy>	指定 x86_64 设备下载 UEFI 或 Legacy 引导的固件 (危险)
-	-P,--proxy		强制镜像加速
-	-T,--test		测试模式 (仅运行流程,不更新固件)
-	-H,--help		打印帮助信息
-	-L,--list		打印系统信息
-	-U			仅检查版本更新
+	-H,--help		打印 AutoUpdate 帮助信息
+	-L,--list		打印当前系统信息
+	-U			检查版本更新
 	--corn <task=> <time>	设置定时任务
-	--corn-del		删除所有 AutoUpdate 相关定时任务
-	--bak <path> <name>	备份配置文件到用户指定的目录
+	--corn-del		删除所有 AutoUpdate 定时任务
+	--bak <path> <name>	备份 Openwrt 配置文件到用户指定的目录
 	--clean			清理固件下载缓存
-	--check			检查 AutoUpdate 依赖
-	--var <variable>	输出指定定义
-	--var-del <variable>	删除指定定义
-	--log			打印 AutoUpdate 运行日志
-	--log-path <path>	更改 AutoUpdate 运行日志保存位置
+	--check			检查 AutoUpdate 依赖软件包
+	--var <variable>	打印用户指定的 <variable>
+	--var-del <variable>	删除用户指定的 <variable>
+	--log			打印 AutoUpdate 历史运行日志
+	--log-path <path>	更改 AutoUpdate 运行日志保存目录
 
 EOF
 	exit 0
@@ -199,7 +200,9 @@ CHANGE_BOOT() {
 	case "$1" in
 	UEFI | Legacy)
 		EDIT_VARIABLE edit ${Custom_Variable} x86_64_Boot $1
+		echo "ON" > /force_dump
 		TIME r "警告: 更换引导方式后更新固件后可能导致设备无法正常启动!"
+		TIME y "已创建临时文件 /force_dump,AutoUpdate 将在下一次更新时强制刷写固件!"
 		TIME y "固件引导格式已指定为: $1"
 	;;
 	*)
@@ -287,31 +290,36 @@ CHECK_UPDATES() {
 
 PREPARE_UPGRADES() {
 	TITLE
-	local Z
-	for Z in $(echo $*)
-	do
-		[[ ${Z} == -T || ${Z} == --test ]] && {
+	while [[ $1 ]];do
+		[[ $1 == -T || $1 == --test ]] && {
 			Test_Mode=1
 			TAIL_MSG=" [Test Mode]"
-		}
-		[[ ${Z} == -P || ${Z} == --proxy ]] && {
+		} ||
+		[[ $1 == -P || $1 == --proxy ]] && {
 			Proxy_Mode=1
 			Proxy_Echo="[FastGit] "
 		} || {
 			Proxy_Mode=0
 			unset Proxy_Echo
 		}
-		[[ ${Z} =~ path= ]] && {
+		[[ $1 =~ path= ]] && {
 			[ -z "$(echo ${Z} | cut -d "=" -f2)" ] && TIME r "保存路径不能为空!" && exit 1
 			FW_SAVE_PATH=$(echo ${Z} | cut -d "=" -f2)
 			TIME g "使用自定义固件保存位置: ${FW_SAVE_PATH}"
 		}
+		[[ $1 == -F || $1 == --force ]] && Force_Write=1
+		case $1 in
+		-n | -f | -u)
+			Option="$1"
+		;;
+		esac
+	shift
 	done
 	REMOVE_FW_CACHE quiet ${FW_SAVE_PATH}
 	Upgrade_Option="${Upgrade_Command} -q"
-	case $1 in
+	case ${Option} in
 	-n)
-		Upgrade_Option="${Upgrade_Command} -n"
+		Upgrade_Option="${Upgrade_Command} -q -n"
 		MSG="更新固件 (不保留配置)"
 	;;
 	-f)
@@ -321,13 +329,19 @@ PREPARE_UPGRADES() {
 	;;
 	-u)
 		AutoUpdate_Mode=1
-		MSG="定时更新 (保留配置)"
+		MSG="LUCI 定时更新 (保留配置)"
 	;;
 	*)
 		Upgrade_Option="${Upgrade_Command} -q"
 		MSG="更新固件 (保留配置)"
 	esac
-	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}"
+	[ -f /force_dump ] && Force_Write=1
+	[[ ${Force_Write} == 1 && ! ${Force_Mode} == 1 ]] && {
+		MSG_2=" [强制刷写]"
+		Upgrade_Option="${Upgrade_Option} -F"
+	}
+	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
+	exit
 	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 		[[ ! ${Google_Check} == 301 ]] && {
@@ -437,7 +451,7 @@ REMOVE_FW_CACHE() {
 	esac
 }
 
-export Version=V6.0.6
+export Version=V6.0.7
 export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
@@ -496,7 +510,7 @@ while [[ $1 ]];do
 		[[ -z ${SH_SAVE_PATH} ]] && SH_SAVE_PATH=/bin
 		UPDATE_SCRIPT ${SH_SAVE_PATH} ${Script_URL}
 	;;
-	-n | -f | -u | -T | --test | -P)
+	-n | -f | -u | -T | --test | -P | --proxy | -F | --force)
 		PREPARE_UPGRADES $*
 	;;
 	--corn)
