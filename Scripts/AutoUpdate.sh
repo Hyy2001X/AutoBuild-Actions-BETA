@@ -557,7 +557,11 @@ while [[ $1 ]];do
 		exit
 	;;
 	--log)
-		TITLE && echo && cat ${log_Path}/AutoUpdate.log
+		[[ -f ${log_Path}/AutoUpdate.log ]] && {
+			TITLE && echo
+			cat ${log_Path}/AutoUpdate.log
+		}
+
 	;;
 	--log-path)
 		shift
