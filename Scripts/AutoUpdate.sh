@@ -303,9 +303,9 @@ PREPARE_UPGRADES() {
 			unset Proxy_Echo
 		}
 		[[ $1 =~ path= ]] && {
-			[ -z "$(echo ${Z} | cut -d "=" -f2)" ] && TIME r "保存路径不能为空!" && exit 1
-			FW_SAVE_PATH=$(echo ${Z} | cut -d "=" -f2)
-			TIME g "使用自定义固件保存位置: ${FW_SAVE_PATH}"
+			[ -z "$(echo $1 | cut -d "=" -f2)" ] && TIME r "固件保存目录不能为空!" && exit 1
+			FW_SAVE_PATH=$(echo $1 | cut -d "=" -f2)
+			TIME g "自定义固件保存位置: ${FW_SAVE_PATH}"
 		}
 		[[ $1 == -F || $1 == --force ]] && Force_Write=1
 		case $1 in
