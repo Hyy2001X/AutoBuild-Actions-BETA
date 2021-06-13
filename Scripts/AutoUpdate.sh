@@ -435,7 +435,7 @@ EOF
 
 DO_UPGRADE() {
 	TIME g "正在更新固件,更新期间请耐心等待..."
-	sleep 1
+	sleep 3
 	$*
 	[[ $? -ne 0 ]] && {
 		TIME r "固件刷写失败,请尝试手动更新固件!"
@@ -470,13 +470,13 @@ AutoUpdate_Main() {
 		case "$1" in
 		-V)
 			shift
-			case $1 in
+			case "$1" in
 			local)
 				[[ -n ${Version} ]] && echo "${Version}" || echo "未知"
 			;;
 			cloud)
-				Cloud_Script_Version=$(wget -q --tries 3 --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | grep "export Version=" | cut -c16-200 | awk 'NR==1')
-				[[ ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
+				Cloud_Script_Version="$(wget -q --tries 3 --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
+				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
 			esac
 			EXIT 0
