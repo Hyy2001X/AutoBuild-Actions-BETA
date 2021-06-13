@@ -168,16 +168,16 @@ EDIT_VARIABLE() {
 	[[ ! -f $1 ]] && TIME r "未检测到定义文件: [$1] !" && EXIT 1
 	case "${Mode}" in
 	edit)
-    	[[ $# != 3 ]] && SHELL_HELP
+    		[[ $# != 3 ]] && SHELL_HELP
 		if [[ -z $(GET_VARIABLE $2 $1) ]];then
 			echo -e "\n$2=$3" >> $1
 		else
-			sed -i "s?$(GET_VARIABLE ${2}= $1)?$3?g" $1
+			sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
 		fi
-		;;
+	;;
 	rm)
-	    [[ $# != 2 ]] && SHELL_HELP
-		sed -i "/${2}=/d" $1
+		[[ $# != 2 ]] && SHELL_HELP
+		sed -i "/$2/d" $1
 	;;
 	esac
 }
@@ -624,7 +624,7 @@ AutoUpdate_Main() {
 	done
 }
 
-export Version=V6.1.0
+export Version=V6.1.1
 export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
