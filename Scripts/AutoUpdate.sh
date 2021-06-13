@@ -464,6 +464,19 @@ LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
 
 while [[ $1 ]];do
 	case "$1" in
+	-V)
+		shift
+		case $1 in
+		local)
+			[[ -n ${Version} ]] && echo "${Version}" || echo "未知"
+		;;
+		cloud)
+			Cloud_Script_Version=$(wget -q --tries 3 --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | grep "export Version=" | cut -c16-200 | awk 'NR==1')
+			[[ ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
+		;;
+		esac
+		exit 0
+	;;
 	--clean)
 		REMOVE_FW_CACHE normal $*
 	;;
