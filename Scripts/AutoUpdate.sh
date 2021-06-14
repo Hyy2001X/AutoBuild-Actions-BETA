@@ -31,10 +31,10 @@ SHELL_HELP() {
 	-P,--proxy		强制使用 [FastGit] 加速 (可附加)
 	-C <Github URL>		更改 Github 地址
 	-B <UEFI | Legacy>	指定 x86_64 设备下载 <UEFI | Legacy> 引导的固件 (危险)
+	-V <local | cloud>	打印 <本地 | 云端> AutoUpdate 脚本版本
 	--help			打印 AutoUpdate 帮助信息
 	-L,--list		打印当前系统信息
 	-U			检查版本更新
-	--corn <task=> <time>	设置定时任务
 	--corn-rm		删除所有 AutoUpdate 定时任务
 	--bak <path> <name>	备份 Openwrt 配置文件到用户指定的目录
 	--clean			清理固件下载缓存
@@ -43,6 +43,7 @@ SHELL_HELP() {
 	--var-rm <variable>	删除用户指定的 <variable>
 	--log			打印 AutoUpdate 历史运行日志
 	--log-path <path>	更改 AutoUpdate 运行日志保存目录
+	--random <number>	打印一个随机数字与字母组合 (0-31)
 
 EOF
 	EXIT 1
@@ -481,11 +482,15 @@ AutoUpdate_Main() {
 			esac
 			EXIT 0
 		;;
+		--random)
+			shift
+			[[ $# != 1 || ! $1 =~ [0-9] || $1 == 0 || $1 -gt 30 ]] && SHELL_HELP || RANDOM $1
+		;;
 		--clean)
 			REMOVE_FW_CACHE normal $*
 		;;
 		--check)
-			CHECK_DEPENDS x86:gzip curl wget 
+			CHECK_DEPENDS x86:gzip curl wget openssl
 		;;
 		--help)
 			SHELL_HELP
@@ -529,20 +534,6 @@ AutoUpdate_Main() {
 		-n | -f | -u | -T | --test | -P | --proxy | -F | --force)
 			PREPARE_UPGRADES $*
 		;;
-		--corn)
-			[[ $# != 3 ]] && SHELL_HELP
-			shift
-			while [[ $1 ]];do
-				[[ $1 =~ task= ]] && Task="$(echo $1 | cut -d "=" -f2)"
-				Time="$1"
-				shift
-			done
-			[[ -z ${Task} || -z ${Time} ]] && SHELL_HELP
-			echo -e "\n${Time} bash $0 $Task" >> /etc/crontabs/root
-			/etc/init.d/cron restart
-			TIME y "已设置计划任务: [${Time} bash $0 $Task]"
-			EXIT 0
-		;;
 		--corn-rm)
 			[ ! -f /etc/crontabs/root ] && EXIT 1
 			sed -i '/AutoUpdate/d' /etc/crontabs/root >/dev/null 2>&1
@@ -552,7 +543,7 @@ AutoUpdate_Main() {
 		;;
 		-U)
 			CHECK_UPDATES check
-			EXIT 0
+			[ $? == 0 ] && EXIT 0 || EXIT 1
 		;;
 		--var)
 			shift
@@ -560,13 +551,13 @@ AutoUpdate_Main() {
 			SHOW_VARIABLE=$(GET_VARIABLE "$1" ${Custom_Variable})
 			[[ -z ${SHOW_VARIABLE} ]] && SHOW_VARIABLE=$(GET_VARIABLE "$1" ${Default_Variable})
 			echo "${SHOW_VARIABLE}"
-			EXIT
+			[ $? == 0 ] && EXIT 0 || EXIT 1
 		;;
 		--var-rm)
 			shift
 			[[ $# != 1 ]] && SHELL_HELP
 			EDIT_VARIABLE rm ${Custom_Variable} $1
-			EXIT
+			[ $? == 0 ] && EXIT 0 || EXIT 1
 		;;
 		--bak)
 			shift
@@ -574,9 +565,7 @@ AutoUpdate_Main() {
 			[[ $# == 2 ]] && {
 				[[ ! -d $1 ]] && mkdir -p $1
 				FILE="$1/$2"
-				if [[ -f ${FILE} ]];then
-				FILE="${FILE}-$(RANDOM 5)"
-				fi
+				[[ -f ${FILE} ]] && FILE="${FILE}-$(RANDOM 5)"
 			} || {
 				[[ ! -d $1 ]] && mkdir -p $1
 				FILE="$1/Openwrt-Backups-$(date +%Y-%m-%d)-$(RANDOM 5)"
@@ -585,9 +574,11 @@ AutoUpdate_Main() {
 			TIME "Saving config files to [${FILE}] ..."
 			sysupgrade -b "${FILE}" >/dev/null 2>&1
 			[ $? == 0 ] && {
-				TIME y "备份成功!"
+				TIME y "系统文件备份成功!"
+				TIME y "保存位置: ${FILE}"
+				EXIT 0
 			} || TIME r "备份文件创建失败,请尝试更换保存目录!"
-			EXIT
+			EXIT 1
 		;;
 		--log)
 			shift
@@ -604,12 +595,10 @@ AutoUpdate_Main() {
 						EDIT_VARIABLE edit ${Custom_Variable} log_Path ${LOG_PATH}
 						[[ ! -d ${LOG_PATH} ]] && mkdir -p ${LOG_PATH}
 						TIME y "AutoUpdate 日志保存目录已修改为: ${LOG_PATH}"
-						EXIT
+						EXIT 0
 					fi
 					[[ $1 == rm || $1 == del ]] && {
-						[[ -f ${log_Path}/AutoUpdate.log ]] && {
-							rm ${log_Path}/AutoUpdate.log
-						}
+						[[ -f ${log_Path}/AutoUpdate.log ]] && rm ${log_Path}/AutoUpdate.log
 					}
 					[[ ! $1 =~ path= && $1 != rm && $1 != del ]] && SHELL_HELP
 					EXIT
@@ -624,7 +613,7 @@ AutoUpdate_Main() {
 	done
 }
 
-export Version=V6.1.1
+export Version=V6.1.2
 export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
