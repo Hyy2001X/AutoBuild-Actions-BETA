@@ -1,4 +1,3 @@
-git other luci-app-argon-config jerrykuku
 svn other luci-app-smartdns kenzok8/openwrt-packages/trunk
 svn feeds/packages smartdns kenzok8/openwrt-packages/trunk
 #svn feeds/packages netdata openwrt/packages/trunk/admin
