@@ -209,7 +209,7 @@ Firmware-Diy_Base() {
 	Replace_File CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
 	case "${Openwrt_Author}" in
 	coolsnowwolf)
-		Replace_File CustomFiles/Depends/coremark_lede.sh package/lean/coremark coremark.sh
+		Replace_File CustomFiles/Depends/coremark.sh package/feeds/packages/coremark
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
@@ -218,7 +218,6 @@ Firmware-Diy_Base() {
 		# [[ ${INCLUDE_DRM_I915} == true ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
 	;;
 	immortalwrt)
-		Replace_File CustomFiles/Depends/coremark_ImmortalWrt.sh package/base-files/files/etc coremark.sh
 		Replace_File CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
 		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" ${Version_File}
