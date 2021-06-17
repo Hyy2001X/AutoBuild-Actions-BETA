@@ -7,13 +7,14 @@ Sysinfo() {
 	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d 天 %d 小时 %d 分钟\n",a,b,c)}' /proc/uptime)
 	local Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
+	local Tmp_Available="$(df -h | grep "/tmp" | awk '{print $4}' | awk 'NR==1')"
 	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
 	echo -e "\n           设备名称:		${Yellow}$(uname -n) / ${TARGET_PROFILE}${White}"
 	[ -n "${TEMP}" ] && echo "           核心温度:		${TEMP}"
 	echo "           内核版本:		$(uname -rs)"
 	echo -e "           固件版本:		${Skyb}${CURRENT_Version}${White}"
 	echo "           IP 地址 : 		${IP_Address}"
-	echo "           可用空间:		${Overlay_Available}"
+	echo "           可用空间:		${Overlay_Available} / ${Tmp_Available}"
 	[ -n "${CoreMark}" ] && echo "           性能得分:		${CoreMark}"
 	echo "           运行时间: 		${Startup}"
 	echo ""
@@ -25,26 +26,17 @@ export Red="\e[31m"
 export Blue="\e[34m"
 export Skyb="\e[36m"
 
-clear
 [ -e /tmp/.failsafe ] && export FAILSAFE=1
-[ -f /etc/banner ] && {
-	echo -e "$Skyb"
-	cat /etc/banner
-	echo -e "$White"
-}
-[ -n "$FAILSAFE" ] && {
-	echo -e "$Red"
-	cat /etc/banner.failsafe
-	echo -e "$White"
-}
+
+[ -f /etc/banner ] && cat /etc/banner
+[ -n "$FAILSAFE" ] && cat /etc/banner.failsafe
+
 fgrep -sq '/ overlay ro,' /proc/mounts && {
-	echo -e "$Red"
-	echo "警告: 您的固件空间已满,接下来保存的数据将会面临丢失的风险."
-	echo "请尝试从 /overlay 删除一些文件并重启设备!"
-	echo -e "$White"
+	echo 'Your JFFS2-partition seems full and overlayfs is mounted read-only.'
+	echo 'Please try to remove files from /overlay/upper/... and reboot!'
 }
 
-export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="%PATH%"
 export HOME=$(grep -e "^${USER:-root}:" /etc/passwd | cut -d ":" -f 6)
 export HOME=${HOME:-/root}
 export PS1='\u@\h:\w\$ '
@@ -57,21 +49,23 @@ case "$TERM" in
 esac
 
 [ -n "$FAILSAFE" ] || {
-	for FILE in /etc/profile.d/*.sh
-	do
+	for FILE in /etc/profile.d/*.sh; do
 		[ -e "$FILE" ] && . "$FILE"
 	done
 	unset FILE
 }
 
-service() {
-	[ -f "/etc/init.d/$1" ] || {
-		echo -e "${Red}service "'"'"$1"'"'" not found, the following services are available:${White}\n"
-		ls "/etc/init.d"
-		return 1
-	}
-	/etc/init.d/$@
-}
+if ( grep -qs '^root::' /etc/shadow && \
+     [ -z "$FAILSAFE" ] )
+then
+cat << EOF
+=== WARNING! =====================================
+There is no root password defined on this device!
+Use the "passwd" command to set up a new password
+in order to prevent unauthorized SSH logins.
+--------------------------------------------------
+EOF
+fi
 
 Sysinfo
 alias reload='clear && /etc/profile'
