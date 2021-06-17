@@ -276,7 +276,7 @@ Other_Scripts() {
 	fi
 	[[ -s $GITHUB_WORKSPACE/Configs/Common ]] && {
 		TIME "Merging Common_Config to .config ..."
-		echo -e "\n$(cat $GITHUB_WORKSPACE/Configs/Common)" >> .config
+		cat $GITHUB_WORKSPACE/Configs/Common >> .config
 	}
 }
 
