@@ -1,0 +1,4 @@
+## 请在下方输入你的自定义变量,一行只填写一个
+## 该文件将在运行 AutoUpdate.sh 时被读取,变量的优先级将高于 Default_Variable 中的变量
+## 示例1: TARGET_PROFILE=x86_64
+## 示例2: Github=https://github.com/Hyy2001X/AutoBuild-Actions
