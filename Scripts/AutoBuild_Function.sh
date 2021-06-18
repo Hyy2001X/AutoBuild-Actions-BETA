@@ -145,16 +145,16 @@ Firmware-Diy_Base() {
 	GET_INFO
 	mkdir -p package/base-files/files/etc/AutoBuild
 	[ -f VARIABLE_FILE_Main ] && cp VARIABLE_FILE_Main package/base-files/files/etc/AutoBuild/Default_Variable
-	Replace_File CustomFiles/Depends/Custom_Variable package/base-files/files/etc/AutoBuild
+	Copy CustomFiles/Depends/Custom_Variable package/base-files/files/etc/AutoBuild
 	AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/Common
 	AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}
 	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
 	chmod 777 -R ${GITHUB_WORKSPACE}/CustomFiles
 	chmod 777 -R ${GITHUB_WORKSPACE}/CustomPackages
 	[[ ${INCLUDE_AutoBuild_Features} == true ]] && {
-		Replace_File Scripts/AutoBuild_Tools.sh package/base-files/files/bin
+		Copy Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 		AddPackage git lean luci-app-autoupdate Hyy2001X main
-		Replace_File Scripts/AutoUpdate.sh package/base-files/files/bin
+		Copy Scripts/AutoUpdate.sh package/base-files/files/bin
 	}
 	[[ ${INCLUDE_Argon} == true ]] && {
 		case "${Openwrt_Author}" in
@@ -205,33 +205,33 @@ Firmware-Diy_Base() {
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
 		AutoUpdate_Version=$(egrep -o "V[0-9].+" package/base-files/files/bin/AutoUpdate.sh | awk 'END{print}')
 	} || AutoUpdate_Version=OFF
-	Replace_File CustomFiles/Depends/profile package/base-files/files/etc
-	Replace_File CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
+	Copy CustomFiles/Depends/profile package/base-files/files/etc
+	Copy CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
 	case "${Openwrt_Author}" in
 	coolsnowwolf)
-		Replace_File CustomFiles/Depends/coremark.sh package/feeds/packages/coremark
-		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
+		Copy CustomFiles/Depends/coremark.sh package/feeds/packages/coremark
+		Copy CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File}
 		sed -i "s?${Old_Version}?${Old_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
-		# [[ ${INCLUDE_DRM_I915} == true ]] && Replace_File CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
+		# [[ ${INCLUDE_DRM_I915} == true ]] && Copy CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
 	;;
 	immortalwrt)
-		Replace_File CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
-		Replace_File CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
+		Copy CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
+		Copy CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" ${Version_File}
-		# [[ ${INCLUDE_DRM_I915} == true ]] && Replace_File CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
+		# [[ ${INCLUDE_DRM_I915} == true ]] && Copy CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
 	;;
 	esac
 	case "${Openwrt_Author}" in
 	immortalwrt)
-		Replace_File CustomFiles/Depends/banner package/lean/default-settings/files openwrt_banner
+		Copy CustomFiles/Depends/banner package/lean/default-settings/files openwrt_banner
 		sed -i "s?By?By ${Author}?g" package/lean/default-settings/files/openwrt_banner
 		sed -i "s?Openwrt?ImmortalWrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/lean/default-settings/files/openwrt_banner
 	;;
 	*)
-		Replace_File CustomFiles/Depends/banner package/base-files/files/etc
+		Copy CustomFiles/Depends/banner package/base-files/files/etc
 		sed -i "s?By?By ${Author}?g" package/base-files/files/etc/banner
 		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
 	;;
@@ -258,11 +258,11 @@ Other_Scripts() {
 		if [[ ${Openwrt_Author} == openwrt || ${Force_mode} == 1 ]];then
 			case "${Openwrt_Branch}" in
 			19.07 | 21.02)
-				Replace_File CustomFiles/Patches/0003-upx-ucl-${Openwrt_Branch}.patch ./
+				Copy CustomFiles/Patches/0003-upx-ucl-${Openwrt_Branch}.patch ./
 				cat 0003-upx-ucl-${Openwrt_Branch}.patch | patch -p1 > /dev/null 2>&1
 				# AddPackage svn feeds/packages/lang golang coolsnowwolf/packages/trunk/lang
 				TIME "Start to convert zh-cn translation files to zh_Hans ..."
-				Replace_File Scripts/Convert_Translation.sh package
+				Copy Scripts/Convert_Translation.sh package
 				cd ./package && bash ./Convert_Translation.sh && cd ..
 			;;
 			*)
@@ -363,8 +363,8 @@ AddPackage_List() {
 	echo "" >> $1
 	[[ -s $1 ]] && {
 		TIME "Loading Custom Packages list: [$1]..."
-		cat $1 | sed '/^$/d' | while read X
-		do
+		cat $1 | sed '/^$/d' | while read X;do
+			[[ $* =~ "#" ]] && TIME "Skip check out: ${X}"
 			[[ -n ${X} && ! $* =~ "#" ]] && AddPackage ${X}
 		done
 	}
@@ -400,26 +400,20 @@ AddPackage() {
 	esac
 	[[ -f ${PKG_NAME}/Makefile || -f ${PKG_NAME}/README* || -n $(ls -A ${PKG_NAME}) ]] && {
 		mv -f "${PKG_NAME}" "package/${PKG_DIR}"
-	} || TIME "[ERROR] Package [${PKG_NAME}] is not detected!"
+	}
 }
 
-Replace_File() {
+Copy() {
 	[[ $# -lt 2 ]] && {
 		TIME "[ERROR] Error options: [$#] [$*] !"
 		return 0
 	}
-	FILE_NAME=$1
-	PATCH_DIR=${GITHUB_WORKSPACE}/openwrt/$2
-	FILE_RENAME=$3
-
-	mkdir -p ${PATCH_DIR}
-	[[ -f ${GITHUB_WORKSPACE}/${FILE_NAME} ]] && _TYPE1=f && _TYPE2=File
-	[[ -d ${GITHUB_WORKSPACE}/${FILE_NAME} ]] && _TYPE1=d && _TYPE2=Folder
-	[ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && {
-		[[ -n ${FILE_RENAME} ]] && _RENAME="${FILE_RENAME}" || _RENAME=""
-		[ -${_TYPE1} "${GITHUB_WORKSPACE}/${FILE_NAME}" ] && {
-			TIME "Moving [${_TYPE2}] ${FILE_NAME} to $2/${FILE_RENAME} ..."
-			mv -f "${GITHUB_WORKSPACE}/${FILE_NAME}" "${PATCH_DIR}/${_RENAME}"
-		} || TIME "CustomFiles ${_TYPE2} [${FILE_NAME}] is not detected !"
+	[ ! -f "${GITHUB_WORKSPACE}/$1" ] && [ ! -d "${GITHUB_WORKSPACE}/$1" ] && {
+		TIME "CustomFiles/${FILE_NAME} is not detected !"
+		return 0
 	}
+	[[ ! -d ${GITHUB_WORKSPACE}/openwrt/$2 ]] && mkdir -p ${GITHUB_WORKSPACE}/openwrt/$2
+	[[ -n $3 ]] && RENAME="$3" || RENAME=""
+	TIME "Copying $1 to $2 ${RENAME} ..."
+	cp -a "${GITHUB_WORKSPACE}/$1" "${GITHUB_WORKSPACE}/openwrt/$2/${RENAME}"
 }
