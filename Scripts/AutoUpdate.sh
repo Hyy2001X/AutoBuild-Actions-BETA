@@ -32,7 +32,7 @@ SHELL_HELP() {
 	-C <Github URL>		更改 Github 地址
 	-B <UEFI | Legacy>	指定 x86_64 设备下载 <UEFI | Legacy> 引导的固件 (危险)
 	-V <local | cloud>	打印 <本地 | 云端> AutoUpdate 脚本版本
-	--help			打印 AutoUpdate 帮助信息
+	-H,--help		打印 AutoUpdate 帮助信息
 	-L,--list		打印当前系统信息
 	-U			检查版本更新
 	--corn-rm		删除所有 AutoUpdate 定时任务
@@ -91,10 +91,6 @@ EXIT() {
 	exit
 }
 
-RANDOM() {
-	openssl rand -base64 $1 | md5sum | cut -c 1-$1
-}
-
 TIME() {
 	[[ ! -d ${log_Path} ]] && mkdir -p "${log_Path}"
 	[[ ! -f ${log_Path}/AutoUpdate.log ]] && touch "${log_Path}/AutoUpdate.log"
@@ -121,6 +117,16 @@ TIME() {
 CHECK_PKG() {
 	which $1 > /dev/null 2>&1
 	[[ $? == 0 ]] && echo true || echo false
+}
+
+RANDOM() {
+	openssl rand -base64 $1 | md5sum | cut -c 1-$1
+}
+
+GET_VARIABLE() {
+	[[ $# != 2 ]] && SHELL_HELP
+	[[ ! -f $2 ]] && TIME "未检测到定义文件: [$2] !" && EXIT 1
+	echo -e "$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
 }
 
 LOAD_VARIABLE() {
@@ -222,18 +228,12 @@ CHANGE_BOOT() {
 	EXIT 0
 }
 
-GET_VARIABLE() {
-	[[ $# != 2 ]] && SHELL_HELP
-	[[ ! -f $2 ]] && TIME "未检测到定义文件: [$2] !" && EXIT 1
-	echo -e "$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
-}
-
 UPDATE_SCRIPT() {
 	[[ $# != 2 ]] && SHELL_HELP
 	TIME b "脚本保存目录: $1"
 	TIME b "下载地址: $2"
 	TIME "开始更新 AutoUpdate 脚本,请耐心等待..."
-	[ ! -d "$1" ] && mkdir -p $1
+	[[ ! -d $1 ]] && mkdir -p $1
 	wget -q --tries 3 --timeout 5 $2 -O /tmp/AutoUpdate.sh
 	if [[ $? == 0 ]];then
 		mv -f /tmp/AutoUpdate.sh $1
@@ -241,12 +241,13 @@ UPDATE_SCRIPT() {
 		chmod +x $1/AutoUpdate.sh
 		NEW_Version=$(egrep -o "V[0-9].+" $1/AutoUpdate.sh | awk 'END{print}')
 		Banner_Version=$(egrep -o "V[0-9]+.[0-9].+" /etc/banner)
-		[[ -n "${Banner_Version}" ]] && sed -i "s?${Banner_Version}?${NEW_Version}?g" /etc/banner
+		[[ -n ${Banner_Version} ]] && sed -i "s?${Banner_Version}?${NEW_Version}?g" /etc/banner
 		TIME y "[${Version}] > [${NEW_Version}] AutoUpdate 脚本更新成功!"
+		EXIT 0
 	else
 		TIME r "AutoUpdate 脚本更新失败,请检查网络后重试!"
+		EXIT 1
 	fi
-	EXIT
 }
 
 CHECK_DEPENDS() {
@@ -273,7 +274,7 @@ CHECK_UPDATES() {
 	TIME "正在获取版本更新..."
 	[ ! -d ${FW_SAVE_PATH} ] && mkdir -p ${FW_SAVE_PATH}
 	wget -q --timeout 5 ${Github_Tag_URL} -O ${FW_SAVE_PATH}/Github_Tags
-	[[ ! $? == 0 ]] || [[ ! -f ${FW_SAVE_PATH}/Github_Tags ]] && {
+	[[ ! $? == 0 || ! -f ${FW_SAVE_PATH}/Github_Tags ]] && {
 		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
 		TIME r "检查更新失败,请稍后重试!"
 		EXIT 1
@@ -303,21 +304,18 @@ PREPARE_UPGRADES() {
 		[[ $1 == -T || $1 == --test ]] && {
 			Test_Mode=1
 			TAIL_MSG=" [测试模式]"
-		} ||
+		}
 		[[ $1 == -P || $1 == --proxy ]] && {
 			Proxy_Mode=1
 			Proxy_Echo="[FastGit] "
-		} || {
-			Proxy_Mode=0
-			unset Proxy_Echo
 		}
 		[[ $1 =~ path= ]] && {
-			[ -z "$(echo $1 | cut -d "=" -f2)" ] && TIME r "固件保存目录不能为空!" && EXIT 1
+			[[ -z $(echo $1 | cut -d "=" -f2) ]] && TIME r "固件保存目录不能为空!" && EXIT 1
 			FW_SAVE_PATH=$(echo $1 | cut -d "=" -f2)
 			TIME g "自定义固件保存目录: ${FW_SAVE_PATH}"
 		}
 		[[ $1 == -F || $1 == --force ]] && Force_Write=1
-		case $1 in
+		case "$1" in
 		-n | -f | -u)
 			Option="$1"
 		;;
@@ -400,7 +398,7 @@ EOF
 		fi
 		[[ ${Retry_Times} == 2 ]] && {
 				FW_URL="${FW_NoProxy_URL}"
-			}
+		}
 		if [[ ${Retry_Times} == 0 ]];then
 			TIME r "固件下载失败,请检查网络后重试!"
 			EXIT 1
@@ -428,8 +426,8 @@ EOF
 		chmod 777 ${FW_SAVE_PATH}/${FW_Name}
 		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}
 	} || {
-		TIME b "[Test Mode] 执行: ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}"
-		TIME b "[Test Mode] 测试模式运行完毕!"
+		TIME x "[测试模式] 执行: ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}"
+		TIME x "[测试模式] 测试模式运行完毕!"
 		EXIT 0
 	}
 }
@@ -461,7 +459,7 @@ REMOVE_FW_CACHE() {
 
 
 AutoUpdate_Main() {
-	[ ! -f ${Custom_Variable} ] && touch ${Custom_Variable}
+	[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
 	LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
 
 	[[ -z $* ]] && PREPARE_UPGRADES $*
@@ -479,6 +477,8 @@ AutoUpdate_Main() {
 				Cloud_Script_Version="$(wget -q --tries 3 --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
 				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
+			*)
+			    SHELL_HELP
 			esac
 			EXIT 0
 		;;
@@ -490,20 +490,24 @@ AutoUpdate_Main() {
 			REMOVE_FW_CACHE normal $*
 		;;
 		--check)
+		    shift && [[ -n $* ]] && SHELL_HELP
 			CHECK_DEPENDS x86:gzip curl wget openssl
 		;;
-		--help)
+		-H | --help)
 			SHELL_HELP
 		;;
 		-L | --list)
+		    shift && [[ -n $* ]] && SHELL_HELP
 			SHOW_VARIABLE
 		;;
 		-C)
-			CHANGE_GITHUB $2
+		    shift
+			CHANGE_GITHUB $1
 		;;
 		-B)
-			[[ ! ${TARGET_PROFILE} == x86_64 ]] && TIME r "该参数仅适用于 x86_64 设备!" && EXIT 1
-			CHANGE_BOOT $2
+		    shift
+			[[ ! ${TARGET_PROFILE} == x86_64 ]] && SHELL_HELP
+			CHANGE_BOOT $1
 		;;
 		-x)
 			while [[ $1 ]];do
@@ -536,12 +540,16 @@ AutoUpdate_Main() {
 		;;
 		--corn-rm)
 			[ ! -f /etc/crontabs/root ] && EXIT 1
-			sed -i '/AutoUpdate/d' /etc/crontabs/root >/dev/null 2>&1
-			TIME y "已删除所有 AutoUpdate 相关计划任务!"
-			/etc/init.d/cron restart
-			EXIT 0
+			shift && [[ -n $* ]] && SHELL_HELP
+			[[ $(cat /etc/crontabs/root) =~ AutoUpdate ]] && {
+			    sed -i '/AutoUpdate/d' /etc/crontabs/root >/dev/null 2>&1
+			    TIME y "已删除所有 AutoUpdate 相关计划任务!"
+		    	/etc/init.d/cron restart
+			    EXIT 0
+			} || EXIT 1
 		;;
 		-U)
+		    shift && [[ -n $* ]] && SHELL_HELP
 			CHECK_UPDATES check
 			[ $? == 0 ] && EXIT 0 || EXIT 1
 		;;
@@ -613,7 +621,7 @@ AutoUpdate_Main() {
 	done
 }
 
-export Version=V6.1.2
+export Version=V6.1.3
 export log_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
