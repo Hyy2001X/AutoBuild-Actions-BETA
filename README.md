@@ -45,15 +45,13 @@
    
    Short_Firmware_Date 固件日期样式,当设置为 true: [20210601] false: [202106012359]
    
-   Default_IP_Address 固件 LAN IP 地址,默认为: [192.168.1.1] false/留空: [不修改]
+   Default_IP_Address 固件 LAN IP 地址
 
-   INCLUDE_AutoUpdate 启用后,将自动添加 Scripts/AutoUpdate.sh 和 luci-app-autoupdate 到固件
-
-   INCLUDE_AutoBuild_Tools 添加 AutoBuild 工具箱: AutoBuild_Tools.sh 到固件
+   INCLUDE_AutoBuild_Features 自动添加 AutoBuild 特性到固件
 
    INCLUDE_DRM_I915 自动勾选 Intel Graphics 驱动 (测试特性)
 
-   INCLUDE_Theme_Argon 自动添加适用于当前源码的 luci-theme-argon 主题
+   INCLUDE_Argon 自动添加 luci-theme-argon 主题和控制器
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
    
