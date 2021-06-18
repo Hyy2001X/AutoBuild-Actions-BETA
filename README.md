@@ -63,7 +63,7 @@
 
    [使用 svn co 拉取文件]  AddPackage svn 存放位置 软件包名 仓库地址/branches/分支/路径
 
-   [替换 /CustomFiles 文件到源码] Replace_File 文件(夹)名称 目标路径 新名称[可选]
+   [复制 /CustomFiles 文件到源码] Copy 文件(夹)名称 目标路径 新名称[可选]
    
    [查找文件/文件夹] PKG_Finder f/d(文件/文件夹) 文件(夹)名称 查找路径
 ```
@@ -83,19 +83,19 @@
 
    检查并更新固件(保留配置),输入: `autoupdate`或`bash /bin/AutoUpdate.sh`
 
-   更新固件(FastGit 镜像加速): `autoupdate -p`
+   更新固件(FastGit 镜像加速): `autoupdate -P`
 
-   更新固件(不保留配置): `autoupdate -n`或`autoupdate -np`
+   更新固件(不保留配置): `autoupdate -n`或`autoupdate -n -P`
 
-   查看更多使用方法: `autoUpdate -h`
+   查看更多使用方法: `autoUpdate --help`
 
-   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoUpdate`为`true`**
+   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Features`为`true`**
 
 ## 使用 AutoBuild 固件工具箱:
 
    打开`TTYD 终端`,输入`tools`或`bash /bin/AutoBuild_Tools.sh`,请自行摸索,功能持续开发中...
 
-   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Tools`为`true`**
+   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Features`为`true`**
 
 ## 鸣谢
 
