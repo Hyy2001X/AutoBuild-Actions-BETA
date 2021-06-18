@@ -9,15 +9,16 @@ Sysinfo() {
 	local Overlay_Available="$(df -h | grep ":/overlay" | awk '{print $4}' | awk 'NR==1')"
 	local Tmp_Available="$(df -h | grep "/tmp" | awk '{print $4}' | awk 'NR==1')"
 	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
-	echo -e "\n           设备名称:		${Yellow}$(uname -n) / ${TARGET_PROFILE}${White}"
-	[ -n "${TEMP}" ] && echo "           核心温度:		${TEMP}"
-	echo "           内核版本:		$(uname -rs)"
-	echo -e "           固件版本:		${Skyb}${CURRENT_Version}${White}"
-	echo "           IP 地址 : 		${IP_Address}"
-	echo "           可用空间:		${Overlay_Available} / ${Tmp_Available}"
-	[ -n "${CoreMark}" ] && echo "           性能得分:		${CoreMark}"
-	echo "           运行时间: 		${Startup}"
-	echo ""
+	cat <<EOF
+
+            $(echo -e "设备名称:		${Yellow}$(uname -n) / ${TARGET_PROFILE}${White}")
+            $(echo -e "固件版本:		${Skyb}${CURRENT_Version}${White}")
+            内核版本:		$(uname -rs)$([ -n "${TEMP}" ] && echo -e "\n            核心温度:		${TEMP}")
+            后台地址: 		${IP_Address}
+            可用空间:		${Overlay_Available} / ${Tmp_Available}
+            运行时间: 		${Startup}$([ -n "${CoreMark}" ] && echo -e "\n            性能得分:		${CoreMark}")
+
+EOF
 }
 
 export White="\e[0m"
@@ -26,17 +27,18 @@ export Red="\e[31m"
 export Blue="\e[34m"
 export Skyb="\e[36m"
 
-[ -e /tmp/.failsafe ] && export FAILSAFE=1
+clear
 
-[ -f /etc/banner ] && cat /etc/banner
+[ -e /tmp/.failsafe ] && export FAILSAFE=1
+[ -f /etc/banner ] && echo -e "${Skyb}$(cat /etc/banner)${White}"
 [ -n "$FAILSAFE" ] && cat /etc/banner.failsafe
 
 fgrep -sq '/ overlay ro,' /proc/mounts && {
-	echo 'Your JFFS2-partition seems full and overlayfs is mounted read-only.'
-	echo 'Please try to remove files from /overlay/upper/... and reboot!'
+	echo -e "${Red}Your JFFS2-partition seems full and overlayfs is mounted read-only."
+	echo -e "Please try to remove files from /overlay/upper/... and reboot!${}"
 }
 
-export PATH="%PATH%"
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 export HOME=$(grep -e "^${USER:-root}:" /etc/passwd | cut -d ":" -f 6)
 export HOME=${HOME:-/root}
 export PS1='\u@\h:\w\$ '
@@ -68,17 +70,15 @@ EOF
 fi
 
 Sysinfo
-alias reload='clear && /etc/profile'
+alias reload='/etc/profile'
 alias autoupdate='bash /bin/AutoUpdate.sh'
 alias tools='bash /bin/AutoBuild_Tools.sh'
-alias run_coremark='bash /etc/coremark.sh'
+alias coremarkd='bash /etc/coremark.sh'
 alias shutdown='sync && poweroff'
 alias ls='ls --color=auto'
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
-alias grep='grep --color=auto'
-alias egrep='egrep --color=auto'
 alias cls='clear'
 alias dh='df -h'
 alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'
