@@ -202,6 +202,10 @@ Firmware-Diy_Base() {
 			TIME "[ERROR] ${New_IP_Address} is not an IP Address !"
 		fi
 	}
+	[[ ${INCLUDE_DRM_I915} == true ]] && {
+		Copy CustomFiles/Depends/DRM-I915 target/linux/x86
+		for X in $(ls -1 target/linux/x86 | grep "config-"); do cat DRM-I915 >> ${X}; done
+	}
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
 		AutoUpdate_Version=$(egrep -o "V[0-9].+" package/base-files/files/bin/AutoUpdate.sh | awk 'END{print}')
 	} || AutoUpdate_Version=OFF
@@ -215,13 +219,11 @@ Firmware-Diy_Base() {
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File}
 		sed -i "s?${Old_Version}?${Old_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
-		# [[ ${INCLUDE_DRM_I915} == true ]] && Copy CustomFiles/Depends/i915-5.4 target/linux/x86 config-5.4
 	;;
 	immortalwrt)
 		Copy CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
 		Copy CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
 		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" ${Version_File}
-		# [[ ${INCLUDE_DRM_I915} == true ]] && Copy CustomFiles/Depends/i915-4.19 target/linux/x86 config-4.19
 	;;
 	esac
 	case "${Openwrt_Author}" in
