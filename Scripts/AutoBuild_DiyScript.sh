@@ -9,7 +9,7 @@ Diy_Core() {
 	Default_IP_Address=192.168.1.1
 
 	INCLUDE_AutoBuild_Features=true
-	INCLUDE_DRM_I915=false
+	INCLUDE_DRM_I915=true
 	INCLUDE_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
 }
@@ -19,6 +19,5 @@ Firmware-Diy() {
 	d-team_newifi-d2)
 		Copy CustomFiles/mac80211.sh package/kernel/mac80211/files/lib/wifi
 		# Copy CustomFiles/system_d-team_newifi-d2 package/base-files/files/etc/config system
-		# Copy CustomFiles/Patches/102-mt7621-fix-cpu-clk-add-clkdev.patch target/linux/ramips/patches-5.4
 	esac
 }
