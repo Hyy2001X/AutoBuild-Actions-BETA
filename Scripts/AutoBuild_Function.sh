@@ -285,6 +285,7 @@ PS_Firmware() {
 	source ./VARIABLE_FILE_Sec
 	mkdir -p bin/Firmware
 	cd ${Firmware_Path}
+	echo -e "### Firmware Output ###\n$(ls -1)\n"
 	case "${TARGET_PROFILE}" in
 	x86_64)
 		[[ -f ${Default_Legacy_Firmware} ]] && {
@@ -301,11 +302,12 @@ PS_Firmware() {
 			cp ${Default_Firmware} $(EVAL_FW common ${Home}/VARIABLE_FILE_Sec)
 			TIME "Firmware: [${Default_Firmware}] is detected !"
 		} || {
-			TIME "[ERROR] Firmware is not detected !"
+			TIME "Firmware is not detected !"
+			Output=1
 		}
 	;;
 	esac
-	mv -f AutoBuild-* ${Home}/bin/Firmware
+	[[ ${Output} != 1 ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
 	cd ${Home}
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 }
