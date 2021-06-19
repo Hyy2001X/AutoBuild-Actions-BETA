@@ -202,7 +202,7 @@ Firmware-Diy_Base() {
 			TIME "[ERROR] ${New_IP_Address} is not an IP Address !"
 		fi
 	}
-	[[ ${INCLUDE_DRM_I915} == true ]] && {
+	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_PROFILE} == x86_64 ]] && {
 		Copy CustomFiles/Depends/DRM-I915 target/linux/x86
 		for X in $(ls -1 target/linux/x86 | grep "config-"); do cat DRM-I915 >> ${X}; done
 	}
