@@ -9,7 +9,7 @@ Diy_Core() {
 	Default_IP_Address=192.168.1.1
 
 	INCLUDE_AutoBuild_Features=true
-	INCLUDE_DRM_I915=false
+	INCLUDE_DRM_I915=true
 	INCLUDE_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
 }
