@@ -275,8 +275,8 @@ Other_Scripts() {
 			TIME "Current source: [${Openwrt_Author}] is not supported,skip..."
 		fi
 	fi
-	[[ -s $GITHUB_WORKSPACE/Configs/Common ]] && {
-		TIME "Merging Common_Config to .config ..."
+	[[ -s $GITHUB_WORKSPACE/Configs/Common && ! $(cat .config) =~ "# DO NOT MERGE" ]] && {
+		TIME "Merging [Configs/Common] to .config ..."
 		cat $GITHUB_WORKSPACE/Configs/Common >> .config
 	}
 }
