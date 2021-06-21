@@ -1,7 +1,8 @@
 svn other luci-app-smartdns kenzok8/openwrt-packages/trunk
-svn feeds/packages smartdns kenzok8/openwrt-packages/trunk
 git other luci-app-serverchan tty228
 svn other luci-app-socat Lienol/openwrt-package/trunk
 git other luci-app-onliner rufengsuixing
 git other luci-app-adguardhome Hyy2001X
-git other OpenClash vernesong master
+svn other luci-app-eqos kenzok8/openwrt-packages/trunk
+git other luci-app-dnsfilter garypang13 main
+# git other OpenClash vernesong master
