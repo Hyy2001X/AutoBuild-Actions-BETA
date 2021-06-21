@@ -275,7 +275,7 @@ Other_Scripts() {
 			TIME "Current source: [${Openwrt_Author}] is not supported,skip..."
 		fi
 	fi
-	[[ -s $GITHUB_WORKSPACE/Configs/Common ]] && {
+	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
 		[[ ! "$(cat .config)" =~ "## DO NOT MERGE" ]] && {
 			TIME "Merging [Configs/Common] to .config ..."
 			cat $GITHUB_WORKSPACE/Configs/Common >> .config
@@ -283,7 +283,7 @@ Other_Scripts() {
 			TIME "Skip merge [Configs/Common] ..."
 			sed -i '/## DO NOT MERGE/d' .config >/dev/null 2>&1
 		}
-	}
+	fi
 }
 
 PS_Firmware() {
