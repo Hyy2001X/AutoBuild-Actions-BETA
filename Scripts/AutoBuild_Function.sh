@@ -276,9 +276,9 @@ Other_Scripts() {
 		fi
 	fi
 	[[ -s $GITHUB_WORKSPACE/Configs/Common ]] && {
-		[[ ! "$(cat .config)" =~ "DO NOT MERGE" ]] && {
+		[[ ! "$(cat ${Home}/.config)" =~ "DO NOT MERGE" ]] && {
 			TIME "Merging [Configs/Common] to .config ..."
-			cat $GITHUB_WORKSPACE/Configs/Common >> .config
+			cat $GITHUB_WORKSPACE/Configs/Common >> ${Home}/.config
 		}
 	}
 }
