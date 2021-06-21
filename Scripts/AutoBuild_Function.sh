@@ -204,7 +204,7 @@ Firmware-Diy_Base() {
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_PROFILE} == x86_64 ]] && {
 		Copy CustomFiles/Depends/DRM-I915 target/linux/x86
-		for X in $(ls -1 target/linux/x86 | grep "config-"); do cat target/linux/x86/DRM-I915 >> target/linux/x86/${X}; done
+		for X in $(ls -1 target/linux/x86 | grep "config-"); do echo -e "\n$(cat target/linux/x86/DRM-I915)" >> target/linux/x86/${X}; done
 	}
 	[ -f package/base-files/files/bin/AutoUpdate.sh ] && {
 		AutoUpdate_Version=$(egrep -o "V[0-9].+" package/base-files/files/bin/AutoUpdate.sh | awk 'END{print}')
