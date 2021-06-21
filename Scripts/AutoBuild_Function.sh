@@ -262,7 +262,7 @@ Other_Scripts() {
 			19.07 | 21.02)
 				Copy CustomFiles/Patches/0003-upx-ucl-${Openwrt_Branch}.patch ./
 				cat 0003-upx-ucl-${Openwrt_Branch}.patch | patch -p1 > /dev/null 2>&1
-				# AddPackage svn feeds/packages/lang golang coolsnowwolf/packages/trunk/lang
+				# AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
 				TIME "Start to convert zh-cn translation files to zh_Hans ..."
 				Copy Scripts/Convert_Translation.sh package
 				cd ./package && bash ./Convert_Translation.sh && cd ..
