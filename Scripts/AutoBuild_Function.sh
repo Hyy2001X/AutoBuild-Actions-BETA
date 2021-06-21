@@ -262,7 +262,7 @@ Other_Scripts() {
 			19.07 | 21.02)
 				Copy CustomFiles/Patches/0003-upx-ucl-${Openwrt_Branch}.patch ./
 				cat 0003-upx-ucl-${Openwrt_Branch}.patch | patch -p1 > /dev/null 2>&1
-				# AddPackage svn feeds/packages/lang golang coolsnowwolf/packages/trunk/lang
+				# AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
 				TIME "Start to convert zh-cn translation files to zh_Hans ..."
 				Copy Scripts/Convert_Translation.sh package
 				cd ./package && bash ./Convert_Translation.sh && cd ..
@@ -275,10 +275,15 @@ Other_Scripts() {
 			TIME "Current source: [${Openwrt_Author}] is not supported,skip..."
 		fi
 	fi
-	[[ -s $GITHUB_WORKSPACE/Configs/Common ]] && {
-		TIME "Merging Common_Config to .config ..."
-		cat $GITHUB_WORKSPACE/Configs/Common >> .config
-	}
+	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
+		[[ ! "$(cat .config)" =~ "## DO NOT MERGE" ]] && {
+			TIME "Merging [Configs/Common] to .config ..."
+			cat $GITHUB_WORKSPACE/Configs/Common >> .config
+		} || {
+			TIME "Skip merge [Configs/Common] ..."
+			sed -i '/## DO NOT MERGE/d' .config >/dev/null 2>&1
+		}
+	fi
 }
 
 PS_Firmware() {
@@ -303,11 +308,11 @@ PS_Firmware() {
 			TIME "Firmware: [${Default_Firmware}] is detected !"
 		} || {
 			TIME "Firmware is not detected !"
-			Output=1
+			Error_Output=1
 		}
 	;;
 	esac
-	[[ ${Output} != 1 ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
+	[[ ${Error_Output} != 1 ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
 	cd ${Home}
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 }
@@ -412,7 +417,7 @@ Copy() {
 		TIME "[ERROR] Error options: [$#] [$*] !"
 		return 0
 	}
-	[ ! -f "${GITHUB_WORKSPACE}/$1" ] && [ ! -d "${GITHUB_WORKSPACE}/$1" ] && {
+	[[ ! -f ${GITHUB_WORKSPACE}/$1 ]] && [[ ! -d ${GITHUB_WORKSPACE}/$1 ]] && {
 		TIME "CustomFiles/${FILE_NAME} is not detected !"
 		return 0
 	}
