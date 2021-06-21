@@ -303,11 +303,11 @@ PS_Firmware() {
 			TIME "Firmware: [${Default_Firmware}] is detected !"
 		} || {
 			TIME "Firmware is not detected !"
-			Output=1
+			Error_Output=1
 		}
 	;;
 	esac
-	[[ ${Output} != 1 ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
+	[[ ${Error_Output} != 1 ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
 	cd ${Home}
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 }
@@ -412,7 +412,7 @@ Copy() {
 		TIME "[ERROR] Error options: [$#] [$*] !"
 		return 0
 	}
-	[ ! -f "${GITHUB_WORKSPACE}/$1" ] && [ ! -d "${GITHUB_WORKSPACE}/$1" ] && {
+	[[ ! -f ${GITHUB_WORKSPACE}/$1 ]] && [[ ! -d ${GITHUB_WORKSPACE}/$1 ]] && {
 		TIME "CustomFiles/${FILE_NAME} is not detected !"
 		return 0
 	}
