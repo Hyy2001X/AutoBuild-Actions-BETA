@@ -276,10 +276,13 @@ Other_Scripts() {
 		fi
 	fi
 	[[ -s $GITHUB_WORKSPACE/Configs/Common ]] && {
-		[[ ! "$(cat ${Home}/.config)" =~ "## DO NOT MERGE" ]] && {
+		[[ ! "$(cat .config)" =~ "## DO NOT MERGE" ]] && {
 			TIME "Merging [Configs/Common] to .config ..."
-			cat $GITHUB_WORKSPACE/Configs/Common >> ${Home}/.config
-		} || TIME "Skip merge [Configs/Common] ..."
+			cat $GITHUB_WORKSPACE/Configs/Common >> .config
+		} || {
+			TIME "Skip merge [Configs/Common] ..."
+			sed -i '/## DO NOT MERGE/d' .config >/dev/null 2>&1
+		}
 	}
 }
 
