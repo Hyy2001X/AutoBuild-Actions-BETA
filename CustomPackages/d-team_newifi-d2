@@ -1,5 +1,2 @@
 git other luci-app-usb3disable rufengsuixing
-svn other luci-app-eqos kenzok8/openwrt-packages/trunk
-git other luci-app-bearDropper NateLol
 svn package/kernel mt76 openwrt/openwrt/trunk/package/kernel
-git other luci-app-dnsfilter garypang13 main
