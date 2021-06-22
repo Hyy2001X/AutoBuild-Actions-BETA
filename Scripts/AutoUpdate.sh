@@ -12,18 +12,18 @@ SHELL_HELP() {
 	cat <<EOF
 
 使用方法:	$0 [<path=>] [-P] [-n] [-f] [-u]
-		$0 [<更新脚本>] [-x/-x <path=>/-x <url=>]
+		$0 [<更新脚本>] [-x/-x path=<>/-x url=<>]
 
 更新固件:
 	-n		更新固件 [不保留配置]
 	-f		跳过版本号验证,并强制刷写固件 [保留配置]
 	-u		适用于定时更新 LUCI 的参数 [保留配置]
-	-? <path=>	更新固件 (保存固件到用户指定的目录)
+	-? path=<>	更新固件 (保存固件到用户指定的目录)
 
 更新脚本:
 	-x		更新 AutoUpdate.sh 脚本
-	-x <path=>	更新 AutoUpdate.sh 脚本 (保存脚本到用户指定的目录)
-	-x <url=>	更新 AutoUpdate.sh 脚本 (使用用户提供的脚本地址更新)
+	-x path=<>	更新 AutoUpdate.sh 脚本 (保存脚本到用户指定的目录)
+	-x url=<>	更新 AutoUpdate.sh 脚本 (使用用户提供的脚本地址更新)
 
 其他参数:
 	-F,--force		强制刷写固件 (可附加)
@@ -31,19 +31,21 @@ SHELL_HELP() {
 	-P,--proxy		强制使用 [FastGit] 加速 (可附加)
 	-C <Github URL>		更改 Github 地址
 	-B <UEFI | Legacy>	指定 x86_64 设备下载 <UEFI | Legacy> 引导的固件 (危险)
-	-V <local | cloud>	打印 <本地 | 云端> AutoUpdate 脚本版本
+	-V <local | cloud>	打印 <当前 | 云端> AutoUpdate.sh 版本
+	-X <local | cloud>	打印 <当前 | 云端> 版本固件更新日志
+	-X <Version>		打印 <指定版本> 固件更新日志
 	-H,--help		打印 AutoUpdate 帮助信息
 	-L,--list		打印当前系统信息
-	-U			检查版本更新
+	-U			仅检查版本更新
 	--corn-rm		删除所有 AutoUpdate 定时任务
-	--bak <path> <name>	备份 Openwrt 配置文件到用户指定的目录
+	--bak <Path> <Name>	备份 Openwrt 配置文件到用户指定的目录
 	--clean			清理固件下载缓存
 	--check			检查 AutoUpdate 依赖软件包
-	--var <variable>	打印用户指定的 <variable>
-	--var-rm <variable>	删除用户指定的 <variable>
+	--var <Variable>	打印用户指定的 <variable>
+	--var-rm <Variable>	删除用户指定的 <variable>
 	--log			打印 AutoUpdate 历史运行日志
-	--log-path <path>	更改 AutoUpdate 运行日志保存目录
-	--random <number>	打印一个随机数字与字母组合 (0-31)
+	--log-path <Path>	更改 AutoUpdate 运行日志保存目录
+	--random <Number>	打印一个随机数字与字母组合 (0-31)
 
 EOF
 	EXIT 1
@@ -95,20 +97,20 @@ TIME() {
 	[[ ! -d ${log_Path} ]] && mkdir -p "${log_Path}"
 	[[ ! -f ${log_Path}/AutoUpdate.log ]] && touch "${log_Path}/AutoUpdate.log"
 	[[ -z $1 ]] && {
-		echo -ne "\n\e[36m[$(date "+%H:%M:%S")]\e[0m "
+		echo -ne "\n${Grey}[$(date "+%H:%M:%S")]${White} "
 	} || {
 	case $1 in
-		r) Color="\e[31m";;
-		g) Color="\e[32m";;
-		b) Color="\e[34m";;
-		y) Color="\e[33m";;
-		x) Color="\e[36m";;
+		r) Color="${Red}";;
+		g) Color="${Green}";;
+		b) Color="${Blue}";;
+		y) Color="${Yellow}";;
+		x) Color="${Grey}";;
 	esac
 		[[ $# -lt 2 ]] && {
-			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m $1"
+			echo -e "\n${Grey}[$(date "+%H:%M:%S")]${White} $1"
 			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $1" >> ${log_Path}/AutoUpdate.log
 		} || {
-			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m ${Color}$2\e[0m"
+			echo -e "\n${Grey}[$(date "+%H:%M:%S")]${White} ${Color}$2${White}"
 			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $2" >> ${log_Path}/AutoUpdate.log
 		}
 	}
@@ -175,7 +177,7 @@ EDIT_VARIABLE() {
 	[[ ! -f $1 ]] && TIME r "未检测到定义文件: [$1] !" && EXIT 1
 	case "${Mode}" in
 	edit)
-    		[[ $# != 3 ]] && SHELL_HELP
+    	[[ $# != 3 ]] && SHELL_HELP
 		if [[ -z $(GET_VARIABLE $2 $1) ]];then
 			echo -e "\n$2=$3" >> $1
 		else
@@ -269,11 +271,43 @@ CHECK_DEPENDS() {
 	EXIT 0
 }
 
-CHECK_UPDATES() {
-	local Size X
-	TIME "正在获取版本更新..."
-	[ ! -d ${FW_SAVE_PATH} ] && mkdir -p ${FW_SAVE_PATH}
-	wget -q --timeout 5 ${Github_Tag_URL} -O ${FW_SAVE_PATH}/Github_Tags
+FW_LOGGER() {
+	local FW_Version
+	[[ -z ${Wget_Head} ]] && Wget_Head="wget -q"
+	case "$1" in
+	local)
+		FW_Version="${CURRENT_Version}"
+	;;
+	cloud)
+		[[ -z ${GET_CLOUD_VERSION} ]] && GET_CLOUD_VERSION
+		FW_Version="${CLOUD_Firmware_Version}"
+	;;
+	-v)
+		shift
+		FW_Version="$1"
+	;;
+	esac
+	${Wget_Head} --timeout 3 --tries 2 ${FW_NoProxy_URL}/Update_Logs.json -O ${Update_Logs_Path}/Update_Logs.json
+	[[ $? == 0 ]] && {
+		Update_Log=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${Update_Logs_Path}/Update_Logs.json)
+		rm -f ${Update_Logs_Path}/Update_Logs.json
+	}
+	case "$2" in
+	show)
+		if [[ -n ${Update_Log} ]];then
+			echo -e "\n${Grey}${FW_Version} 更新日志:"
+			echo -e "\n${Green}${Update_Log}${White}\n"
+		else
+			TIME r "未查询到版本: [${FW_Version}] 的日志信息!"
+		fi
+	;;
+	esac
+}
+
+GET_CLOUD_VERSION() {
+	[[ ! -d ${FW_SAVE_PATH} ]] && mkdir -p ${FW_SAVE_PATH}
+	[[ -z ${Wget_Head} ]] && Wget_Head="wget -q"
+	${Wget_Head} --timeout 5 ${Github_Tag_URL} -O ${FW_SAVE_PATH}/Github_Tags
 	[[ ! $? == 0 || ! -f ${FW_SAVE_PATH}/Github_Tags ]] && {
 		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
 		TIME r "检查更新失败,请稍后重试!"
@@ -283,19 +317,32 @@ CHECK_UPDATES() {
 	FW_Name=$(egrep -o "${X}" ${FW_SAVE_PATH}/Github_Tags | awk 'END {print}')
 	[[ -z ${FW_Name} ]] && TIME "云端固件名称获取失败!" && EXIT 1
 	CLOUD_Firmware_Version=$(echo ${FW_Name} | egrep -o "R[0-9].*20[0-9]+")
+}
+
+CHECK_UPDATES() {
+	local Size
+	TIME "正在获取版本更新..."
+	GET_CLOUD_VERSION
+	[[ ${CLOUD_Firmware_Version} == ${CURRENT_Version} ]] && {
+		CURRENT_Type="${Yellow} [已是最新]${White}"
+		Upgrade_Stopped=1
+	} || {
+		[[ $(echo ${CLOUD_Firmware_Version} | cut -d "-" -f2) -gt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && CURRENT_Type="${Green} [可更新]${White}"
+		[[ $(echo ${CLOUD_Firmware_Version} | cut -d "-" -f2) -lt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && {
+			CLOUD_Type="${Red} [旧版本]${White}"
+			Upgrade_Stopped=2
+		}
+	}
 	SHA5BIT=$(echo ${FW_Name} | egrep -o "[a-zA-Z0-9]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
 	let Size="$(grep -n "${FW_Name}" ${FW_SAVE_PATH}/Github_Tags | tail -1 | cut -d : -f 1)-4"
 	let CLOUD_Firmware_Size="$(sed -n "${Size}p" ${FW_SAVE_PATH}/Github_Tags | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1"
 	[[ $1 == check ]] && {
-		echo -e "\n当前固件版本: ${CURRENT_Version}\n$([[ ! ${CLOUD_Firmware_Version} == ${CURRENT_Version} ]] && echo "云端固件版本: ${CLOUD_Firmware_Version} [可更新]" || echo "云端固件版本: ${CLOUD_Firmware_Version} [无需更新]")\n"
-		if [[ "${CURRENT_Version}" == "${CLOUD_Firmware_Version}" ]];then
-			Checked_Type=" [已是最新]"
-		else
-			Checked_Type=" [可更新]"
-		fi
-		echo "${CLOUD_Firmware_Version} /${x86_64_Boot}${Checked_Type}" > /tmp/Cloud_Version
-	}
-	rm ${FW_SAVE_PATH}/Github_Tags
+		echo -e "\n当前固件版本: ${CURRENT_Version}${CURRENT_Type}"
+		echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}"
+		FW_LOGGER cloud show
+		echo "${CLOUD_Firmware_Version} /${x86_64_Boot}${CURRENT_Type}" > /tmp/Cloud_Version
+	} || FW_LOGGER cloud
+	rm -f ${FW_SAVE_PATH}/Github_Tags
 }
 
 PREPARE_UPGRADES() {
@@ -322,7 +369,7 @@ PREPARE_UPGRADES() {
 		esac
 	shift
 	done
-	REMOVE_FW_CACHE quiet ${FW_SAVE_PATH}
+	REMOVE_CACHE quiet ${FW_SAVE_PATH}
 	Upgrade_Option="${Upgrade_Command} -q"
 	case ${Option} in
 	-n)
@@ -370,23 +417,27 @@ PREPARE_UPGRADES() {
 设备名称: $(uname -n) / ${TARGET_PROFILE}
 $([[ ${TARGET_PROFILE} == x86_64 ]] && echo "固件格式: ${Firmware_Type} / ${x86_64_Boot}" || echo "固件格式: ${Firmware_Type}")
 
-当前固件版本: ${CURRENT_Version}
-$([[ ! ${CLOUD_Firmware_Version} == ${CURRENT_Version} ]] && echo "云端固件版本: ${CLOUD_Firmware_Version} [可更新]" || echo "云端固件版本: ${CLOUD_Firmware_Version} [已是更新]")
+$(echo -e "当前固件版本: ${CURRENT_Version}${CURRENT_Type}")
+$(echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}")
 云端固件体积: ${CLOUD_Firmware_Size}MB
 
 云端固件名称: ${FW_Name}
 固件下载地址: ${FW_URL}
 EOF
-	if [[ ${CURRENT_Version} == ${CLOUD_Firmware_Version} ]];then
-		[[ ${AutoUpdate_Mode} == 1 ]] && {
-			TIME y "已是最新版本,无需更新!"
-			EXIT 0
-		}
+	if [[ -n ${Update_Log} ]];then
+			echo -e "\n${Grey}${CLOUD_Firmware_Version} 更新日志:"
+			echo -e "\n${Green}${Update_Log}${White}"
+	fi
+	case "${Upgrade_Stopped}" in
+	1 | 2)
+		[[ ${AutoUpdate_Mode} == 1 ]] && TIME y "已是最新版本,无需更新!" && EXIT 0
+		[[ ${Upgrade_Stopped} == 1 ]] && MSG="已是最新版本" || MSG="云端固件版本为旧版"
 		[[ ! ${Force_Mode} == 1 ]] && {
-			TIME && read -p "已是最新版本,是否继续更新固件?[Y/n]:" Choose
+			TIME && read -p "${MSG},是否继续更新固件?[Y/n]:" Choose
 		} || Choose=Y
 		[[ ! ${Choose} =~ [Yy] ]] && EXIT 0
-	fi
+	;;
+	esac
 	Retry_Times=5
 	TIME "正在下载固件,请耐心等待..."
 	while [[ ${Retry_Times} -ge 0 ]];do
@@ -442,7 +493,8 @@ DO_UPGRADE() {
 	} || EXIT 0
 }
 
-REMOVE_FW_CACHE() {
+REMOVE_CACHE() {
+	local RM_PATH
 	[[ -z $2 ]] && RM_PATH=${FW_SAVE_PATH}
 	rm -rf ${RM_PATH}/AutoBuild-${TARGET_PROFILE}-* \
 		${RM_PATH}/Github_Tags
@@ -487,7 +539,7 @@ AutoUpdate_Main() {
 			[[ $# != 1 || ! $1 =~ [0-9] || $1 == 0 || $1 -gt 30 ]] && SHELL_HELP || RANDOM $1
 		;;
 		--clean)
-			REMOVE_FW_CACHE normal $*
+			REMOVE_CACHE normal $*
 		;;
 		--check)
 		    shift && [[ -n $* ]] && SHELL_HELP
@@ -552,6 +604,17 @@ AutoUpdate_Main() {
 		    shift && [[ -n $* ]] && SHELL_HELP
 			CHECK_UPDATES check
 			[ $? == 0 ] && EXIT 0 || EXIT 1
+		;;
+		-X)
+			shift
+			case $1 in
+			local | cloud)
+				FW_LOGGER $1 show
+			;;
+			*)
+				[[ ! $1 =~ R ]] && SHELL_HELP || FW_LOGGER -v $1 show
+			;;
+			esac
 		;;
 		--var)
 			shift
@@ -621,10 +684,18 @@ AutoUpdate_Main() {
 	done
 }
 
-export Version=V6.1.3
+export Version=V6.2.0
 export log_Path=/tmp
+export Update_Logs_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
 export Custom_Variable=/etc/AutoBuild/Custom_Variable
+
+export White="\e[0m"
+export Yellow="\e[33m"
+export Red="\e[31m"
+export Blue="\e[34m"
+export Grey="\e[36m"
+export Green="\e[32m"
 
 AutoUpdate_Main $*
