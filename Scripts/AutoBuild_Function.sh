@@ -180,26 +180,22 @@ Firmware-Diy_Base() {
 		esac
 		AddPackage git other luci-app-argon-config jerrykuku
 	}
-	New_IP_Address="${Default_IP_Address}"
-	[[ -n ${Defined_IP_Address} ]] && {
-		TIME "Using defined IP Address [${Defined_IP_Address}] ..."
-		New_IP_Address="${Defined_IP_Address}"
-	}
-	[[ -n ${New_IP_Address} && ${New_IP_Address} != false ]] && {
-		if [[ ${New_IP_Address} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
+	[[ -n ${Defined_IP_Address} ]] && Default_LAN_IP="${Defined_IP_Address}"
+	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} != false ]] && {
+		if [[ ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
 			Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
-			if [[ ! ${New_IP_Address} == ${Old_IP_Address} ]];then
-				TIME "Setting default IP Address to ${New_IP_Address} ..."
-				sed -i "s/${Old_IP_Address}/${New_IP_Address}/g" package/base-files/files/bin/config_generate
-				a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
-				b=$(echo ${New_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
-				c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
-				d=")).$(echo ${New_IP_Address} | egrep -o "[0-9]+" | awk 'END {print}')"
-				sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
-				sed -i "s/${c}/${d}/g" package/base-files/files/bin/config_generate
+			if [[ ! ${Default_LAN_IP} == ${Old_IP_Address} ]];then
+				TIME "Setting default IP Address to ${Default_LAN_IP} ..."
+				sed -i "s/${Old_IP_Address}/${Default_LAN_IP}/g" package/base-files/files/bin/config_generate
+				# a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
+				# b=$(echo ${Default_LAN_IP} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
+				# c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
+				# d=")).$(echo ${Default_LAN_IP} | egrep -o "[0-9]+" | awk 'END {print}')"
+				# sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
+				# sed -i "s/${c}/${d}/g" package/base-files/files/bin/config_generate
 			fi
 		else
-			TIME "[ERROR] ${New_IP_Address} is not an IP Address !"
+			TIME "[ERROR] ${Default_LAN_IP} is not an IP Address !"
 		fi
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_PROFILE} == x86_64 ]] && {
