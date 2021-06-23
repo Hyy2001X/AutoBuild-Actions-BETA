@@ -16,7 +16,7 @@ GET_INFO() {
 		Openwrt_Version_="R$(date +%y.%m)-"
 	else
 		Openwrt_Branch="$(echo ${Openwrt_Branch} | egrep -o "[0-9]+.[0-9]+")"
-		Openwrt_Version_="R${Openwrt_Branch}-"
+		Openwrt_Version_="R${Openwrt_Branch}.0-"
 	fi
 	case "${Openwrt_Author}" in
 	coolsnowwolf)
