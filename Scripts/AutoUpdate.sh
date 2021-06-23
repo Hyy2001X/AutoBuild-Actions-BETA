@@ -448,8 +448,8 @@ EOF
 			TIME r "固件下载失败,请检查网络后重试!"
 			EXIT 1
 		else
-			echo "${Downloader} "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}"
-			[[ ! $? == 0 ]] && TIME y "固件下载成功!" && break
+			${Downloader} "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
+			[[ $? == 0 && -f ${FW_SAVE_PATH}/${FW_Name} ]] && TIME y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
 		TIME r "下载失败,剩余尝试次数: ${Retry_Times} 次"
