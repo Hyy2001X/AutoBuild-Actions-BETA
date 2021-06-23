@@ -68,8 +68,9 @@ Release API:		${Github_API}
 Release URL:		${Github_Release_URL}
 FastGit URL:		${Release_FastGit_URL}
 Github Proxy URL:	${Release_Goproxy_URL}
-固件保存位置:           ${FW_SAVE_PATH}
-log 文件:		${log_Path}/AutoUpdate.log
+固件保存位置:		${FW_SAVE_PATH}
+运行日志:		${log_Path}/AutoUpdate.log
+Downloader:		${Downloader}
 EOF
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
 		echo "x86_64 引导模式:	${x86_64_Boot}"
@@ -244,7 +245,7 @@ UPDATE_SCRIPT() {
 	TIME b "下载地址: $2"
 	TIME "开始更新 AutoUpdate 脚本,请耐心等待..."
 	[[ ! -d $1 ]] && mkdir -p $1
-	wget -q --timeout 5 $2 -O /tmp/AutoUpdate.sh
+	${Downloader} $2 -O /tmp/AutoUpdate.sh
 	if [[ $? == 0 ]];then
 		mv -f /tmp/AutoUpdate.sh $1
 		[[ ! $? == 0 ]] && TIME r "AutoUpdate 脚本更新失败!" && EXIT 1
@@ -546,6 +547,12 @@ AutoUpdate_Main() {
 	[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
 	LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
 
+	[[ $(CHECK_PKG uclient-fetch) == true ]] && {
+		Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
+	} || {
+		Downloader="wget -q --no-check-certificate --timeout 5"
+	}
+
 	[[ -z $* ]] && PREPARE_UPGRADES $*
 	[[ $1 =~ path= && ! $* =~ -x && ! $* =~ -U ]] && PREPARE_UPGRADES $*
 
@@ -558,7 +565,7 @@ AutoUpdate_Main() {
 				[[ -n ${Version} ]] && echo "${Version}" || echo "未知"
 			;;
 			cloud)
-				Cloud_Script_Version="$(wget -q --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
+				Cloud_Script_Version="$(${Downloader} https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
 				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
 			*)
@@ -695,13 +702,12 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.3
+Version=V6.2.4
 log_Path=/tmp
 Update_Logs_Path=/tmp
 Upgrade_Command=sysupgrade
 Default_Variable=/etc/AutoBuild/Default_Variable
 Custom_Variable=/etc/AutoBuild/Custom_Variable
-Downloader="wget -q --no-check-certificate --timeout 5"
 
 White="\e[0m"
 Yellow="\e[33m"
