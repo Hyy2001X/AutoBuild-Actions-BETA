@@ -12,10 +12,12 @@ GET_INFO() {
 	Openwrt_Author="$(echo "${Openwrt_Repo}" | cut -d "/" -f4)"
 	Openwrt_Repo_Name="$(echo "${Openwrt_Repo}" | cut -d "/" -f5)"
 	Openwrt_Branch="$(GET_BRANCH)"
-	[[ ! ${Openwrt_Branch} == master ]] && {
+	if [[ ${Openwrt_Branch} == master || -z ${Openwrt_Branch} ]];then
+		Openwrt_Version_="R$(date +%y.%m)-"
+	else
 		Openwrt_Branch="$(echo ${Openwrt_Branch} | egrep -o "[0-9]+.[0-9]+")"
 		Openwrt_Version_="R${Openwrt_Branch}-"
-	} || Openwrt_Version_="R$(date +%y.%m)-"
+	fi
 	case "${Openwrt_Author}" in
 	coolsnowwolf)
 		Version_File=package/lean/default-settings/files/zzz-default-settings
