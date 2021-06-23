@@ -89,12 +89,12 @@ GET_INFO() {
 		Default_Legacy_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${Legacy_Tail}.${Firmware_Type}"
 		Default_UEFI_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${UEFI_Tail}.${Firmware_Type}"
 		AutoBuild_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-${CURRENT_Version}-${x86_64_Boot}-${SHA5BIT}.${Firmware_Type}'
-		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9].+-[0-9]+-${x86_64_Boot}-[0-9a-z]+.${Firmware_Type}'
+		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9]+.[0-9]+.[0-9]+-[0-9]+-${x86_64_Boot}.[0-9a-z]+.${Firmware_Type}'
 	;;
 	*)
 		Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
 		AutoBuild_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-${CURRENT_Version}-${SHA5BIT}.${Firmware_Type}'
-		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9].+-[0-9]+-[0-9a-z]+.${Firmware_Type}'
+		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9]+.[0-9]+.[0-9]+.[0-9]+-[0-9a-z]+.${Firmware_Type}'
 	;;
 	esac
 	Firmware_Path="bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
@@ -102,7 +102,6 @@ GET_INFO() {
 	cat >> VARIABLE_FILE_Main <<EOF
 Author=${Author}
 Github=${User_Repo}
-Default_Device=${Default_Device}
 TARGET_PROFILE=${TARGET_PROFILE}
 TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
@@ -180,26 +179,22 @@ Firmware-Diy_Base() {
 		esac
 		AddPackage git other luci-app-argon-config jerrykuku
 	}
-	New_IP_Address="${Default_IP_Address}"
-	[[ -n ${Defined_IP_Address} ]] && {
-		TIME "Using defined IP Address [${Defined_IP_Address}] ..."
-		New_IP_Address="${Defined_IP_Address}"
-	}
-	[[ -n ${New_IP_Address} && ${New_IP_Address} != false ]] && {
-		if [[ ${New_IP_Address} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
+	[[ -n ${Defined_IP_Address} ]] && Default_LAN_IP="${Defined_IP_Address}"
+	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} != false ]] && {
+		if [[ ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
 			Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
-			if [[ ! ${New_IP_Address} == ${Old_IP_Address} ]];then
-				TIME "Setting default IP Address to ${New_IP_Address} ..."
-				sed -i "s/${Old_IP_Address}/${New_IP_Address}/g" package/base-files/files/bin/config_generate
-				a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
-				b=$(echo ${New_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
-				c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
-				d=")).$(echo ${New_IP_Address} | egrep -o "[0-9]+" | awk 'END {print}')"
-				sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
-				sed -i "s/${c}/${d}/g" package/base-files/files/bin/config_generate
+			if [[ ! ${Default_LAN_IP} == ${Old_IP_Address} ]];then
+				TIME "Setting default IP Address to ${Default_LAN_IP} ..."
+				sed -i "s/${Old_IP_Address}/${Default_LAN_IP}/g" package/base-files/files/bin/config_generate
+				# a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
+				# b=$(echo ${Default_LAN_IP} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
+				# c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
+				# d=")).$(echo ${Default_LAN_IP} | egrep -o "[0-9]+" | awk 'END {print}')"
+				# sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
+				# sed -i "s/${c}/${d}/g" package/base-files/files/bin/config_generate
 			fi
 		else
-			TIME "[ERROR] ${New_IP_Address} is not an IP Address !"
+			TIME "[ERROR] ${Default_LAN_IP} is not an IP Address !"
 		fi
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_PROFILE} == x86_64 ]] && {
@@ -218,6 +213,7 @@ Firmware-Diy_Base() {
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File}
+		sed -i "s?ip6tables -t?#ip6tables -t?g" ${Version_File}
 		sed -i "s?${Old_Version}?${Old_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	immortalwrt)

@@ -6,7 +6,7 @@ Diy_Core() {
 	Author=Hyy2001
 	Default_Device=
 	Short_Firmware_Date=true
-	Default_IP_Address=192.168.1.1
+	Default_LAN_IP=192.168.1.1
 
 	INCLUDE_AutoBuild_Features=true
 	INCLUDE_DRM_I915=true
