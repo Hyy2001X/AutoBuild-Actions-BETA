@@ -278,7 +278,7 @@ FW_LOGGER() {
 		FW_Version="${CURRENT_Version}"
 	;;
 	cloud)
-		[[ -z ${GET_CLOUD_VERSION} ]] && GET_CLOUD_VERSION
+		[[ -z ${CLOUD_Firmware_Version} ]] && GET_CLOUD_VERSION
 		FW_Version="${CLOUD_Firmware_Version}"
 	;;
 	-v)
