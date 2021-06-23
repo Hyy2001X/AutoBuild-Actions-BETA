@@ -400,7 +400,7 @@ PREPARE_UPGRADES() {
 	}
 	[[ ${Test_Mode} == 1 ]] && Downloader="wget --no-check-certificate --timeout 5"
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
-	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
+	if [[ $(CHECK_PKG curl) == true && ! ${Proxy_Mode} == 1 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 		[[ ! ${Google_Check} == 301 ]] && {
 			TIME r "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
