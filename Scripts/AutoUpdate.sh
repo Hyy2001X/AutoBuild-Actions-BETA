@@ -236,7 +236,7 @@ UPDATE_SCRIPT() {
 	TIME b "下载地址: $2"
 	TIME "开始更新 AutoUpdate 脚本,请耐心等待..."
 	[[ ! -d $1 ]] && mkdir -p $1
-	wget -q --tries 3 --timeout 5 $2 -O /tmp/AutoUpdate.sh
+	wget -q --timeout 5 $2 -O /tmp/AutoUpdate.sh
 	if [[ $? == 0 ]];then
 		mv -f /tmp/AutoUpdate.sh $1
 		[[ ! $? == 0 ]] && TIME r "AutoUpdate 脚本更新失败!" && EXIT 1
@@ -273,7 +273,6 @@ CHECK_DEPENDS() {
 
 FW_LOGGER() {
 	local FW_Version
-	[[ -z ${Wget_Head} ]] && Wget_Head="wget -q"
 	case "$1" in
 	local)
 		FW_Version="${CURRENT_Version}"
@@ -287,7 +286,7 @@ FW_LOGGER() {
 		FW_Version="$1"
 	;;
 	esac
-	${Wget_Head} --timeout 3 --tries 2 ${FW_NoProxy_URL}/Update_Logs.json -O ${Update_Logs_Path}/Update_Logs.json
+	${Wget_Head} --timeout 3 ${FW_NoProxy_URL}/Update_Logs.json -O ${Update_Logs_Path}/Update_Logs.json
 	[[ $? == 0 ]] && {
 		Update_Log=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${Update_Logs_Path}/Update_Logs.json)
 		rm -f ${Update_Logs_Path}/Update_Logs.json
@@ -306,7 +305,7 @@ FW_LOGGER() {
 
 GET_CLOUD_VERSION() {
 	[[ ! -d ${FW_SAVE_PATH} ]] && mkdir -p ${FW_SAVE_PATH}
-	[[ -z ${Wget_Head} ]] && Wget_Head="wget -q"
+	rm -f ${FW_SAVE_PATH}/Github_Tags
 	${Wget_Head} --timeout 5 ${Github_Tag_URL} -O ${FW_SAVE_PATH}/Github_Tags
 	[[ ! $? == 0 || ! -f ${FW_SAVE_PATH}/Github_Tags ]] && {
 		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
@@ -320,7 +319,6 @@ GET_CLOUD_VERSION() {
 }
 
 CHECK_UPDATES() {
-	local Size
 	TIME "正在获取版本更新..."
 	GET_CLOUD_VERSION
 	[[ ${CLOUD_Firmware_Version} == ${CURRENT_Version} ]] && {
@@ -334,15 +332,12 @@ CHECK_UPDATES() {
 		}
 	}
 	SHA5BIT=$(echo ${FW_Name} | egrep -o "[a-zA-Z0-9]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
-	let Size="$(grep -n "${FW_Name}" ${FW_SAVE_PATH}/Github_Tags | tail -1 | cut -d : -f 1)-4"
-	let CLOUD_Firmware_Size="$(sed -n "${Size}p" ${FW_SAVE_PATH}/Github_Tags | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1"
 	[[ $1 == check ]] && {
 		echo -e "\n当前固件版本: ${CURRENT_Version}${CURRENT_Type}"
 		echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}"
 		FW_LOGGER cloud show
 		echo "${CLOUD_Firmware_Version} /${x86_64_Boot}${CURRENT_Type}" > /tmp/Cloud_Version
 	} || FW_LOGGER cloud
-	rm -f ${FW_SAVE_PATH}/Github_Tags
 }
 
 PREPARE_UPGRADES() {
@@ -394,7 +389,7 @@ PREPARE_UPGRADES() {
 		MSG_2=" [强制刷写]"
 		Upgrade_Option="${Upgrade_Option} -F"
 	}
-	[[ ! $Test_Mode == 1 ]] && Wget_Head="wget -q" || Wget_Head="wget"
+	[[ $Test_Mode == 1 ]] && Wget_Head="wget --no-check-certificate"
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
 	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
@@ -419,7 +414,6 @@ $([[ ${TARGET_PROFILE} == x86_64 ]] && echo "固件格式: ${Firmware_Type} / ${
 
 $(echo -e "当前固件版本: ${CURRENT_Version}${CURRENT_Type}")
 $(echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}")
-云端固件体积: ${CLOUD_Firmware_Size}MB
 
 云端固件名称: ${FW_Name}
 固件下载地址: ${FW_URL}
@@ -454,7 +448,7 @@ EOF
 			TIME r "固件下载失败,请检查网络后重试!"
 			EXIT 1
 		else
-			${Wget_Head} --tries 3 --timeout 5 "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
+			${Wget_Head} --timeout 5 "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
 			[[ $? == 0 ]] && TIME y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
@@ -526,7 +520,7 @@ AutoUpdate_Main() {
 				[[ -n ${Version} ]] && echo "${Version}" || echo "未知"
 			;;
 			cloud)
-				Cloud_Script_Version="$(wget -q --tries 3 --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
+				Cloud_Script_Version="$(wget -q --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
 				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
 			*)
@@ -684,12 +678,13 @@ AutoUpdate_Main() {
 	done
 }
 
-export Version=V6.2.0
+export Version=V6.2.1
 export log_Path=/tmp
 export Update_Logs_Path=/tmp
 export Upgrade_Command=sysupgrade
 export Default_Variable=/etc/AutoBuild/Default_Variable
 export Custom_Variable=/etc/AutoBuild/Custom_Variable
+export Wget_Head="wget -q --no-check-certificate"
 
 export White="\e[0m"
 export Yellow="\e[33m"
