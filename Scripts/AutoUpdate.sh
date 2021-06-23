@@ -56,24 +56,25 @@ SHOW_VARIABLE() {
 	cat <<EOF
 
 设备名称:		$(uname -n) / ${TARGET_PROFILE}
-固件作者:		${Author}
-默认设备:		${Default_Device}
-软件架构:		${TARGET_SUBTARGET}
 固件版本:		${CURRENT_Version}
+固件作者:		${Author}
+软件架构:		${TARGET_SUBTARGET}
 作者仓库:		${Github}
-源码仓库:		https://github.com/${Openwrt_Author}/${Openwrt_Repo_Name}:${Openwrt_Branch}	
-Release API:		${Github_Tag_URL}
+OpenWrt 源码:		https://github.com/${Openwrt_Author}/${Openwrt_Repo_Name}:${Openwrt_Branch}	
+Release API:		${Github_API}
 固件格式-框架:		$(GET_VARIABLE AutoBuild_Firmware ${Default_Variable})
 固件名称-框架:		$(GET_VARIABLE Egrep_Firmware ${Default_Variable})
-默认下载地址:		${Github_Release_URL}
-固件保存位置:           ${FW_SAVE_PATH}
 固件格式:		${Firmware_Type}
+Release URL:		${Github_Release_URL}
+FastGit URL:		${Release_FastGit_URL}
+Github Proxy URL:	${Release_Goproxy_URL}
+固件保存位置:           ${FW_SAVE_PATH}
 log 文件:		${log_Path}/AutoUpdate.log
 EOF
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
-		echo "引导模式:		${x86_64_Boot}"
+		echo "x86_64 引导模式:	${x86_64_Boot}"
 	}
-	EXIT 2
+	EXIT 0
 }
 
 EXIT() {
@@ -139,17 +140,16 @@ LOAD_VARIABLE() {
 		}
 		shift
 	done
-	[[ -z ${TARGET_PROFILE} && -n ${Default_Device} ]] && TARGET_PROFILE="${Default_Device}"
 	[[ -z ${TARGET_PROFILE} ]] && TARGET_PROFILE="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
 	[[ -z ${TARGET_PROFILE} ]] && TIME r "获取设备名称失败,无法执行更新!" && EXIT 1
 	[[ -z ${CURRENT_Version} ]] && CURRENT_Version=未知
 	[[ -z ${FW_SAVE_PATH} ]] && FW_SAVE_PATH=/tmp/Downloads
 	Github_Release_URL="${Github}/releases/download/AutoUpdate"
 	FW_Author="${Github##*com/}"
-	Github_Tag_URL="https://api.github.com/repos/${FW_Author}/releases/latest"
-	Github_Proxy_URL="https://download.fastgit.org"
-	FW_NoProxy_URL="https://github.com/${FW_Author}/releases/download/AutoUpdate"
-	FW_Proxy_URL="${Github_Proxy_URL}/${FW_Author}/releases/download/AutoUpdate"
+	Github_API="https://api.github.com/repos/${FW_Author}/releases/latest"
+	Release_URL="https://github.com/${FW_Author}/releases/download/AutoUpdate"
+	Release_FastGit_URL="https://download.fastgit.org/${FW_Author}/releases/download/AutoUpdate"
+	Release_Goproxy_URL="https://ghproxy.com/${Release_URL}"
 	case ${TARGET_PROFILE} in
 	x86_64)
 		case ${Firmware_Type} in
@@ -286,7 +286,7 @@ FW_LOGGER() {
 		FW_Version="$1"
 	;;
 	esac
-	${Wget_Head} --timeout 3 ${FW_NoProxy_URL}/Update_Logs.json -O ${Update_Logs_Path}/Update_Logs.json
+	${Downloader} ${Release_URL}/Update_Logs.json -O ${Update_Logs_Path}/Update_Logs.json
 	[[ $? == 0 ]] && {
 		Update_Log=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${Update_Logs_Path}/Update_Logs.json)
 		rm -f ${Update_Logs_Path}/Update_Logs.json
@@ -306,7 +306,7 @@ FW_LOGGER() {
 GET_CLOUD_VERSION() {
 	[[ ! -d ${FW_SAVE_PATH} ]] && mkdir -p ${FW_SAVE_PATH}
 	rm -f ${FW_SAVE_PATH}/Github_Tags
-	${Wget_Head} --timeout 5 ${Github_Tag_URL} -O ${FW_SAVE_PATH}/Github_Tags
+	${Downloader} ${Github_API} -O ${FW_SAVE_PATH}/Github_Tags
 	[[ ! $? == 0 || ! -f ${FW_SAVE_PATH}/Github_Tags ]] && {
 		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
 		TIME r "检查更新失败,请稍后重试!"
@@ -349,7 +349,7 @@ PREPARE_UPGRADES() {
 		}
 		[[ $1 == -P || $1 == --proxy ]] && {
 			Proxy_Mode=1
-			Proxy_Echo="[FastGit] "
+			Proxy_Echo="[Proxy] "
 		}
 		[[ $1 =~ path= ]] && {
 			[[ -z $(echo $1 | cut -d "=" -f2) ]] && TIME r "固件保存目录不能为空!" && EXIT 1
@@ -389,7 +389,7 @@ PREPARE_UPGRADES() {
 		MSG_2=" [强制刷写]"
 		Upgrade_Option="${Upgrade_Option} -F"
 	}
-	[[ $Test_Mode == 1 ]] && Wget_Head="wget --no-check-certificate"
+	[[ ${Test_Mode} == 1 ]] && Downloader="wget --no-check-certificate --timeout 5"
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
 	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
@@ -404,8 +404,8 @@ PREPARE_UPGRADES() {
 		EXIT 1
 	}
 	[[ ${Proxy_Mode} == 1 ]] && {
-		FW_URL="${FW_Proxy_URL}"
-	} || FW_URL="${FW_NoProxy_URL}"
+		FW_URL="${Release_FastGit_URL}"
+	} || FW_URL="${Release_URL}"
 	cat <<EOF
 
 固件作者: ${FW_Author%/*}
@@ -433,23 +433,23 @@ EOF
 	;;
 	esac
 	Retry_Times=5
-	TIME "正在下载固件,请耐心等待..."
+	TIME "${Proxy_Echo}正在下载固件,请耐心等待..."
 	while [[ ${Retry_Times} -ge 0 ]];do
-		if [[ ! ${PROXY_Mode} == 1 ]];then
-			[[ ${Retry_Times} == 4 ]] && {
-				TIME g "尝试使用 [FastGit] 镜像加速下载固件!"
-				FW_URL="${FW_Proxy_URL}"
-			}
+		if [[ ! ${PROXY_Mode} == 1 && ${Retry_Times} == 4 ]];then
+			TIME g "尝试使用 [FastGit] 镜像加速下载固件!"
+			FW_URL="${Release_FastGit_URL}"
 		fi
-		[[ ${Retry_Times} == 2 ]] && {
-				FW_URL="${FW_NoProxy_URL}"
+		[[ ${Retry_Times} == 3 ]] && {
+				TIME g "尝试使用 [Github Proxy] 镜像加速下载固件!"
+				FW_URL="${Release_Goproxy_URL}"
 		}
+		[[ ${Retry_Times} == 2 ]] && FW_URL="${Github_Release_URL}"
 		if [[ ${Retry_Times} == 0 ]];then
 			TIME r "固件下载失败,请检查网络后重试!"
 			EXIT 1
 		else
-			${Wget_Head} --timeout 5 "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
-			[[ $? == 0 ]] && TIME y "固件下载成功!" && break
+			echo "${Downloader} "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}"
+			[[ ! $? == 0 ]] && TIME y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
 		TIME r "下载失败,剩余尝试次数: ${Retry_Times} 次"
@@ -633,7 +633,7 @@ AutoUpdate_Main() {
 				[[ -f ${FILE} ]] && FILE="${FILE}-$(RANDOM 5)"
 			} || {
 				[[ ! -d $1 ]] && mkdir -p $1
-				FILE="$1/Openwrt-Backups-$(date +%Y-%m-%d)-$(RANDOM 5)"
+				FILE="$1/$(uname -n)-Backups-$(date +%Y-%m-%d)-$(RANDOM 5)"
 			}
 			[[ ! ${FILE} =~ tar.gz ]] && FILE="${FILE}.tar.gz"
 			TIME "Saving config files to [${FILE}] ..."
@@ -678,19 +678,19 @@ AutoUpdate_Main() {
 	done
 }
 
-export Version=V6.2.1
-export log_Path=/tmp
-export Update_Logs_Path=/tmp
-export Upgrade_Command=sysupgrade
-export Default_Variable=/etc/AutoBuild/Default_Variable
-export Custom_Variable=/etc/AutoBuild/Custom_Variable
-export Wget_Head="wget -q --no-check-certificate"
+Version=V6.2.2
+log_Path=/tmp
+Update_Logs_Path=/tmp
+Upgrade_Command=sysupgrade
+Default_Variable=/etc/AutoBuild/Default_Variable
+Custom_Variable=/etc/AutoBuild/Custom_Variable
+Downloader="wget -q --no-check-certificate --timeout 5"
 
-export White="\e[0m"
-export Yellow="\e[33m"
-export Red="\e[31m"
-export Blue="\e[34m"
-export Grey="\e[36m"
-export Green="\e[32m"
+White="\e[0m"
+Yellow="\e[33m"
+Red="\e[31m"
+Blue="\e[34m"
+Grey="\e[36m"
+Green="\e[32m"
 
 AutoUpdate_Main $*
