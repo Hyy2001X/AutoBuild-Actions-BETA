@@ -354,11 +354,13 @@ TIME() {
 }
 
 PKG_Finder() {
+	local Result
 	[[ $# -ne 3 ]] && {
-		TIME "[ERROR] Error options: [$#] [$*] !"
+		TIME "Usage: PKG_Finder <f | d> Search_Path Target_Name/Target_Path"
 		return 0
 	}
-	find $2 -name $3 -type $1 -depth -exec echo {} \;
+	Result=$(find $2 -name $3 -type $1 -depth -exec echo {} \;)
+	[[ -n ${Result} ]] && echo "${Result}"
 }
 
 AddPackage_List() {
