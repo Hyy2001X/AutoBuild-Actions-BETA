@@ -126,6 +126,14 @@ RANDOM() {
 	openssl rand -base64 $1 | md5sum | cut -c 1-$1
 }
 
+GET_SHA256SUM() {
+	[[ ! -f $1 && ! -s $1 ]] && {
+		TIME r "未检测到文件: [$1] 或该文件为空,无法计算 sha256 值!"
+		EXIT 1
+	}
+	sha256sum $1 | cut -c1-$2
+}
+
 GET_VARIABLE() {
 	[[ $# != 2 ]] && SHELL_HELP
 	[[ ! -f $2 ]] && TIME "未检测到定义文件: [$2] !" && EXIT 1
@@ -433,7 +441,7 @@ EOF
 	;;
 	esac
 	Retry_Times=5
-	TIME "${Proxy_Echo}正在下载固件,请耐心等待..."
+	TIME "${Proxy_Echo}正在下载固件,请耐心等待 ..."
 	while [[ ${Retry_Times} -ge 0 ]];do
 		if [[ ! ${PROXY_Mode} == 1 && ${Retry_Times} == 4 ]];then
 			TIME g "尝试使用 [FastGit] 镜像加速下载固件!"
@@ -449,20 +457,27 @@ EOF
 			EXIT 1
 		else
 			${Downloader} "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
-			[[ $? == 0 && -f ${FW_SAVE_PATH}/${FW_Name} ]] && TIME y "固件下载成功!" && break
+			[[ $? == 0 && -s ${FW_SAVE_PATH}/${FW_Name} ]] && TIME y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
-		TIME r "下载失败,剩余尝试次数: ${Retry_Times} 次"
+		TIME r "固件下载失败,剩余尝试次数: ${Retry_Times} 次"
 	done
+	CURRENT_SHA256=$(GET_SHA256SUM ${FW_SAVE_PATH}/${FW_Name} 5)
+	CLOUD_SHA256=$(echo ${FW_Name} | egrep -o "[0-9a-z]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
+	[[ ${CURRENT_SHA256} != ${CLOUD_SHA256} ]] && {
+		TIME r "本地固件 SHA256 与云端对比不通过,请检查网络后重试!"
+		EXIT 1
+	}
 	case "${Firmware_Type}" in
 	img.gz)
+		TIME "正在解压固件,请耐心等待 ..."
 		gzip -d -q -f -c ${FW_SAVE_PATH}/${FW_Name} > ${FW_SAVE_PATH}/$(echo ${FW_Name} | sed -r 's/(.*).gz/\1/')
 		FW_Name="$(echo ${FW_Name} | sed -r 's/(.*).gz/\1/')"
-		[[ $? == 0 ]] && {
-			TIME y "解压成功,固件已解压到: ${FW_SAVE_PATH}/${FW_Name}!"
-		} || {
+		[[ ! $? == 0 && -s ${FW_SAVE_PATH}/${FW_Name} ]] && {
 			TIME r "固件解压失败,请检查相关依赖或更换固件保存目录!"
 			EXIT 1
+		} || {
+			TIME y "固件解压成功,固件已解压到: ${FW_SAVE_PATH}/${FW_Name}!"
 		}
 	;;
 	esac
@@ -472,7 +487,6 @@ EOF
 		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}
 	} || {
 		TIME x "[测试模式] 执行: ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}"
-		TIME x "[测试模式] 测试模式运行完毕!"
 		EXIT 0
 	}
 }
@@ -503,6 +517,30 @@ REMOVE_CACHE() {
 	esac
 }
 
+AutoUpdate_LOGGGER() {
+	[[ -z $1 ]] && {
+		[[ -f ${log_Path}/AutoUpdate.log ]] && {
+			TITLE && echo
+			cat ${log_Path}/AutoUpdate.log
+		}
+	} || {
+		while [[ $1 ]];do
+			if [[ $1 =~ path= ]];then
+				LOG_PATH="$(echo $1 | cut -d "=" -f2)"
+				EDIT_VARIABLE rm ${Custom_Variable} log_Path
+				EDIT_VARIABLE edit ${Custom_Variable} log_Path ${LOG_PATH}
+				[[ ! -d ${LOG_PATH} ]] && mkdir -p ${LOG_PATH}
+				TIME y "AutoUpdate 日志保存目录已修改为: ${LOG_PATH}"
+				EXIT 0
+			fi
+			[[ $1 == rm || $1 == del ]] && {
+				[[ -f ${log_Path}/AutoUpdate.log ]] && rm ${log_Path}/AutoUpdate.log
+			}
+			[[ ! $1 =~ path= && $1 != rm && $1 != del ]] && SHELL_HELP
+			EXIT
+		done
+	}
+}
 
 AutoUpdate_Main() {
 	[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
@@ -647,28 +685,7 @@ AutoUpdate_Main() {
 		;;
 		--log)
 			shift
-			[[ -z $1 ]] && {
-				[[ -f ${log_Path}/AutoUpdate.log ]] && {
-					TITLE && echo
-					cat ${log_Path}/AutoUpdate.log
-				}
-			} || {
-				while [[ $1 ]];do
-					if [[ $1 =~ path= ]];then
-						LOG_PATH="$(echo $1 | cut -d "=" -f2)"
-						EDIT_VARIABLE rm ${Custom_Variable} log_Path
-						EDIT_VARIABLE edit ${Custom_Variable} log_Path ${LOG_PATH}
-						[[ ! -d ${LOG_PATH} ]] && mkdir -p ${LOG_PATH}
-						TIME y "AutoUpdate 日志保存目录已修改为: ${LOG_PATH}"
-						EXIT 0
-					fi
-					[[ $1 == rm || $1 == del ]] && {
-						[[ -f ${log_Path}/AutoUpdate.log ]] && rm ${log_Path}/AutoUpdate.log
-					}
-					[[ ! $1 =~ path= && $1 != rm && $1 != del ]] && SHELL_HELP
-					EXIT
-				done
-			}
+			AutoUpdate_LOGGGER $*
 		;;
 		*)
 			SHELL_HELP
@@ -678,7 +695,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.2
+Version=V6.2.3
 log_Path=/tmp
 Update_Logs_Path=/tmp
 Upgrade_Command=sysupgrade
