@@ -6,7 +6,7 @@
 
 name: AutoBuild-xiaoyu_xy-c5
 
-### 以下内容请保持不变
+### 以下内容请保持不变 (修改 环境变量设置 中的信息)
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -28,8 +28,8 @@ on:
 
 ### 环境变量设置
 env:
-# 设备名称
-  DEFAULT_TARGET: xiaoyu_xy-c5
+# 设备名称 (可在 README 中找到获取方法)
+  TARGET_PROFILE: xiaoyu_xy-c5
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
@@ -54,13 +54,13 @@ jobs:
 
     - name: Initialization Define Info
       run: |
-        DEFAULT_TARGET=${{ env.DEFAULT_TARGET }}
+        TARGET_PROFILE=${{ env.TARGET_PROFILE }}
         DEFAULT_SOURCE=${{ env.DEFAULT_SOURCE }}
         DELETE_USELESS_FILES=${{ env.DELETE_USELESS_FILES }}
-        echo "DEFAULT_TARGET=$DEFAULT_TARGET" >> $GITHUB_ENV
+        echo "TARGET_PROFILE=$TARGET_PROFILE" >> $GITHUB_ENV
         echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
-        [ ! -f "$GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET" ] && {
-            echo "[ERROR] No target_config file: [$DEFAULT_TARGET] detected!"
+        [ ! -f "$GITHUB_WORKSPACE/Configs/$TARGET_PROFILE" ] && {
+            echo "[ERROR] config-file [/Config/$TARGET_PROFILE] is not detected!"
             exit 1
         }
         export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
@@ -68,7 +68,7 @@ jobs:
         [ -z $REPO_BRANCH ] && REPO_BRANCH=master
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-        echo -e "TARGET_PROFILE: $DEFAULT_TARGET\nSOURCE: $REPO_URL:$REPO_BRANCH"
+        echo -e "TARGET_PROFILE: $TARGET_PROFILE\nSOURCE: $REPO_URL:$REPO_BRANCH"
 
     - name: Initialization Environment
       env:
@@ -104,14 +104,14 @@ jobs:
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/$TARGET_PROFILE openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware-Diy_Base
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET .config
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$TARGET_PROFILE .config
 
     - name: Compile
       run: |
@@ -135,14 +135,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.DEFAULT_TARGET }}_${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
+        name: ${{ env.TARGET_PROFILE }}_${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.DEFAULT_TARGET }}_${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
+        name: ${{ env.TARGET_PROFILE }}_${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Github Releases
