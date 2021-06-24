@@ -16,7 +16,7 @@ on:
         required: true
         default: 'false'
       TARGET_PROFILE:
-        description: '设备名称 (可在 README 中找到获取方法) [必选]'
+        description: '设备名称 (获取方法参考 README)'
         default: 'x86_64'
       DEFAULT_SOURCE:
         description: '源码:分支 [必选]'

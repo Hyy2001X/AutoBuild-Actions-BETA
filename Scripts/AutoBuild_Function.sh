@@ -36,14 +36,21 @@ GET_INFO() {
 		x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
 		[[ -n ${x86_Test} ]] && break
 		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" .config | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
-		[[ -z ${x86_Test} ]] && TIME "[ERROR] Can not obtain the TARGET_PROFILE !" && exit 1
+		[[ -z ${x86_Test} ]] && TIME "[ERROR] Can not obtain the TARGET_PROFILE,please check!" && exit 1
 	done
 	[[ ${x86_Test} == x86_64 ]] && {
 		TARGET_PROFILE=x86_64
 	} || {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
-	[[ -z ${TARGET_PROFILE} ]] && TARGET_PROFILE="${Default_Device}"
+	[[ -z ${TARGET_PROFILE} ]] && {
+		if [[ -n ${Default_TARGET_PROFILE} && ${Default_TARGET_PROFILE} != auto ]];then
+			TARGET_PROFILE="${Default_TARGET_PROFILE}"
+		else
+			TIME "[ERROR] Can not obtain the TARGET_PROFILE,please check!"
+			exit 1
+		fi
+	}
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
 		[[ $(cat ${Home}/.config) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && Firmware_Type=img.gz || Firmware_Type=img 
 	}
