@@ -44,7 +44,6 @@ GET_INFO() {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
 	[[ -z ${TARGET_PROFILE} ]] && TARGET_PROFILE="${Default_Device}"
-	[[ -z ${Default_Device} ]] && Default_Device="${TARGET_PROFILE}"
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
 		[[ $(cat ${Home}/.config) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && Firmware_Type=img.gz || Firmware_Type=img 
 	}
@@ -94,7 +93,15 @@ GET_INFO() {
 		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9]+.[0-9]+.[0-9]+-[0-9]+-${x86_64_Boot}.[0-9a-z]+.${Firmware_Type}'
 	;;
 	*)
-		Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+		case "${TARGET_SUBTARGET}" in
+		generic)
+			Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+		;;
+		*)
+			Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+		;;
+		esac
+		
 		AutoBuild_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-${CURRENT_Version}-${SHA5BIT}.${Firmware_Type}'
 		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9]+.[0-9]+.[0-9]+.[0-9]+-[0-9a-z]+.${Firmware_Type}'
 	;;
