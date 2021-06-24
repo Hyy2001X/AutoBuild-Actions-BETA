@@ -622,7 +622,7 @@ AutoUpdate_Main() {
 				}
 				shift
 			done
-			[[ ${Proxy_Mode} == 1 ]] && Script_URL=https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
+			[[ ${Proxy_Mode} == 1 ]] && Script_URL="https://ghproxy.com/${Script_URL}"
 			[[ -z ${SH_SAVE_PATH} ]] && SH_SAVE_PATH=/bin
 			UPDATE_SCRIPT ${SH_SAVE_PATH} ${Script_URL}
 		;;
@@ -702,7 +702,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.4
+Version=V6.2.5
 log_Path=/tmp
 Update_Logs_Path=/tmp
 Upgrade_Command=sysupgrade
