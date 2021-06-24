@@ -68,8 +68,9 @@ Release API:		${Github_API}
 Release URL:		${Github_Release_URL}
 FastGit URL:		${Release_FastGit_URL}
 Github Proxy URL:	${Release_Goproxy_URL}
-固件保存位置:           ${FW_SAVE_PATH}
-log 文件:		${log_Path}/AutoUpdate.log
+固件保存位置:		${FW_SAVE_PATH}
+运行日志:		${log_Path}/AutoUpdate.log
+Downloader:		${Downloader}
 EOF
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
 		echo "x86_64 引导模式:	${x86_64_Boot}"
@@ -124,6 +125,14 @@ CHECK_PKG() {
 
 RANDOM() {
 	openssl rand -base64 $1 | md5sum | cut -c 1-$1
+}
+
+GET_SHA256SUM() {
+	[[ ! -f $1 && ! -s $1 ]] && {
+		TIME r "未检测到文件: [$1] 或该文件为空,无法计算 sha256 值!"
+		EXIT 1
+	}
+	sha256sum $1 | cut -c1-$2
 }
 
 GET_VARIABLE() {
@@ -236,7 +245,7 @@ UPDATE_SCRIPT() {
 	TIME b "下载地址: $2"
 	TIME "开始更新 AutoUpdate 脚本,请耐心等待..."
 	[[ ! -d $1 ]] && mkdir -p $1
-	wget -q --timeout 5 $2 -O /tmp/AutoUpdate.sh
+	${Downloader} $2 -O /tmp/AutoUpdate.sh
 	if [[ $? == 0 ]];then
 		mv -f /tmp/AutoUpdate.sh $1
 		[[ ! $? == 0 ]] && TIME r "AutoUpdate 脚本更新失败!" && EXIT 1
@@ -391,7 +400,7 @@ PREPARE_UPGRADES() {
 	}
 	[[ ${Test_Mode} == 1 ]] && Downloader="wget --no-check-certificate --timeout 5"
 	TIME g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
-	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} == 0 ]];then
+	if [[ $(CHECK_PKG curl) == true && ! ${Proxy_Mode} == 1 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 		[[ ! ${Google_Check} == 301 ]] && {
 			TIME r "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
@@ -433,7 +442,7 @@ EOF
 	;;
 	esac
 	Retry_Times=5
-	TIME "${Proxy_Echo}正在下载固件,请耐心等待..."
+	TIME "${Proxy_Echo}正在下载固件,请耐心等待 ..."
 	while [[ ${Retry_Times} -ge 0 ]];do
 		if [[ ! ${PROXY_Mode} == 1 && ${Retry_Times} == 4 ]];then
 			TIME g "尝试使用 [FastGit] 镜像加速下载固件!"
@@ -449,20 +458,27 @@ EOF
 			EXIT 1
 		else
 			${Downloader} "${FW_URL}/${FW_Name}" -O ${FW_SAVE_PATH}/${FW_Name}
-			[[ $? == 0 && -f ${FW_SAVE_PATH}/${FW_Name} ]] && TIME y "固件下载成功!" && break
+			[[ $? == 0 && -s ${FW_SAVE_PATH}/${FW_Name} ]] && TIME y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
-		TIME r "下载失败,剩余尝试次数: ${Retry_Times} 次"
+		TIME r "固件下载失败,剩余尝试次数: ${Retry_Times} 次"
 	done
+	CURRENT_SHA256=$(GET_SHA256SUM ${FW_SAVE_PATH}/${FW_Name} 5)
+	CLOUD_SHA256=$(echo ${FW_Name} | egrep -o "[0-9a-z]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
+	[[ ${CURRENT_SHA256} != ${CLOUD_SHA256} ]] && {
+		TIME r "本地固件 SHA256 与云端对比不通过,请检查网络后重试!"
+		EXIT 1
+	}
 	case "${Firmware_Type}" in
 	img.gz)
+		TIME "正在解压固件,请耐心等待 ..."
 		gzip -d -q -f -c ${FW_SAVE_PATH}/${FW_Name} > ${FW_SAVE_PATH}/$(echo ${FW_Name} | sed -r 's/(.*).gz/\1/')
 		FW_Name="$(echo ${FW_Name} | sed -r 's/(.*).gz/\1/')"
-		[[ $? == 0 ]] && {
-			TIME y "解压成功,固件已解压到: ${FW_SAVE_PATH}/${FW_Name}!"
-		} || {
+		[[ ! $? == 0 && -s ${FW_SAVE_PATH}/${FW_Name} ]] && {
 			TIME r "固件解压失败,请检查相关依赖或更换固件保存目录!"
 			EXIT 1
+		} || {
+			TIME y "固件解压成功,固件已解压到: ${FW_SAVE_PATH}/${FW_Name}!"
 		}
 	;;
 	esac
@@ -472,7 +488,6 @@ EOF
 		DO_UPGRADE ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}
 	} || {
 		TIME x "[测试模式] 执行: ${Upgrade_Option} ${FW_SAVE_PATH}/${FW_Name}"
-		TIME x "[测试模式] 测试模式运行完毕!"
 		EXIT 0
 	}
 }
@@ -503,10 +518,40 @@ REMOVE_CACHE() {
 	esac
 }
 
+AutoUpdate_LOGGGER() {
+	[[ -z $1 ]] && {
+		[[ -f ${log_Path}/AutoUpdate.log ]] && {
+			TITLE && echo
+			cat ${log_Path}/AutoUpdate.log
+		}
+	} || {
+		while [[ $1 ]];do
+			if [[ $1 =~ path= ]];then
+				LOG_PATH="$(echo $1 | cut -d "=" -f2)"
+				EDIT_VARIABLE rm ${Custom_Variable} log_Path
+				EDIT_VARIABLE edit ${Custom_Variable} log_Path ${LOG_PATH}
+				[[ ! -d ${LOG_PATH} ]] && mkdir -p ${LOG_PATH}
+				TIME y "AutoUpdate 日志保存目录已修改为: ${LOG_PATH}"
+				EXIT 0
+			fi
+			[[ $1 == rm || $1 == del ]] && {
+				[[ -f ${log_Path}/AutoUpdate.log ]] && rm ${log_Path}/AutoUpdate.log
+			}
+			[[ ! $1 =~ path= && $1 != rm && $1 != del ]] && SHELL_HELP
+			EXIT
+		done
+	}
+}
 
 AutoUpdate_Main() {
 	[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
 	LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
+
+	[[ $(CHECK_PKG uclient-fetch) == true ]] && {
+		Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
+	} || {
+		Downloader="wget -q --no-check-certificate --timeout 5"
+	}
 
 	[[ -z $* ]] && PREPARE_UPGRADES $*
 	[[ $1 =~ path= && ! $* =~ -x && ! $* =~ -U ]] && PREPARE_UPGRADES $*
@@ -520,7 +565,7 @@ AutoUpdate_Main() {
 				[[ -n ${Version} ]] && echo "${Version}" || echo "未知"
 			;;
 			cloud)
-				Cloud_Script_Version="$(wget -q --timeout 5 https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
+				Cloud_Script_Version="$(${Downloader} https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
 				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
 			*)
@@ -647,28 +692,7 @@ AutoUpdate_Main() {
 		;;
 		--log)
 			shift
-			[[ -z $1 ]] && {
-				[[ -f ${log_Path}/AutoUpdate.log ]] && {
-					TITLE && echo
-					cat ${log_Path}/AutoUpdate.log
-				}
-			} || {
-				while [[ $1 ]];do
-					if [[ $1 =~ path= ]];then
-						LOG_PATH="$(echo $1 | cut -d "=" -f2)"
-						EDIT_VARIABLE rm ${Custom_Variable} log_Path
-						EDIT_VARIABLE edit ${Custom_Variable} log_Path ${LOG_PATH}
-						[[ ! -d ${LOG_PATH} ]] && mkdir -p ${LOG_PATH}
-						TIME y "AutoUpdate 日志保存目录已修改为: ${LOG_PATH}"
-						EXIT 0
-					fi
-					[[ $1 == rm || $1 == del ]] && {
-						[[ -f ${log_Path}/AutoUpdate.log ]] && rm ${log_Path}/AutoUpdate.log
-					}
-					[[ ! $1 =~ path= && $1 != rm && $1 != del ]] && SHELL_HELP
-					EXIT
-				done
-			}
+			AutoUpdate_LOGGGER $*
 		;;
 		*)
 			SHELL_HELP
@@ -678,13 +702,12 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.2
+Version=V6.2.4
 log_Path=/tmp
 Update_Logs_Path=/tmp
 Upgrade_Command=sysupgrade
 Default_Variable=/etc/AutoBuild/Default_Variable
 Custom_Variable=/etc/AutoBuild/Custom_Variable
-Downloader="wget -q --no-check-certificate --timeout 5"
 
 White="\e[0m"
 Yellow="\e[33m"

@@ -236,7 +236,6 @@ Firmware-Diy_Base() {
 		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/base-files/files/etc/banner
 	;;
 	esac
-	[[ -n $(PKG_Finder d package default-settings) ]] && echo "$(PKG_Finder d package default-settings)"
 	TIME "[Firmware-Diy_Base] All done !"
 }
 
