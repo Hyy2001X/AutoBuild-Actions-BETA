@@ -29,7 +29,7 @@
 
    **在本地的 .config 文件中获取设备名称:** `egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
    
-   **或者:** `grep 'TARGET_PROFILE' .config`
+   **或者:** `grep 'TARGET_PROFILE' .config`,名称中不应含有 `DEVICE_`
 
 2. 把本地的 `.config` 文件重命名为你设备的 **TARGET_PROFILE** 并上传到`/Configs`目录
 
@@ -47,15 +47,15 @@
 ```
    Author 作者名称,若该项留空将自动获取
 
-   Default_Device 设备的 TARGET_PROFILE 名称,例如 d-team_newifi-d2、x86_64
+   Default_TARGET_PROFILE 设备名称,获取方法见上方
    
    Short_Firmware_Date 固件日期样式,当设置为 true: [20210601] false: [202106012359]
    
-   Default_LAN_IP 固件 LAN IP 地址
+   Default_LAN_IP 固件 LAN IP 地址,默认为 192.168.1.1
 
    INCLUDE_AutoBuild_Features 自动添加 AutoBuild 特性到固件
 
-   INCLUDE_DRM_I915 自动勾选 Intel Graphics 驱动 (测试特性)
+   INCLUDE_DRM_I915 自动勾选 Intel Graphics 驱动
 
    INCLUDE_Argon 自动添加 luci-theme-argon 主题和控制器
 
@@ -73,9 +73,9 @@
 ```
 ## 编译固件(STEP 3):
 
-   **一键编译** 先删除`第 30-31 行`的注释并保存,单(双)击重新点亮右上角的 **Star** 即可一键编译
+   **一键编译** 先删除`第 26-27 行`的注释并保存,单(双)击重新点亮右上角的 **Star** 即可一键编译
 
-   **定时编译** 先删除`第 27-28 行`的注释,然后按需修改相关参数并保存,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
+   **定时编译** 先删除`第 23-24 行`的注释,然后按需修改相关参数并保存,[使用方法](https://www.runoob.com/w3cnote/linux-crontab-tasks.html)
 
    **手动编译** 点击上方`Actions`,选择你要编译的设备名称,点击右方`Run workflow`,点击绿色按钮即可开始编译
    
