@@ -161,7 +161,7 @@ Firmware-Diy_Base() {
 	mkdir -p package/base-files/files/etc/AutoBuild
 	[ -f VARIABLE_FILE_Main ] && cp VARIABLE_FILE_Main package/base-files/files/etc/AutoBuild/Default_Variable
 	Copy CustomFiles/Depends/Custom_Variable package/base-files/files/etc/AutoBuild
-	[[ ! "$(cat .config)" =~ "## DO NOT MERGE" ]] && AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/Common
+	[[ ! "$(cat ${GITHUB_WORKSPACE}/Configs/${TARGET_PROFILE})" =~ "## DO NOT MERGE" ]] && AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/Common
 	AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}
 	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
 	chmod 777 -R ${GITHUB_WORKSPACE}/CustomFiles
@@ -430,7 +430,7 @@ Copy() {
 		return 0
 	}
 	[[ ! -f ${GITHUB_WORKSPACE}/$1 ]] && [[ ! -d ${GITHUB_WORKSPACE}/$1 ]] && {
-		TIME "CustomFiles/${FILE_NAME} is not detected !"
+		TIME "CustomFiles/$1 is not detected !"
 		return 0
 	}
 	[[ ! -d ${GITHUB_WORKSPACE}/openwrt/$2 ]] && mkdir -p ${GITHUB_WORKSPACE}/openwrt/$2
