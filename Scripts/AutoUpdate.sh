@@ -696,7 +696,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.6
+Version=V6.2.7
 log_Path=/tmp
 Update_Logs_Path=/tmp
 Upgrade_Command=sysupgrade
@@ -711,7 +711,9 @@ Grey="\e[36m"
 Green="\e[32m"
 
 if [[ $(CHECK_PKG wget-ssl) == true ]];then
-	Downloader="wget-ssl -q --no-check-certificate -T 5 --tries 1 --no-dns-cache -x"
+	Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
+elif [[ $(CHECK_PKG wget) == true ]];then
+	Downloader="wget -q --no-check-certificate -T 5 --no-dns-cache -x"
 else
 	Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
 fi
