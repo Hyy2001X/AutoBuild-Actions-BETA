@@ -128,7 +128,6 @@ Openwrt_Branch=${Openwrt_Branch}
 AutoBuild_Firmware=${AutoBuild_Firmware}
 Openwrt_Repo_Name=${Openwrt_Repo_Name}
 Egrep_Firmware=${Egrep_Firmware}
-FW_SAVE_PATH=/tmp/Downloads
 EOF
 	cat >> VARIABLE_FILE_Sec <<EOF
 INCLUDE_Obsolete_PKG_Compatible=${INCLUDE_Obsolete_PKG_Compatible}
@@ -161,7 +160,7 @@ Firmware-Diy_Base() {
 	mkdir -p package/base-files/files/etc/AutoBuild
 	[ -f VARIABLE_FILE_Main ] && cp VARIABLE_FILE_Main package/base-files/files/etc/AutoBuild/Default_Variable
 	Copy CustomFiles/Depends/Custom_Variable package/base-files/files/etc/AutoBuild
-	AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/Common
+	[[ ! "$(cat ${GITHUB_WORKSPACE}/Configs/${TARGET_PROFILE})" =~ "## DO NOT MERGE" ]] && AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/Common
 	AddPackage_List ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}
 	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
 	chmod 777 -R ${GITHUB_WORKSPACE}/CustomFiles
@@ -229,7 +228,6 @@ Firmware-Diy_Base() {
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File}
-		sed -i "s?ip6tables -t?#ip6tables -t?g" ${Version_File}
 		sed -i "s?${Old_Version}?${Old_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	immortalwrt)
@@ -387,7 +385,6 @@ AddPackage_List() {
 	[[ -s $1 ]] && {
 		TIME "Loading Custom Packages list: [$1]..."
 		cat $1 | sed '/^$/d' | while read X;do
-			[[ $* =~ "#" ]] && TIME "Skip check out: ${X}"
 			[[ -n ${X} && ! $* =~ "#" ]] && AddPackage ${X}
 		done
 	}
@@ -432,7 +429,7 @@ Copy() {
 		return 0
 	}
 	[[ ! -f ${GITHUB_WORKSPACE}/$1 ]] && [[ ! -d ${GITHUB_WORKSPACE}/$1 ]] && {
-		TIME "CustomFiles/${FILE_NAME} is not detected !"
+		TIME "CustomFiles/$1 is not detected !"
 		return 0
 	}
 	[[ ! -d ${GITHUB_WORKSPACE}/openwrt/$2 ]] && mkdir -p ${GITHUB_WORKSPACE}/openwrt/$2
