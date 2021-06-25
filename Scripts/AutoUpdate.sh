@@ -561,7 +561,7 @@ AutoUpdate_Main() {
 				[[ -n ${Version} ]] && echo "${Version}" || echo "未知"
 			;;
 			cloud)
-				Cloud_Script_Version="$(${Downloader} https://raw.fastgit.org/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
+				Cloud_Script_Version="$(${Downloader} https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
 				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
 			*)
@@ -598,29 +598,21 @@ AutoUpdate_Main() {
 		;;
 		-x)
 			while [[ $1 ]];do
-				[[ $1 == -P || $1 == --proxy ]] && Proxy_Mode=1
-				if [[ ${Proxy_Mode} == 1 && $1 =~ url= ]];then
-					ECHO r "参数冲突: [$0 $*],[-P,--proxy] 与 [url=] 不能同时存在!"
-					EXIT 1
-				fi
-				if [[ ! $1 =~ url= ]];then
-						Script_URL=https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
-				else
+				if [[ $1 =~ url= ]];then
 					[[ $1 =~ url= ]] && {
 					[[ -z $(echo $1 | cut -d "=" -f2) ]] && ECHO r "脚本地址不能为空!" && EXIT 1
-						Script_URL="$(echo $1 | cut -d "=" -f2)"
-						ECHO "使用自定义脚本地址: ${Script_URL}"
+						AutoUpdate_Script_URL="$(echo $1 | cut -d "=" -f2)"
+						ECHO "使用自定义脚本地址: ${AutoUpdate_Script_URL}"
 					}
 				fi
 				[[ $1 =~ path= ]] && {
-					[ -z "$(echo $1 | cut -d "=" -f2)" ] && ECHO r "保存路径不能为空!" && EXIT 1
+					[[ -z $(echo $1 | cut -d "=" -f2) ]] && ECHO r "保存路径不能为空!" && EXIT 1
 					SH_SAVE_PATH="$(echo $1 | cut -d "=" -f2)"
 				}
 				shift
 			done
-			[[ ${Proxy_Mode} == 1 ]] && Script_URL="https://ghproxy.com/${Script_URL}"
 			[[ -z ${SH_SAVE_PATH} ]] && SH_SAVE_PATH=/bin
-			UPDATE_SCRIPT ${SH_SAVE_PATH} ${Script_URL}
+			UPDATE_SCRIPT ${SH_SAVE_PATH} ${AutoUpdate_Script_URL}
 		;;
 		-n | -f | -u | -T | --test | -P | --proxy | -F | --force)
 			PREPARE_UPGRADES $*
@@ -698,9 +690,10 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.8
+Version=V6.2.9
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
+AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
 Upgrade_Command=sysupgrade
 Default_Variable=/etc/AutoBuild/Default_Variable
 Custom_Variable=/etc/AutoBuild/Custom_Variable
