@@ -346,7 +346,7 @@ CHECK_UPDATES() {
 		echo -e "\n当前固件版本: ${CURRENT_Version}${CURRENT_Type}"
 		echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}"
 		GET_FW_LOG cloud show
-		echo "${CLOUD_Firmware_Version} /${x86_64_Boot}${CURRENT_Type}" > /tmp/Cloud_Version
+		echo "${CLOUD_Firmware_Version} /${x86_64_Boot}" > /tmp/Cloud_Version
 	} || GET_FW_LOG cloud
 }
 
