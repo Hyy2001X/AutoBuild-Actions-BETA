@@ -1,5 +1,5 @@
 svn other luci-app-smartdns kenzok8/openwrt-packages/trunk
-git other luci-app-serverchan tty228
+git other luci-app-serverchan tty228_test
 svn other luci-app-socat Lienol/openwrt-package/trunk
 git other luci-app-onliner rufengsuixing
 git other luci-app-adguardhome Hyy2001X
