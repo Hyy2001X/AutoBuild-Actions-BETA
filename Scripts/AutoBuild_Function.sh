@@ -407,20 +407,11 @@ AddPackage() {
 		TIME "Removing old package: [${PKG_NAME}] ..."
 		rm -rf package/${PKG_DIR}/${PKG_NAME}
 	}
+	TIME "Checking out package [${PKG_NAME}] to package/${PKG_DIR} ..."
 	case "${PKG_PROTO}" in
 	git)
-		TIME "Checking ${PKG_URL} ..."
+		
 		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
-		wget -q --spider --no-check-certificate ${PKG_URL} > /dev/null 2>&1
-		[[ $? != 0 ]] && {
-			TIME "[ERROR] Package URL: [${REPO_URL}] Remote file does not exist -- broken link !"
-			return 0
-		}
-	;;
-	esac
-	TIME "Cloning package [${PKG_NAME}] into package/${PKG_DIR} ..."
-	case "${PKG_PROTO}" in
-	git)
 		git clone -b ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} > /dev/null 2>&1
 	;;
 	svn)
