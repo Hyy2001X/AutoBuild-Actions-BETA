@@ -3,9 +3,9 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/Hyy2001X/AutoBuild-Actions.svg?style=flat-square&label=Forks&logo=github)
 
-测试通过的设备: `d-team_newifi-d2`、`x86_64`
+测试通过的设备: `x86_64`
 
-测试通过的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt`
+支持的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt`
 
 ## 部署环境(STEP 1):
 
