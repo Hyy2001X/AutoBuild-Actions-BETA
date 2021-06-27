@@ -26,9 +26,8 @@ SHELL_HELP() {
 	-x url=<>	更新 AutoUpdate.sh 脚本 (使用用户提供的脚本地址更新)
 
 其他参数:
-	-F,--force		强制刷写固件 (可附加)
-	-T,--test		测试模式 (可附加)
-	-P,--proxy		强制使用 [FastGit] 加速 (可附加)
+	-T,--test		测试模式
+	-P,--proxy		优先使用镜像加速
 	-C <Github URL>		更改 Github 地址
 	-B <UEFI | Legacy>	指定 x86_64 设备下载 <UEFI | Legacy> 引导的固件 (危险)
 	-V <local | cloud>	打印 <当前 | 云端> AutoUpdate.sh 版本
@@ -37,6 +36,7 @@ SHELL_HELP() {
 	-H,--help		打印 AutoUpdate 帮助信息
 	-L,--list		打印当前系统信息
 	-U			仅检查版本更新
+	-F			强制刷写固件
 	--corn-rm		删除所有 AutoUpdate 定时任务
 	--bak <Path> <Name>	备份 Openwrt 配置文件到用户指定的目录
 	--clean			清理固件下载缓存
@@ -188,12 +188,10 @@ EDIT_VARIABLE() {
 	[[ ! -f $1 ]] && ECHO r "未检测到定义文件: [$1] !" && EXIT 1
 	case "${Mode}" in
 	edit)
-    	[[ $# != 3 ]] && SHELL_HELP
-		if [[ -z $(GET_VARIABLE $2 $1) ]];then
+    		[[ $# != 3 ]] && SHELL_HELP
+		[[ -z $(GET_VARIABLE $2 $1) ]] && {
 			echo -e "\n$2=$3" >> $1
-		else
-			sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
-		fi
+		} || sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
 	;;
 	rm)
 		[[ $# != 2 ]] && SHELL_HELP
@@ -230,7 +228,6 @@ CHANGE_BOOT() {
 		EDIT_VARIABLE edit ${Custom_Variable} x86_64_Boot $1
 		echo "ON" > /force_dump
 		ECHO r "警告: 更换引导方式后更新固件后可能导致设备无法正常启动!"
-		ECHO y "已创建临时文件 /force_dump"
 		ECHO y "固件引导格式已指定为: [$1],AutoUpdate 将在下一次更新时执行强制刷写固件!"
 	;;
 	*)
@@ -248,7 +245,7 @@ UPDATE_SCRIPT() {
 	ECHO "开始更新 AutoUpdate 脚本,请耐心等待..."
 	[[ ! -d $1 ]] && mkdir -p $1
 	${Downloader} $2 -O /tmp/AutoUpdate.sh
-	if [[ $? == 0 ]];then
+	if [[ $? == 0 && -s /tmp/AutoUpdate.sh ]];then
 		mv -f /tmp/AutoUpdate.sh $1
 		[[ ! $? == 0 ]] && ECHO r "AutoUpdate 脚本更新失败!" && EXIT 1
 		chmod +x $1/AutoUpdate.sh
@@ -317,7 +314,7 @@ GET_FW_LOG() {
 GET_CLOUD_VERSION() {
 	rm -f ${AutoUpdate_Path}/Github_Tags
 	${Downloader} ${Github_API} -O ${AutoUpdate_Path}/Github_Tags
-	[[ ! $? == 0 || ! -f ${AutoUpdate_Path}/Github_Tags ]] && {
+	[[ $? != 0 || ! -f ${AutoUpdate_Path}/Github_Tags ]] && {
 		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
 		ECHO r "检查更新失败,请稍后重试!"
 		EXIT 1
@@ -352,21 +349,22 @@ CHECK_UPDATES() {
 
 PREPARE_UPGRADES() {
 	TITLE
+	[[ $* =~ -f && $* =~ -F ]] && SHELL_HELP
 	while [[ $1 ]];do
 		[[ $1 == -T || $1 == --test ]] && {
 			Test_Mode=1
-			TAIL_MSG=" [测试模式]"
+			MSG_1=" [测试模式]"
 		}
 		[[ $1 == -P || $1 == --proxy ]] && {
 			Proxy_Mode=1
-			Proxy_Echo="[Proxy] "
+			Proxy_Echo="[镜像加速] "
 		}
 		[[ $1 =~ path= ]] && {
 			[[ -z $(echo $1 | cut -d "=" -f2) ]] && ECHO r "固件保存目录不能为空!" && EXIT 1
 			AutoUpdate_Path=$(echo $1 | cut -d "=" -f2)
 			ECHO g "自定义固件保存目录: ${AutoUpdate_Path}"
 		}
-		[[ $1 == -F || $1 == --force ]] && Force_Write=1
+		[[ $1 == -F ]] && Only_Force_Write=1
 		case "$1" in
 		-n | -f | -u)
 			Option="$1"
@@ -383,7 +381,7 @@ PREPARE_UPGRADES() {
 	;;
 	-f)
 		Force_Mode=1
-		Upgrade_Option="${Upgrade_Command} -q -F"
+		Upgrade_Option="${Upgrade_Command} -q"
 		MSG="强制更新固件 (保留配置)"
 	;;
 	-u)
@@ -394,17 +392,16 @@ PREPARE_UPGRADES() {
 		Upgrade_Option="${Upgrade_Command} -q"
 		MSG="更新固件 (保留配置)"
 	esac
-	[ -f /force_dump ] && Force_Write=1
-	[[ ${Force_Write} == 1 && ! ${Force_Mode} == 1 ]] && {
+	[ -f /force_dump ] && Only_Force_Write=1
+	[[ ${Only_Force_Write} == 1 || ${Force_Mode} == 1 ]] && {
 		MSG_2=" [强制刷写]"
 		Upgrade_Option="${Upgrade_Option} -F"
 	}
-	[[ ${Test_Mode} == 1 ]] && Downloader="wget --no-check-certificate --timeout 5"
-	ECHO g "执行: ${Proxy_Echo}${MSG}${TAIL_MSG}${MSG_2}"
-	if [[ $(CHECK_PKG curl) == true && ! ${Proxy_Mode} == 1 ]];then
+	ECHO g "执行: ${Proxy_Echo}${MSG}${MSG_1}${MSG_2}"
+	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} != 1 ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
-		[[ ! ${Google_Check} == 301 ]] && {
-			ECHO r "Google 连接失败,尝试使用 [FastGit] 镜像加速!"
+		[[ ${Google_Check} != 301 ]] && {
+			ECHO r "Google 连接失败,优先使用镜像加速!"
 			Proxy_Mode=1
 		}
 	fi
@@ -429,8 +426,8 @@ $(echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}")
 固件下载地址: ${FW_URL}
 EOF
 	if [[ -n ${Update_Log} ]];then
-			echo -e "\n${Grey}${CLOUD_Firmware_Version} 更新日志:"
-			echo -e "\n${Green}${Update_Log}${White}"
+		echo -e "\n${Grey}${CLOUD_Firmware_Version} 更新日志:"
+		echo -e "\n${Green}${Update_Log}${White}"
 	fi
 	rm -f ${AutoUpdate_Path}/Github_Tags
 	case "${Upgrade_Stopped}" in
@@ -451,8 +448,8 @@ EOF
 			FW_URL="${Release_FastGit_URL}"
 		fi
 		[[ ${Retry_Times} == 3 ]] && {
-				ECHO g "尝试使用 [Github Proxy] 镜像加速下载固件!"
-				FW_URL="${Release_Goproxy_URL}"
+			ECHO g "尝试使用 [Github Proxy] 镜像加速下载固件!"
+			FW_URL="${Release_Goproxy_URL}"
 		}
 		[[ ${Retry_Times} == 2 ]] && FW_URL="${Github_Release_URL}"
 		if [[ ${Retry_Times} == 0 ]];then
@@ -476,15 +473,15 @@ EOF
 		ECHO "正在解压固件,请耐心等待 ..."
 		gzip -d -q -f -c ${AutoUpdate_Path}/${FW_Name} > ${AutoUpdate_Path}/$(echo ${FW_Name} | sed -r 's/(.*).gz/\1/')
 		FW_Name="$(echo ${FW_Name} | sed -r 's/(.*).gz/\1/')"
-		[[ ! $? == 0 && -s ${AutoUpdate_Path}/${FW_Name} ]] && {
+		[[ $? != 0 ]] && {
 			ECHO r "固件解压失败,请检查相关依赖或更换固件保存目录!"
 			EXIT 1
 		} || {
-			ECHO y "固件解压成功,固件已解压到: ${AutoUpdate_Path}/${FW_Name}!"
+			ECHO "固件解压成功,固件已解压到: ${AutoUpdate_Path}/${FW_Name}"
 		}
 	;;
 	esac
-	[[ ! ${Test_Mode} == 1 ]] && {
+	[[ ${Test_Mode} != 1 ]] && {
 		sleep 3
 		chmod 777 ${AutoUpdate_Path}/${FW_Name}
 		DO_UPGRADE ${Upgrade_Option} ${AutoUpdate_Path}/${FW_Name}
@@ -508,6 +505,7 @@ REMOVE_CACHE() {
 	rm -rf ${AutoUpdate_Path}/AutoBuild-${TARGET_PROFILE}-* \
 		${AutoUpdate_Path}/Github_Tags \
 		${AutoUpdate_Path}/Update_Logs.json
+
 	case "$1" in
 	quiet)
 		LOGGER "固件下载缓存清理完成!"
@@ -552,6 +550,16 @@ AutoUpdate_Main() {
 	[[ -z $* ]] && PREPARE_UPGRADES $*
 	[[ $1 =~ path= && ! $* =~ -x && ! $* =~ -U ]] && PREPARE_UPGRADES $*
 
+	if [[ $(CHECK_PKG wget-ssl) == true ]];then
+		Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
+	elif [[ $(CHECK_PKG wget) == true ]];then
+		Downloader="wget -q --no-check-certificate -T 5 --no-dns-cache -x"
+	else
+		Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
+	fi
+
+	[[ $* =~ -T || $* =~ --test ]] && Downloader="$(echo ${Downloader} | sed -r 's/-q /\1/')"
+
 	while [[ $1 ]];do
 		case "$1" in
 		-V)
@@ -565,7 +573,7 @@ AutoUpdate_Main() {
 				[[ -n ${Cloud_Script_Version} ]] && echo "${Cloud_Script_Version}" || echo "未知"
 			;;
 			*)
-			    SHELL_HELP
+				SHELL_HELP
 			esac
 			EXIT 0
 		;;
@@ -574,6 +582,7 @@ AutoUpdate_Main() {
 			[[ $# != 1 || ! $1 =~ [0-9] || $1 == 0 || $1 -gt 30 ]] && SHELL_HELP || RANDOM $1
 		;;
 		--clean)
+			shift && [[ -n $* ]] && SHELL_HELP
 			REMOVE_CACHE
 		;;
 		--check)
@@ -584,16 +593,16 @@ AutoUpdate_Main() {
 			SHELL_HELP
 		;;
 		-L | --list)
-		    shift && [[ -n $* ]] && SHELL_HELP
+			shift && [[ -n $* ]] && SHELL_HELP
 			SHOW_VARIABLE
 		;;
 		-C)
-		    shift
+			shift
 			CHANGE_GITHUB $1
 		;;
 		-B)
-		    shift
-			[[ ! ${TARGET_PROFILE} == x86_64 ]] && SHELL_HELP
+			shift
+			[[ ${TARGET_PROFILE} != x86_64 ]] && SHELL_HELP
 			CHANGE_BOOT $1
 		;;
 		-x)
@@ -614,23 +623,23 @@ AutoUpdate_Main() {
 			[[ -z ${SH_SAVE_PATH} ]] && SH_SAVE_PATH=/bin
 			UPDATE_SCRIPT ${SH_SAVE_PATH} ${AutoUpdate_Script_URL}
 		;;
-		-n | -f | -u | -T | --test | -P | --proxy | -F | --force)
+		-n | -f | -u | -T | --test | -P | --proxy | -F)
 			PREPARE_UPGRADES $*
 		;;
 		--corn-rm)
 			[ ! -f /etc/crontabs/root ] && EXIT 1
 			shift && [[ -n $* ]] && SHELL_HELP
 			[[ $(cat /etc/crontabs/root) =~ AutoUpdate ]] && {
-			    sed -i '/AutoUpdate/d' /etc/crontabs/root >/dev/null 2>&1
-			    ECHO y "已删除所有 AutoUpdate 相关计划任务!"
-		    	/etc/init.d/cron restart
-			    EXIT 0
+				sed -i '/AutoUpdate/d' /etc/crontabs/root >/dev/null 2>&1
+				ECHO y "已删除所有 AutoUpdate 相关计划任务!"
+				/etc/init.d/cron restart
+				EXIT 0
 			} || EXIT 1
 		;;
 		-U)
-		    shift && [[ -n $* ]] && SHELL_HELP
+			shift && [[ -n $* ]] && SHELL_HELP
 			CHECK_UPDATES check
-			[ $? == 0 ] && EXIT 0 || EXIT 1
+			[[ $? == 0 ]] && EXIT 0 || EXIT 1
 		;;
 		-X)
 			shift
@@ -649,13 +658,13 @@ AutoUpdate_Main() {
 			SHOW_VARIABLE=$(GET_VARIABLE "$1" ${Custom_Variable})
 			[[ -z ${SHOW_VARIABLE} ]] && SHOW_VARIABLE=$(GET_VARIABLE "$1" ${Default_Variable})
 			echo "${SHOW_VARIABLE}"
-			[ $? == 0 ] && EXIT 0 || EXIT 1
+			[[ $? == 0 ]] && EXIT 0 || EXIT 1
 		;;
 		--var-rm)
 			shift
 			[[ $# != 1 ]] && SHELL_HELP
 			EDIT_VARIABLE rm ${Custom_Variable} $1
-			[ $? == 0 ] && EXIT 0 || EXIT 1
+			[[ $? == 0 ]] && EXIT 0 || EXIT 1
 		;;
 		--bak)
 			shift
@@ -671,7 +680,7 @@ AutoUpdate_Main() {
 			[[ ! ${FILE} =~ tar.gz ]] && FILE="${FILE}.tar.gz"
 			ECHO "Saving config files to [${FILE}] ..."
 			sysupgrade -b "${FILE}" >/dev/null 2>&1
-			[ $? == 0 ] && {
+			[[ $? == 0 ]] && {
 				ECHO y "系统文件备份成功!"
 				ECHO y "保存位置: ${FILE}"
 				EXIT 0
@@ -690,7 +699,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.2.9
+Version=V6.3.0
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
@@ -705,13 +714,5 @@ Red="\e[31m"
 Blue="\e[34m"
 Grey="\e[36m"
 Green="\e[32m"
-
-if [[ $(CHECK_PKG wget-ssl) == true ]];then
-	Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
-elif [[ $(CHECK_PKG wget) == true ]];then
-	Downloader="wget -q --no-check-certificate -T 5 --no-dns-cache -x"
-else
-	Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
-fi
 
 AutoUpdate_Main $*
