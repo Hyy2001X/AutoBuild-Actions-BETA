@@ -201,12 +201,6 @@ Firmware-Diy_Base() {
 			if [[ ! ${Default_LAN_IP} == ${Old_IP_Address} ]];then
 				TIME "Setting default IP Address to ${Default_LAN_IP} ..."
 				sed -i "s/${Old_IP_Address}/${Default_LAN_IP}/g" package/base-files/files/bin/config_generate
-				# a=$(echo ${Old_IP_Address} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
-				# b=$(echo ${Default_LAN_IP} | egrep -o "[0-9]+.[0-9]+." | awk 'NR==1')
-				# c="$(egrep -o ")).[0-9]+" package/base-files/files/bin/config_generate)"
-				# d=")).$(echo ${Default_LAN_IP} | egrep -o "[0-9]+" | awk 'END {print}')"
-				# sed -i "s/${a}/${b}/g" package/base-files/files/bin/config_generate
-				# sed -i "s/${c}/${d}/g" package/base-files/files/bin/config_generate
 			fi
 		else
 			TIME "[ERROR] ${Default_LAN_IP} is not an IP Address !"
@@ -385,7 +379,7 @@ AddPackage_List() {
 	[[ -s $1 ]] && {
 		TIME "Loading Custom Packages list: [$1]..."
 		cat $1 | sed '/^$/d' | while read X;do
-			[[ -n ${X} && ! $* =~ "#" ]] && AddPackage ${X}
+			[[ -n ${X} && ! $* =~ '#' ]] && AddPackage ${X}
 		done
 	}
 }
@@ -401,6 +395,7 @@ AddPackage() {
 	PKG_NAME="$3"
 	REPO_URL="https://github.com/$4"
 	[[ -z $5 ]] && REPO_BRANCH=master || REPO_BRANCH="$5"
+	[[ ${REPO_URL} =~ "${Openwrt_Author}/${Openwrt_Repo_Name}" ]] && return 0
 
 	mkdir -p package/${PKG_DIR}
 	[[ -d package/${PKG_DIR}/${PKG_NAME} ]] && {
@@ -418,7 +413,7 @@ AddPackage() {
 		svn checkout ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
 	;;
 	esac
-	[[ -f ${PKG_NAME}/Makefile || -f ${PKG_NAME}/README* || -n $(ls -A ${PKG_NAME}) ]] && {
+	[[ -f ${PKG_NAME}/Makefile || -n $(ls -A ${PKG_NAME}) ]] && {
 		mv -f "${PKG_NAME}" "package/${PKG_DIR}"
 	}
 }
