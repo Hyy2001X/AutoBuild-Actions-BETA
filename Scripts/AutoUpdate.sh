@@ -1,7 +1,7 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoUpdate for Openwrt
-# Depends on bash wget curl x86:gzip
+# Depends: bash wget-ssl/wget/uclient-fetch curl x86:gzip openssl
 
 TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -41,8 +41,9 @@ SHELL_HELP() {
 	--bak <Path> <Name>	备份 Openwrt 配置文件到用户指定的目录
 	--clean			清理固件下载缓存
 	--check			检查 AutoUpdate 依赖软件包
-	--var <Variable>	打印用户指定的 <variable>
-	--var-rm <Variable>	删除用户指定的 <variable>
+	--var <Variable>	打印用户指定的 <Variable>
+	--var-rm <Variable>	删除用户指定的 <Variable>
+	--env <0 | 1 | 2>	打印 AutoUpdate 环境变量
 	--log			打印 AutoUpdate 历史运行日志
 	--log-path <Path>	更改 AutoUpdate 运行日志保存目录
 	--random <Number>	打印一个随机数字与字母组合 (0-31)
@@ -78,6 +79,22 @@ EOF
 	EXIT 0
 }
 
+LIST_ENV() {
+	local X
+	cat /etc/AutoBuild/*_Variable | grep -v '#' | while read X;do
+	[[ ${X} =~ "=" ]] && {
+		case $1 in
+		1 | 2)
+			[[ -n $(echo ${X} | cut -d "=" -f1) ]] && echo ${X} | cut -d "=" -f$1
+		;;
+		0)
+			echo ${X}
+		;;
+		esac
+	}
+	done
+}
+
 EXIT() {
 	local RUN_TYPE
 	case "$1" in
@@ -96,6 +113,7 @@ EXIT() {
 }
 
 ECHO() {
+	local Color
 	[[ -z $1 ]] && {
 		echo -ne "\n${Grey}[$(date "+%H:%M:%S")]${White} "
 	} || {
@@ -263,19 +281,21 @@ UPDATE_SCRIPT() {
 CHECK_DEPENDS() {
 	TITLE
 	local PKG
-	echo -e "\n软件包		状态"
+	echo -e "\n软件包			检测结果"
 	while [[ $1 ]];do
 		if [[ $1 =~ : ]];then
 			[[ $(echo $1 | cut -d ":" -f1) == ${TARGET_BOARD} ]] && {
 				PKG="$(echo $1 | cut -d ":" -f2)"
-				echo -e "${PKG}		$(CHECK_PKG ${PKG})"
+				[[ $(echo ${PKG} | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
+				echo -e "${PKG}${Tab}$(CHECK_PKG ${PKG})"
 			}
 		else
-			echo -e "$1		$(CHECK_PKG $1)"
+			[[ $(echo $1 | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
+			echo -e "$1${Tab}$(CHECK_PKG $1)"
 		fi
 		shift
 	done
-	ECHO y "测试结束,若某项测试结果为 [false],请手动 [opkg install] 安装该软件包!"
+	ECHO y "检测结束,若某项检测结果为 [false],请手动 [opkg install] 安装该软件包!"
 	EXIT 0
 }
 
@@ -547,9 +567,7 @@ AutoUpdate_Main() {
 	LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
 	[[ ! -d ${AutoUpdate_Path} ]] && mkdir -p ${AutoUpdate_Path}
 	LOGGER "Command :[${Run_Command}] Started."
-	[[ -z $* ]] && PREPARE_UPGRADES $*
-	[[ $1 =~ path= && ! $* =~ -x && ! $* =~ -U ]] && PREPARE_UPGRADES $*
-
+	
 	if [[ $(CHECK_PKG wget-ssl) == true ]];then
 		Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
 	elif [[ $(CHECK_PKG wget) == true ]];then
@@ -558,6 +576,8 @@ AutoUpdate_Main() {
 		Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
 	fi
 
+	[[ -z $* ]] && PREPARE_UPGRADES $*
+	[[ $1 =~ path= && ! $* =~ -x && ! $* =~ -U ]] && PREPARE_UPGRADES $*
 	[[ $* =~ -T || $* =~ --test ]] && Downloader="$(echo ${Downloader} | sed -r 's/-q /\1/')"
 
 	while [[ $1 ]];do
@@ -577,6 +597,17 @@ AutoUpdate_Main() {
 			esac
 			EXIT 0
 		;;
+		--env)
+			shift
+			case $1 in
+			0 | 1 | 2)
+				LIST_ENV $1
+			;;
+			*)
+				SHELL_HELP
+			;;
+			esac
+		;;
 		--random)
 			shift
 			[[ $# != 1 || ! $1 =~ [0-9] || $1 == 0 || $1 -gt 30 ]] && SHELL_HELP || RANDOM $1
@@ -587,7 +618,7 @@ AutoUpdate_Main() {
 		;;
 		--check)
 		    shift && [[ -n $* ]] && SHELL_HELP
-			CHECK_DEPENDS x86:gzip curl wget openssl
+			CHECK_DEPENDS bash x86:gzip x86:wget-ssl uclient-fetch curl wget openssl
 		;;
 		-H | --help)
 			SHELL_HELP
