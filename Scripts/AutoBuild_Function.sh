@@ -36,7 +36,7 @@ GET_INFO() {
 		x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
 		[[ -n ${x86_Test} ]] && break
 		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" .config | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
-		[[ -z ${x86_Test} ]] && TIME "[ERROR] Can not obtain the TARGET_PROFILE,please check!" && exit 1
+		[[ -z ${x86_Test} ]] && break
 	done
 	[[ ${x86_Test} == x86_64 ]] && {
 		TARGET_PROFILE=x86_64
@@ -225,16 +225,16 @@ Firmware-Diy_Base() {
 		sed -i "s?${Old_Version}?${Old_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	immortalwrt)
-		Copy CustomFiles/Depends/ImmortalWrt package/base-files/files/etc openwrt_release
+		Copy CustomFiles/Depends/openwrt_release_${Openwrt_Author} package/base-files/files/etc openwrt_release
 		Copy CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
-		sed -i "s?Template?Compiled by ${Author} [${Display_Date}]?g" ${Version_File}
+		sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	esac
 	case "${Openwrt_Author}" in
 	immortalwrt)
 		Copy CustomFiles/Depends/banner package/lean/default-settings/files openwrt_banner
 		sed -i "s?By?By ${Author}?g" package/lean/default-settings/files/openwrt_banner
-		sed -i "s?Openwrt?ImmortalWrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/lean/default-settings/files/openwrt_banner
+		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/lean/default-settings/files/openwrt_banner
 	;;
 	*)
 		Copy CustomFiles/Depends/banner package/base-files/files/etc
