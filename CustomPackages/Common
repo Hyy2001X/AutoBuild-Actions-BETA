@@ -5,4 +5,4 @@ git other luci-app-onliner rufengsuixing
 git other luci-app-adguardhome Hyy2001X
 svn other luci-app-eqos kenzok8/openwrt-packages/trunk
 git other luci-app-dnsfilter garypang13 main
-# git other OpenClash vernesong master
+git other OpenClash vernesong master
