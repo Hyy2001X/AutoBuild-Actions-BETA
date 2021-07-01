@@ -573,7 +573,7 @@ AutoUpdate_Main() {
 	elif [[ $(CHECK_PKG wget) == true ]];then
 		Downloader="wget -q --no-check-certificate -T 5 --no-dns-cache -x"
 	else
-		Downloader="uclient-fetch -q --no-check-certificate --timeout 5"
+		Downloader="uclient-fetch -q --no-check-certificate -T 5"
 	fi
 
 	[[ -z $* ]] && PREPARE_UPGRADES $*
