@@ -47,7 +47,7 @@ GET_INFO() {
 		if [[ -n ${Default_TARGET_PROFILE} && ${Default_TARGET_PROFILE} != auto ]];then
 			TARGET_PROFILE="${Default_TARGET_PROFILE}"
 		else
-			TIME "[ERROR] Can not obtain the TARGET_PROFILE,please check!"
+			TIME "[ERROR] Can not get TARGET_PROFILE,please check!"
 			exit 1
 		fi
 	}
@@ -217,8 +217,8 @@ Firmware-Diy_Base() {
 	Copy CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
 	case "${Openwrt_Author}" in
 	coolsnowwolf)
-		Copy CustomFiles/Depends/coremark.sh package/feeds/packages/coremark
-		Copy CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
+		Copy CustomFiles/Depends/coremark.sh $(PKG_Finder d package/feeds coremark)
+		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File}
@@ -226,15 +226,15 @@ Firmware-Diy_Base() {
 	;;
 	immortalwrt)
 		Copy CustomFiles/Depends/openwrt_release_${Openwrt_Author} package/base-files/files/etc openwrt_release
-		Copy CustomFiles/Depends/cpuinfo_x86 package/lean/autocore/files/x86/sbin cpuinfo
+		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	esac
 	case "${Openwrt_Author}" in
 	immortalwrt)
-		Copy CustomFiles/Depends/banner package/lean/default-settings/files openwrt_banner
-		sed -i "s?By?By ${Author}?g" package/lean/default-settings/files/openwrt_banner
-		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" package/lean/default-settings/files/openwrt_banner
+		Copy CustomFiles/Depends/banner $(PKG_Finder d package default-settings)/files openwrt_banner
+		sed -i "s?By?By ${Author}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
+		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
 	;;
 	*)
 		Copy CustomFiles/Depends/banner package/base-files/files/etc
