@@ -47,7 +47,7 @@ GET_INFO() {
 		if [[ -n ${Default_TARGET_PROFILE} && ${Default_TARGET_PROFILE} != auto ]];then
 			TARGET_PROFILE="${Default_TARGET_PROFILE}"
 		else
-			TIME "[ERROR] Can not obtain the TARGET_PROFILE,please check!"
+			TIME "[ERROR] Can not get TARGET_PROFILE,please check!"
 			exit 1
 		fi
 	}
