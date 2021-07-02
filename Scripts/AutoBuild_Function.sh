@@ -9,27 +9,27 @@ GET_INFO() {
 	[[ ${Short_Firmware_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
 	User_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	[[ -z ${Author} ]] && Author="$(echo "${User_Repo}" | cut -d "/" -f4)"
-	Openwrt_Author="$(echo "${Openwrt_Repo}" | cut -d "/" -f4)"
+	Openwrt_Maintainer="$(echo "${Openwrt_Repo}" | cut -d "/" -f4)"
 	Openwrt_Repo_Name="$(echo "${Openwrt_Repo}" | cut -d "/" -f5)"
 	Openwrt_Branch="$(GET_BRANCH)"
-	if [[ ${Openwrt_Branch} == master || -z ${Openwrt_Branch} ]];then
-		Openwrt_Version_="R$(date +%y.%m)-"
+	if [[ ${Openwrt_Branch} == master || ${Openwrt_Branch} == main ]];then
+		Openwrt_Version_Head="R$(date +%y.%m)-"
 	else
 		Openwrt_Branch="$(echo ${Openwrt_Branch} | egrep -o "[0-9]+.[0-9]+")"
-		Openwrt_Version_="R${Openwrt_Branch}-"
+		Openwrt_Version_Head="R${Openwrt_Branch}-"
 	fi
-	case "${Openwrt_Author}" in
+	case "${Openwrt_Maintainer}" in
 	coolsnowwolf)
 		Version_File=package/lean/default-settings/files/zzz-default-settings
-		Old_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
-		CURRENT_Version="${Old_Version}-${Compile_Date}"
+		zzz_Default_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
+		CURRENT_Version="${zzz_Default_Version}-${Compile_Date}"
 	;;
 	immortalwrt)
 		Version_File=package/base-files/files/etc/openwrt_release
-		CURRENT_Version="${Openwrt_Version_}${Compile_Date}"
+		CURRENT_Version="${Openwrt_Version_Head}${Compile_Date}"
 	;;
 	*)
-		CURRENT_Version="${Openwrt_Version_}${Compile_Date}"
+		CURRENT_Version="${Openwrt_Version_Head}${Compile_Date}"
 	;;
 	esac
 	while [[ -z ${x86_Test} ]];do
@@ -65,7 +65,7 @@ GET_INFO() {
 	esac
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 
-	case "${Openwrt_Author}" in
+	case "${Openwrt_Maintainer}" in
 	immortalwrt)
 		Firmware_Head=immortalwrt
 	;;
@@ -75,7 +75,7 @@ GET_INFO() {
 	esac
 	case "${Openwrt_Branch}" in
 	19.07 | 18.06)
-		case "${Openwrt_Author}" in
+		case "${Openwrt_Maintainer}" in
 		immortalwrt)
 			Legacy_Tail=combined-squashfs
 			UEFI_Tail=uefi-gpt-squashfs
@@ -123,7 +123,7 @@ TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
 Firmware_Type=${Firmware_Type}
 CURRENT_Version=${CURRENT_Version}
-Openwrt_Author=${Openwrt_Author}
+Openwrt_Maintainer=${Openwrt_Maintainer}
 Openwrt_Branch=${Openwrt_Branch}
 AutoBuild_Firmware=${AutoBuild_Firmware}
 Openwrt_Repo_Name=${Openwrt_Repo_Name}
@@ -171,7 +171,7 @@ Firmware-Diy_Base() {
 		Copy Scripts/AutoUpdate.sh package/base-files/files/bin
 	}
 	[[ ${INCLUDE_Argon} == true ]] && {
-		case "${Openwrt_Author}" in
+		case "${Openwrt_Maintainer}" in
 		coolsnowwolf)
 			AddPackage git lean luci-theme-argon jerrykuku 18.06
 		;;
@@ -215,22 +215,22 @@ Firmware-Diy_Base() {
 	} || AutoUpdate_Version=OFF
 	Copy CustomFiles/Depends/profile package/base-files/files/etc
 	Copy CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
-	case "${Openwrt_Author}" in
+	case "${Openwrt_Maintainer}" in
 	coolsnowwolf)
 		Copy CustomFiles/Depends/coremark.sh $(PKG_Finder d package/feeds coremark)
 		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		sed -i "s?iptables?#iptables?g" ${Version_File}
-		sed -i "s?${Old_Version}?${Old_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
+		sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	immortalwrt)
-		Copy CustomFiles/Depends/openwrt_release_${Openwrt_Author} package/base-files/files/etc openwrt_release
+		Copy CustomFiles/Depends/openwrt_release_${Openwrt_Maintainer} package/base-files/files/etc openwrt_release
 		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	esac
-	case "${Openwrt_Author}" in
+	case "${Openwrt_Maintainer}" in
 	immortalwrt)
 		Copy CustomFiles/Depends/banner $(PKG_Finder d package default-settings)/files openwrt_banner
 		sed -i "s?By?By ${Author}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
@@ -261,7 +261,7 @@ Other_Scripts() {
 	esac
 	if [[ ${INCLUDE_Obsolete_PKG_Compatible} == true ]];then
 		TIME "Start to run Obsolete_Package_Compatible Scripts ..."
-		if [[ ${Openwrt_Author} == openwrt || ${Force_mode} == 1 ]];then
+		if [[ ${Openwrt_Maintainer} == openwrt || ${Force_mode} == 1 ]];then
 			case "${Openwrt_Branch}" in
 			19.07 | 21.02)
 				Copy CustomFiles/Patches/0003-upx-ucl-${Openwrt_Branch}.patch ./
@@ -276,7 +276,7 @@ Other_Scripts() {
 			;;
 			esac
 		else
-			TIME "Current source: [${Openwrt_Author}] is not supported,skip..."
+			TIME "Current source: [${Openwrt_Maintainer}] is not supported,skip..."
 		fi
 	fi
 	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
@@ -395,7 +395,7 @@ AddPackage() {
 	PKG_NAME="$3"
 	REPO_URL="https://github.com/$4"
 	[[ -z $5 ]] && REPO_BRANCH=master || REPO_BRANCH="$5"
-	[[ ${REPO_URL} =~ "${Openwrt_Author}/${Openwrt_Repo_Name}" ]] && return 0
+	[[ ${REPO_URL} =~ "${Openwrt_Maintainer}/${Openwrt_Repo_Name}" ]] && return 0
 
 	mkdir -p package/${PKG_DIR}
 	[[ -d package/${PKG_DIR}/${PKG_NAME} ]] && {
