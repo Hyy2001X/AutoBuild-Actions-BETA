@@ -217,7 +217,9 @@ Firmware-Diy_Base() {
 	Copy CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
 	case "${Openwrt_Maintainer}" in
 	coolsnowwolf)
-		Copy CustomFiles/Depends/coremark.sh $(PKG_Finder d package/feeds coremark)
+		sed -i "/dns_caching_dns/d" $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
+		echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
+		Copy CustomFiles/Depends/coremark.sh $(PKG_Finder d "package feeds" coremark)
 		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
@@ -225,6 +227,8 @@ Firmware-Diy_Base() {
 		sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	immortalwrt)
+		sed -i "/dns_caching_dns/d" $(PKG_Finder d "package feeds" luci-app-turboacc)/root/etc/config/turboacc
+		echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d "package feeds" luci-app-turboacc)/root/etc/config/turboacc
 		Copy CustomFiles/Depends/openwrt_release_${Openwrt_Maintainer} package/base-files/files/etc openwrt_release
 		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
@@ -366,7 +370,7 @@ PKG_Finder() {
 		TIME "Usage: PKG_Finder <f | d> Search_Path Target_Name/Target_Path"
 		return 0
 	}
-	Result=$(find $2 -name $3 -type $1 -depth -exec echo {} \;)
+	Result=$(find $2 -name $3 -type $1 -exec echo {} \;)
 	[[ -n ${Result} ]] && echo "${Result}"
 }
 

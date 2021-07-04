@@ -38,7 +38,6 @@ SHELL_HELP() {
 	-U			仅检查版本更新
 	-F			强制刷写固件
 	--skip			跳过固件 SHA256 比对校验 (危险)
-	--corn-rm		删除所有 AutoUpdate 定时任务
 	--bak <Path> <Name>	备份 Openwrt 配置文件到用户指定的目录
 	--clean			清理固件下载缓存
 	--check			检查 AutoUpdate 依赖软件包
@@ -80,6 +79,30 @@ EOF
 	EXIT 0
 }
 
+GET_PID() {
+	local Result
+	while [[ $1 ]];do
+		Result=$(busybox ps | grep "$1" | grep -v "grep" | awk '{print $1}' | awk 'NR==1')
+		[[ -n ${Result} ]] && echo ${Result}
+	shift
+	done
+}
+
+KILL_PID() {
+	local Result
+	Result=$(kill -9 $1)
+}
+
+UCI_GET() {
+	local Result="$(uci get $1.@$2[0].$3 2>/dev/null)"
+	[[ -n ${Result} ]] && echo "${Result}"
+}
+
+UCI_SET() {
+	uci set $1.@$2[0].$3=$4 2>/dev/null
+	uci commit $1
+}
+
 LIST_ENV() {
 	local X
 	cat /etc/AutoBuild/*_Variable | grep -v '#' | while read X;do
@@ -109,7 +132,7 @@ EXIT() {
 		RUN_TYPE="[UNKNOWN]"
 	;;
 	esac
-	LOGGER "${RUN_TYPE} Command :[${Run_Command}] Finished."
+	LOGGER "Command :[${Run_Command}] Finished."
 	exit
 }
 
@@ -136,8 +159,9 @@ ECHO() {
 }
 
 LOGGER() {
+	[[ ! -d ${AutoUpdate_Log_Path} ]] && mkdir -p ${AutoUpdate_Log_Path}
 	[[ ! -f ${AutoUpdate_Log_Path}/AutoUpdate.log ]] && touch ${AutoUpdate_Log_Path}/AutoUpdate.log
-	echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $*" >> ${AutoUpdate_Log_Path}/AutoUpdate.log
+	echo "[$(date "+%Y-%m-%d-%H:%M:%S")] [$(GET_PID AutoUpdate.sh)] $*" >> ${AutoUpdate_Log_Path}/AutoUpdate.log
 }
 
 CHECK_PKG() {
@@ -146,7 +170,9 @@ CHECK_PKG() {
 }
 
 RANDOM() {
-	openssl rand -base64 $1 | md5sum | cut -c 1-$1
+	local Result=$(openssl rand -base64 $1 | md5sum | cut -c 1-$1)
+	[[ -n ${Result} ]] && echo ${Result}
+	LOGGER "[RANDOM] $1-bit random-number : ${Result}"
 }
 
 GET_SHA256SUM() {
@@ -154,13 +180,17 @@ GET_SHA256SUM() {
 		ECHO r "未检测到文件: [$1] 或该文件为空,无法计算 SHA256 值!"
 		EXIT 1
 	}
-	sha256sum $1 | cut -c1-$2
+	local Result=$(sha256sum $1 | cut -c1-$2)
+	[[ -n ${Result} ]] && echo ${Result}
+	LOGGER "[GET_SHA256SUM] File [$1] Calculated result: ${Result}"
 }
 
 GET_VARIABLE() {
 	[[ $# != 2 ]] && SHELL_HELP
 	[[ ! -f $2 ]] && ECHO "未检测到定义文件: [$2] !" && EXIT 1
-	echo -e "$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
+	local Result="$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
+	[[ -n ${Result} ]] && echo ${Result}
+	LOGGER "[GET_VARIABLE] Get Variable: ${Result}"
 }
 
 LOAD_VARIABLE() {
@@ -207,13 +237,17 @@ EDIT_VARIABLE() {
 	[[ ! -f $1 ]] && ECHO r "未检测到定义文件: [$1] !" && EXIT 1
 	case "${Mode}" in
 	edit)
-    		[[ $# != 3 ]] && SHELL_HELP
+    	[[ $# != 3 ]] && SHELL_HELP
 		[[ -z $(GET_VARIABLE $2 $1) ]] && {
+			LOGGER "[EDIT_VARIABLE] Appending [$2=$3] to $1 ..."
 			echo -e "\n$2=$3" >> $1
-		} || sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
+		} || {
+			sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
+		}
 	;;
 	rm)
 		[[ $# != 2 ]] && SHELL_HELP
+		LOGGER "[EDIT_VARIABLE] Removing $2 from $1 ..."
 		sed -i "/$2/d" $1
 	;;
 	esac
@@ -225,10 +259,9 @@ CHANGE_GITHUB() {
 		ECHO r "错误的 Github 地址,示例: https://github.com/Hyy2001X/AutoBuild-Actions"
 		EXIT 1
 	}
-	UCI_Github_URL=$(uci get autoupdate.@common[0].github 2>/dev/null)
+	UCI_Github_URL=$(UCI_GET autoupdate common github)
 	[[ -n ${UCI_Github_URL} && ! ${UCI_Github_URL} == $1 ]] && {
-		uci set autoupdate.@common[0].github=$1
-		uci commit autoupdate
+		UCI_SET autoupdate common github $1
 		ECHO y "UCI 设置已更新!"
 	}
 	[[ ! ${Github} == $1 ]] && {
@@ -289,14 +322,16 @@ CHECK_DEPENDS() {
 				PKG="$(echo $1 | cut -d ":" -f2)"
 				[[ $(echo ${PKG} | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 				echo -e "${PKG}${Tab}$(CHECK_PKG ${PKG})"
+				LOGGER "Checking ${PKG}... $(CHECK_PKG ${PKG})"
 			}
 		else
 			[[ $(echo $1 | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 			echo -e "$1${Tab}$(CHECK_PKG $1)"
+			LOGGER "Checking $1... $(CHECK_PKG $1)"
 		fi
 		shift
 	done
-	ECHO y "检测结束,若某项检测结果为 [false],请手动 [opkg install] 安装该软件包!"
+	ECHO y "AutoUpdate 依赖检测结束,若某项检测结果为 [false],请尝试手动安装!"
 	EXIT 0
 }
 
@@ -573,7 +608,6 @@ AutoUpdate_Main() {
 	[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
 	LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
 	[[ ! -d ${AutoUpdate_Path} ]] && mkdir -p ${AutoUpdate_Path}
-	LOGGER "Command :[${Run_Command}] Started."
 	
 	if [[ $(CHECK_PKG wget-ssl) == true ]];then
 		Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
@@ -590,6 +624,14 @@ AutoUpdate_Main() {
 
 	while [[ $1 ]];do
 		case "$1" in
+		--sleep)
+			shift
+			sleep $1
+		;;
+		--pid)
+			shift
+			GET_PID $*
+		;;
 		-V)
 			shift
 			case "$1" in
@@ -665,16 +707,6 @@ AutoUpdate_Main() {
 		-n | -f | -u | -T | --test | -P | --proxy | -F)
 			PREPARE_UPGRADES $*
 		;;
-		--corn-rm)
-			[ ! -f /etc/crontabs/root ] && EXIT 1
-			shift && [[ -n $* ]] && SHELL_HELP
-			[[ $(cat /etc/crontabs/root) =~ AutoUpdate ]] && {
-				sed -i '/AutoUpdate/d' /etc/crontabs/root >/dev/null 2>&1
-				ECHO y "已删除所有 AutoUpdate 相关计划任务!"
-				/etc/init.d/cron restart
-				EXIT 0
-			} || EXIT 1
-		;;
 		-U)
 			shift && [[ -n $* ]] && SHELL_HELP
 			CHECK_UPDATES check
@@ -738,7 +770,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.3.1
+Version=V6.3.3
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
