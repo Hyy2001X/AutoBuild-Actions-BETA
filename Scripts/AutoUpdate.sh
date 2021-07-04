@@ -89,10 +89,8 @@ GET_PID() {
 }
 
 KILL_PID() {
-	while [[ $1 ]];do
-		kill -9 $1 2>/dev/null
-	shift
-	done
+	local Result
+	Result=$(kill -9 $1)
 }
 
 UCI_GET() {
@@ -161,6 +159,7 @@ ECHO() {
 }
 
 LOGGER() {
+	[[ ! -d ${AutoUpdate_Log_Path} ]] && mkdir -p ${AutoUpdate_Log_Path}
 	[[ ! -f ${AutoUpdate_Log_Path}/AutoUpdate.log ]] && touch ${AutoUpdate_Log_Path}/AutoUpdate.log
 	echo "[$(date "+%Y-%m-%d-%H:%M:%S")] [$(GET_PID AutoUpdate.sh)] $*" >> ${AutoUpdate_Log_Path}/AutoUpdate.log
 }
@@ -171,7 +170,9 @@ CHECK_PKG() {
 }
 
 RANDOM() {
-	openssl rand -base64 $1 | md5sum | cut -c 1-$1
+	local Result=$(openssl rand -base64 $1 | md5sum | cut -c 1-$1)
+	[[ -n ${Result} ]] && echo ${Result}
+	LOGGER "[RANDOM] $1-bit random-number : ${Result}"
 }
 
 GET_SHA256SUM() {
@@ -179,13 +180,17 @@ GET_SHA256SUM() {
 		ECHO r "未检测到文件: [$1] 或该文件为空,无法计算 SHA256 值!"
 		EXIT 1
 	}
-	sha256sum $1 | cut -c1-$2
+	local Result=$(sha256sum $1 | cut -c1-$2)
+	[[ -n ${Result} ]] && echo ${Result}
+	LOGGER "[GET_SHA256SUM] File [$1] Calculated result: ${Result}"
 }
 
 GET_VARIABLE() {
 	[[ $# != 2 ]] && SHELL_HELP
 	[[ ! -f $2 ]] && ECHO "未检测到定义文件: [$2] !" && EXIT 1
-	echo -e "$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
+	local Result="$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
+	[[ -n ${Result} ]] && echo ${Result}
+	LOGGER "[GET_VARIABLE] Get Variable: ${Result}"
 }
 
 LOAD_VARIABLE() {
@@ -232,13 +237,17 @@ EDIT_VARIABLE() {
 	[[ ! -f $1 ]] && ECHO r "未检测到定义文件: [$1] !" && EXIT 1
 	case "${Mode}" in
 	edit)
-    		[[ $# != 3 ]] && SHELL_HELP
+    	[[ $# != 3 ]] && SHELL_HELP
 		[[ -z $(GET_VARIABLE $2 $1) ]] && {
+			LOGGER "[EDIT_VARIABLE] Appending [$2=$3] to $1 ..."
 			echo -e "\n$2=$3" >> $1
-		} || sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
+		} || {
+			sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1
+		}
 	;;
 	rm)
 		[[ $# != 2 ]] && SHELL_HELP
+		LOGGER "[EDIT_VARIABLE] Removing $2 from $1 ..."
 		sed -i "/$2/d" $1
 	;;
 	esac
@@ -313,14 +322,16 @@ CHECK_DEPENDS() {
 				PKG="$(echo $1 | cut -d ":" -f2)"
 				[[ $(echo ${PKG} | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 				echo -e "${PKG}${Tab}$(CHECK_PKG ${PKG})"
+				LOGGER "Checking ${PKG}... $(CHECK_PKG ${PKG})"
 			}
 		else
 			[[ $(echo $1 | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 			echo -e "$1${Tab}$(CHECK_PKG $1)"
+			LOGGER "Checking $1... $(CHECK_PKG $1)"
 		fi
 		shift
 	done
-	ECHO y "检测结束,若某项检测结果为 [false],请手动 [opkg install] 安装该软件包!"
+	ECHO y "AutoUpdate 依赖检测结束,若某项检测结果为 [false],请尝试手动安装!"
 	EXIT 0
 }
 
@@ -597,7 +608,6 @@ AutoUpdate_Main() {
 	[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
 	LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
 	[[ ! -d ${AutoUpdate_Path} ]] && mkdir -p ${AutoUpdate_Path}
-	LOGGER "Command :[${Run_Command}] Started."
 	
 	if [[ $(CHECK_PKG wget-ssl) == true ]];then
 		Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
@@ -760,7 +770,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.3.2
+Version=V6.3.3
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
