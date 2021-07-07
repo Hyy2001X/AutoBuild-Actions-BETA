@@ -32,11 +32,10 @@ SHELL_HELP() {
 	-C <Github URL>		更改 Github 地址为提供的 <Github URL>
 	-B <UEFI | Legacy>	指定 x86_64 设备下载 <UEFI | Legacy> 引导的固件 (危险)
 	-V < | cloud>		打印 <当前 | 云端> AutoUpdate.sh 版本号
-	-E <local | cloud | *>	打印 <当前 | 云端 | 指定版本> 版本的固件更新日志
+	-E < | cloud | *>	打印 <当前 | 云端 | 指定版本> 版本的固件更新日志
 	-H,--help		打印 AutoUpdate 帮助信息
 	-L,--list		打印当前系统信息
 	-Q < | cloud>		打印 <当前 | 云端> 固件版本
-	-U			检查固件版本更新并获取更新日志
 	--bak <Path> <Name>	备份当前系统配置文件到指定的 <Path> 路径及名称 <Name>
 	--clean			清理 AutoUpdate 缓存
 	--check			检查 AutoUpdate 依赖软件包
@@ -284,7 +283,7 @@ UPDATE_SCRIPT() {
 	ECHO b "下载地址: $2"
 	ECHO "开始更新 AutoUpdate 脚本,请耐心等待..."
 	[[ ! -d $1 ]] && mkdir -p $1
-	${Downloader} $2 -O /tmp/AutoUpdate.sh
+	${Downloader} /tmp/AutoUpdate.sh $2
 	if [[ $? == 0 && -s /tmp/AutoUpdate.sh ]];then
 		mv -f /tmp/AutoUpdate.sh $1
 		[[ ! $? == 0 ]] && ECHO r "AutoUpdate 脚本更新失败!" && EXIT 1
@@ -324,7 +323,7 @@ CHECK_DEPENDS() {
 }
 
 GET_FW_LOG() {
-	local FW_Version Update_Log
+	local Update_Log
 	case "$1" in
 	local)
 		FW_Version="${CURRENT_Version}"
@@ -338,28 +337,20 @@ GET_FW_LOG() {
 		FW_Version="$1"
 	;;
 	esac
-	${Downloader} ${Release_URL}/Update_Logs.json -O ${AutoUpdate_Path}/Update_Logs.json
+	${Downloader} ${AutoUpdate_Path}/Update_Logs.json ${Release_URL}/Update_Logs.json
 	[[ $? == 0 ]] && {
 		Update_Log=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${AutoUpdate_Path}/Update_Logs.json)
 		rm -f ${AutoUpdate_Path}/Update_Logs.json
-	}
-	case "$2" in
-	show)
-		if [[ -n ${Update_Log} ]];then
-			echo -e "\n${Grey}${FW_Version} 更新日志:"
-			echo -e "\n${Green}${Update_Log}${White}\n"
-		else
-			ECHO r "未查询到版本: [${FW_Version}] 的日志信息!"
-		fi
-	;;
-	esac
+	} || return
+	[[ -z ${Update_Log} ]] && return
+	echo -e "\n${Grey}${FW_Version} for ${TARGET_PROFILE} 更新日志:"
+	echo -e "\n${Green}${Update_Log}${White}"
 }
 
 GET_CLOUD_INFO() {
 	[[ -f ${AutoUpdate_Path}/Github_Tags ]] && rm -f ${AutoUpdate_Path}/Github_Tags
-	${Downloader} ${Github_API} -O ${AutoUpdate_Path}/Github_Tags
+	${Downloader} ${AutoUpdate_Path}/Github_Tags ${Github_API}
 	[[ $? != 0 || ! -s ${AutoUpdate_Path}/Github_Tags ]] && {
-		[[ $1 == check ]] && echo "获取失败" > /tmp/Cloud_Version
 		echo 0
 	} || echo 1
 }
@@ -395,11 +386,6 @@ CHECK_UPDATES() {
 		}
 	}
 	SHA5BIT=$(echo ${FW_Name} | egrep -o "[a-zA-Z0-9]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
-	[[ $1 == check ]] && {
-		echo -e "\n当前固件版本: ${CURRENT_Version}${CURRENT_Type}"
-		echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}"
-		GET_FW_LOG cloud show
-	} || GET_FW_LOG cloud
 }
 
 PREPARE_UPGRADES() {
@@ -451,6 +437,7 @@ PREPARE_UPGRADES() {
 		esac
 	shift
 	done
+	LOGGER "Upgrade Options: ${Upgrade_Option}"
 	[[ -n "${Special_Commands}" ]] && ECHO g "特殊指令:${Special_Commands} / ${Upgrade_Option}"
 	ECHO g "执行: ${MSG}${Special_MSG}"
 	REMOVE_CACHE quiet
@@ -481,10 +468,7 @@ $(echo -e "云端固件版本: ${CLOUD_Firmware_Version}${CLOUD_Type}")
 云端固件名称: ${FW_Name}
 固件下载地址: ${FW_URL}
 EOF
-	if [[ -n ${Update_Log} ]];then
-		echo -e "\n${Grey}${CLOUD_Firmware_Version} 更新日志:"
-		echo -e "\n${Green}${Update_Log}${White}"
-	fi
+	GET_FW_LOG -v ${CLOUD_Firmware_Version}
 	rm -f ${AutoUpdate_Path}/Github_Tags
 	case "${Upgrade_Stopped}" in
 	1 | 2)
@@ -512,7 +496,7 @@ EOF
 			ECHO r "固件下载失败,请检查网络后重试!"
 			EXIT 1
 		else
-			${Downloader} "${FW_URL}/${FW_Name}" -O ${AutoUpdate_Path}/${FW_Name}
+			${Downloader} ${AutoUpdate_Path}/${FW_Name} "${FW_URL}/${FW_Name}"
 			[[ $? == 0 && -s ${AutoUpdate_Path}/${FW_Name} ]] && ECHO y "固件下载成功!" && break
 		fi
 		Retry_Times=$((${Retry_Times} - 1))
@@ -540,7 +524,6 @@ EOF
 	;;
 	esac
 	[[ ${Test_Mode} != 1 ]] && {
-		sleep 3
 		chmod 777 ${AutoUpdate_Path}/${FW_Name}
 		DO_UPGRADE ${Upgrade_Option} ${AutoUpdate_Path}/${FW_Name}
 	} || {
@@ -550,8 +533,9 @@ EOF
 }
 
 DO_UPGRADE() {
-	ECHO g "正在更新固件,更新期间请耐心等待 ..."
-	sleep 3
+	ECHO g "准备更新固件,更新期间请不要断开电源或重启设备 ..."
+	sleep 5
+	ECHO g "正在更新固件,请耐心等待 ..."
 	$*
 	[[ $? -ne 0 ]] && {
 		ECHO r "固件刷写失败,请尝试手动更新固件!"
@@ -606,11 +590,11 @@ AutoUpdate_Main() {
 	[[ ! -d ${AutoUpdate_Path} ]] && mkdir -p ${AutoUpdate_Path}
 	
 	if [[ $(CHECK_PKG wget-ssl) == true ]];then
-		Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x"
+		Downloader="wget-ssl -q --no-check-certificate -T 5 --no-dns-cache -x -O"
 	elif [[ $(CHECK_PKG wget) == true ]];then
-		Downloader="wget -q --no-check-certificate -T 5 --no-dns-cache -x"
+		Downloader="wget -q --no-check-certificate -T 5 --no-dns-cache -x -O"
 	else
-		Downloader="uclient-fetch -q --no-check-certificate -T 5"
+		Downloader="uclient-fetch -q --no-check-certificate -T 5 -O"
 	fi
 
 	[[ -z $* ]] && PREPARE_UPGRADES $*
@@ -621,6 +605,7 @@ AutoUpdate_Main() {
 	while [[ $1 ]];do
 		case "$1" in
 		-n | -f | -u | -T | --test | -P | --proxy | -F)
+			LOGGER "Downloader: ${Downloader}"
 			PREPARE_UPGRADES $*
 		;;
 		--bak)
@@ -712,6 +697,7 @@ AutoUpdate_Main() {
 				}
 				shift
 			done
+			LOGGER "Downloader: ${Downloader}"
 			[[ -z ${SH_SAVE_PATH} ]] && SH_SAVE_PATH=/bin
 			UPDATE_SCRIPT ${SH_SAVE_PATH} ${AutoUpdate_Script_URL}
 		;;
@@ -758,16 +744,11 @@ AutoUpdate_Main() {
 			esac
 			EXIT 0
 		;;
-		-U)
-			shift && [[ -n $* ]] && SHELL_HELP
-			CHECK_UPDATES check
-			[[ $? == 0 ]] && EXIT 0 || EXIT 1
-		;;
 		-V)
 			shift
 			case "$1" in
 			cloud)
-				Result="$(${Downloader} https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh -O - | egrep -o "V[0-9].+")"
+				Result="$(${Downloader} - ${AutoUpdate_Script_URL} | egrep -o "V[0-9].+")"
 			;;
 			*)
 				Result=${Version}
@@ -786,7 +767,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.4.0
+Version=V6.4.1
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
