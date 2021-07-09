@@ -6,7 +6,7 @@
 
 name: AutoBuild-Test
 
-### 以下内容请保持不变 (修改 环境变量设置 中的信息)
+### 以下内容请保持不变 (请修改下方: 环境变量设置)
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -15,8 +15,8 @@ on:
         description: 'SSH 连接到 Actions'
         required: true
         default: 'false'
-      TARGET_PROFILE:
-        description: '设备名称 (获取方法参考 README)'
+      CONFIG:
+        description: '调用的 [.config] 文件名称'
         default: 'x86_64'
       DEFAULT_SOURCE:
         description: '源码:分支 [必选]'
@@ -51,13 +51,13 @@ jobs:
 
     - name: Initialization Define Info
       run: |
-        TARGET_PROFILE=${{ github.event.inputs.TARGET_PROFILE }}
+        CONFIG=${{ github.event.inputs.CONFIG }}
         DEFAULT_SOURCE=${{ github.event.inputs.DEFAULT_SOURCE }}
         DELETE_USELESS_FILES=${{ github.event.inputs.DELETE_USELESS_FILES }}
-        echo "TARGET_PROFILE=$TARGET_PROFILE" >> $GITHUB_ENV
+        echo "CONFIG=$CONFIG" >> $GITHUB_ENV
         echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
-        [ ! -f "$GITHUB_WORKSPACE/Configs/$TARGET_PROFILE" ] && {
-            echo "Config_File: [/Config/$TARGET_PROFILE] is not detected!"
+        [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG" ] && {
+            echo "Config_File: [/Config/$CONFIG] is not detected!"
             exit 1
         }
         export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
@@ -99,14 +99,14 @@ jobs:
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$TARGET_PROFILE openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/$CONFIG openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware-Diy_Base
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$TARGET_PROFILE .config
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG .config
 
     - name: SSH Connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -137,14 +137,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.TARGET_PROFILE }}_${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
+        name: ${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.TARGET_PROFILE }}_${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
+        name: ${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Github Releases
