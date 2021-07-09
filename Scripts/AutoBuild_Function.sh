@@ -43,14 +43,7 @@ GET_INFO() {
 	} || {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
-	[[ -z ${TARGET_PROFILE} ]] && {
-		if [[ -n ${Default_TARGET_PROFILE} && ${Default_TARGET_PROFILE} != auto ]];then
-			TARGET_PROFILE="${Default_TARGET_PROFILE}"
-		else
-			TIME "[ERROR] Can not get TARGET_PROFILE,please check!"
-			exit 1
-		fi
-	}
+	[[ -z ${TARGET_PROFILE} ]] && TIME "Empty [TARGET_PROFILE]"
 	[[ ${TARGET_PROFILE} == x86_64 ]] && {
 		[[ $(cat ${Home}/.config) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && Firmware_Type=img.gz || Firmware_Type=img 
 	}
