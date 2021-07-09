@@ -4,7 +4,6 @@
 
 Diy_Core() {
 	Author=Hyy2001
-	Default_TARGET_PROFILE=auto
 	Short_Firmware_Date=true
 	Default_LAN_IP=false
 
