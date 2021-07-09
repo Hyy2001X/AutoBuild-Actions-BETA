@@ -29,27 +29,27 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
    **提示: 下文中所有的 TARGET_PROFILE 均为你的设备名称,可以在 .config 中找到,例如 d-team_newifi-d2**
 
-   **在本地的 .config 文件中获取设备名称:** `egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
+   **本地获取 TARGET_PROFILE 方法:** `egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
    
    **或者:** `grep 'TARGET_PROFILE' .config`,名称中不应含有 `DEVICE_`
 
-2. 把本地的 `.config` 文件重命名为你设备的 **TARGET_PROFILE** 并上传到`/Configs`目录
+2. 把本地的 `.config` 文件**重命名**并上传到仓库的`Configs`目录
 
-3. 编辑`.github/workflows/*.yml`文件,修改`第 7 和 32 行`为你设备的 **TARGET_PROFILE**
+3. 编辑`.github/workflows/*.yml`文件,修改`第 7 行`为易于自己识别的名称
+
+4. 编辑`.github/workflows/*.yml`文件,修改`第 32 行`为上传的 `.config` 文件名称
 
    **使用其他源码** 修改`第 34 行`为源码的仓库地址:分支
 
-4. 按照需求编辑并定制`Scripts/AutoBuild_DiyScript.sh`文件
+5. 按照需求编辑并定制`Scripts/AutoBuild_DiyScript.sh`文件
 
    **注意: 为了更方便地同步最新改动,不建议修改 Scripts/AutoBuild_Function.sh 文件**
 
-   **第三方软件包列表** 编辑`CustomPackages`目录下对应的 **TARGET_PROFILE** 的文件,按照现有语法为该设备添加第三方软件包 (可选)
+   **额外的软件包列表** 编辑或自行创建`CustomPackages`目录下要编译的设备对应的 **TARGET_PROFILE** 的文件 (可选)
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
    Author 作者名称,若该项留空将自动获取
-
-   Default_TARGET_PROFILE 设备名称,获取方法见上方
    
    Short_Firmware_Date 固件日期样式,当设置为 true: [20210601] false: [202106012359]
    
