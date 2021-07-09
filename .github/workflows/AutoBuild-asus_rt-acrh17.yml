@@ -6,7 +6,7 @@
 
 name: AutoBuild-asus_rt-acrh17
 
-### 以下内容请保持不变
+### 以下内容请保持不变 (修改 环境变量设置 中的信息)
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -28,8 +28,8 @@ on:
 
 ### 环境变量设置
 env:
-# 设备名称
-  DEFAULT_TARGET: asus_rt-acrh17
+# 编译时调用的 [.config] 文件名称
+  CONFIG: asus_rt-acrh17
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
@@ -38,14 +38,14 @@ env:
   UPLOAD_ARTIFACTS: false
 # 上传 bin 文件夹到 Github Artifacts
   UPLOAD_BIN_ARTIFACTS: false
-# 删除无用文件以释放更多空间
+# 删除无用文件以增加编译空间
   DELETE_USELESS_FILES: true
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: true
 ### END
 
 jobs:
-  Compile:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,13 +54,13 @@ jobs:
 
     - name: Initialization Define Info
       run: |
-        DEFAULT_TARGET=${{ env.DEFAULT_TARGET }}
+        CONFIG=${{ env.CONFIG }}
         DEFAULT_SOURCE=${{ env.DEFAULT_SOURCE }}
         DELETE_USELESS_FILES=${{ env.DELETE_USELESS_FILES }}
-        echo "DEFAULT_TARGET=$DEFAULT_TARGET" >> $GITHUB_ENV
+        echo "CONFIG=$CONFIG" >> $GITHUB_ENV
         echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
-        [ ! -f "$GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET" ] && {
-            echo "Config_File: [/Config/$TARGET_PROFILE] is not detected!"
+        [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG" ] && {
+            echo "Config_File: [/Config/$CONFIG] is not detected!"
             exit 1
         }
         export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
@@ -102,14 +102,14 @@ jobs:
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/$CONFIG openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware-Diy_Base
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET .config
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG .config
 
     - name: Compile
       run: |
@@ -133,14 +133,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.DEFAULT_TARGET }}_${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
+        name: ${{ env.CONFIG }}_${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.DEFAULT_TARGET }}_${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
+        name: ${{ env.CONFIG }}_${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Github Releases
