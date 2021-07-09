@@ -56,7 +56,7 @@ GET_INFO() {
 	}
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	case "${TARGET_BOARD}" in
-	ramips | reltek | ipq40xx | ath79)
+	ramips | reltek | ipq40xx | ath79 | ipq807x)
 		Firmware_Type=bin
 	;;
 	rockchip)
@@ -105,7 +105,13 @@ GET_INFO() {
 			Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
 		;;
 		*)
-			Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+			case "${TARGET_BOARD}" in
+			ipq807x)
+				Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-nand-sysupgrade.${Firmware_Type}"
+			;;
+			*)
+				Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+			esac
 		;;
 		esac
 		
