@@ -368,7 +368,7 @@ GET_CLOUD_FW() {
 
 GET_CLOUD_VERSION() {
 	GET_CLOUD_FW
-	CLOUD_Firmware_Version=$(echo "${FW_Name}" | egrep -o "R[0-9].*20[0-9]+")
+	CLOUD_Firmware_Version=$(echo "${FW_Name}" | egrep -o "R[0-9].*202[1-2][0-9]+")
 	[[ -z ${CLOUD_Firmware_Version} ]] && ECHO "云端固件版本获取失败!" && EXIT 1
 }
 
@@ -767,7 +767,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.4.1
+Version=V6.4.2
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
