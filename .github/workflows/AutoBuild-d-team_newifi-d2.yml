@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: AutoBuild-d-team_newifi-d2
+name: d-team_newifi-d2
 
 ### 以下内容请保持不变 (请修改下方: 环境变量设置)
 on:
