@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: AutoBuild-x86_64
+name: AutoBuild-xiaomi_redmi-router-ac2100
 
 ### 以下内容请保持不变 (修改 环境变量设置 中的信息)
 on:
@@ -29,7 +29,7 @@ on:
 ### 环境变量设置
 env:
 # 设备名称 (可在 README 中找到获取方法)
-  TARGET_PROFILE: x86_64
+  TARGET_PROFILE: xiaomi_redmi-router-ac2100
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
@@ -45,7 +45,7 @@ env:
 ### END
 
 jobs:
-  Compile:
+  build:
     runs-on: ubuntu-latest
 
     steps:
