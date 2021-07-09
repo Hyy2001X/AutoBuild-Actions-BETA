@@ -7,8 +7,8 @@ GET_INFO() {
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	[[ -f ${GITHUB_WORKSPACE}/Openwrt.info ]] && source ${GITHUB_WORKSPACE}/Openwrt.info
 	[[ ${Short_Firmware_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
-	User_Repo="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
-	[[ -z ${Author} ]] && Author="$(echo "${User_Repo}" | cut -d "/" -f4)"
+	Author_Repository="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
+	[[ -z ${Author} ]] && Author="$(echo "${Author_Repository}" | cut -d "/" -f4)"
 	Openwrt_Maintainer="$(echo "${Openwrt_Repo}" | cut -d "/" -f4)"
 	Openwrt_Repo_Name="$(echo "${Openwrt_Repo}" | cut -d "/" -f5)"
 	Openwrt_Branch="$(GET_BRANCH)"
@@ -100,18 +100,27 @@ GET_INFO() {
 		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_64_Boot}.[0-9a-z]+.${Firmware_Type}'
 	;;
 	*)
-		case "${TARGET_SUBTARGET}" in
-		generic)
-			Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+		case ${TARGET_BOARD} in
+		ipq807x)
+			Common_Tail=squashfs-nand-sysupgrade
 		;;
 		*)
-			case "${TARGET_BOARD}" in
+			Common_Tail=squashfs-sysupgrade
+		;;
+		esac
+		case "${TARGET_SUBTARGET}" in
+		generic)
+			case ${TARGET_BOARD} in
 			ipq807x)
-				Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-nand-sysupgrade.${Firmware_Type}"
+				Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-${Common_Tail}.${Firmware_Type}"
 			;;
 			*)
-				Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-squashfs-sysupgrade.${Firmware_Type}"
+				Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_PROFILE}-${Common_Tail}.${Firmware_Type}"
+			;;
 			esac
+		;;
+		*)
+			Default_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${TARGET_PROFILE}-${Common_Tail}.${Firmware_Type}"
 		;;
 		esac
 		
@@ -123,7 +132,7 @@ GET_INFO() {
 
 	cat >> VARIABLE_FILE_Main <<EOF
 Author=${Author}
-Github=${User_Repo}
+Github=${Author_Repository}
 TARGET_PROFILE=${TARGET_PROFILE}
 TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
