@@ -60,7 +60,7 @@ jobs:
         echo "DEFAULT_TARGET=$DEFAULT_TARGET" >> $GITHUB_ENV
         echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
         [ ! -f "$GITHUB_WORKSPACE/Configs/$DEFAULT_TARGET" ] && {
-            echo "[ERROR] No target_config file: [$DEFAULT_TARGET] detected!"
+            echo "Config_File: [/Config/$TARGET_PROFILE] is not detected!"
             exit 1
         }
         export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
@@ -68,7 +68,6 @@ jobs:
         [ -z $REPO_BRANCH ] && REPO_BRANCH=master
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-        echo -e "TARGET_PROFILE: $DEFAULT_TARGET\nSOURCE: $REPO_URL:$REPO_BRANCH"
 
     - name: Initialization Environment
       env:
@@ -80,7 +79,6 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
         if [ "$DELETE_USELESS_FILES" == true ];then
-            echo "Deleting useless files,please wait ..."
             docker rmi $(docker images -q)
             sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php
             sudo -E apt-get -y autoremove --purge
@@ -88,8 +86,8 @@ jobs:
         fi
         echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/Openwrt.info
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Defined_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Openwrt_Repo=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Before_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Openwrt_Repository=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
         touch Release_info
 
