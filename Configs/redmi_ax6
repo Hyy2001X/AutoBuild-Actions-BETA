@@ -1,0 +1,5 @@
+CONFIG_TARGET_ipq807x=y
+CONFIG_TARGET_ipq807x_generic=y
+CONFIG_TARGET_ipq807x_generic_DEVICE_redmi_ax6=y
+
+## DO NOT MERGE
