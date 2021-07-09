@@ -59,7 +59,7 @@ SHOW_VARIABLE() {
 固件作者:		${Author}
 软件架构:		${TARGET_SUBTARGET}
 作者仓库:		${Github}
-OpenWrt 源码:		https://github.com/${Openwrt_Maintainer}/${Openwrt_Repo_Name}:${Openwrt_Branch}	
+OpenWrt 源码:		https://github.com/${Openwrt_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}	
 Release API:		${Github_API}
 固件格式-框架:		$(GET_VARIABLE AutoBuild_Firmware ${Default_Variable})
 固件名称-框架:		$(GET_VARIABLE Egrep_Firmware ${Default_Variable})
