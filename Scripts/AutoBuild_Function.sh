@@ -131,10 +131,10 @@ TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
 Firmware_Type=${Firmware_Type}
 CURRENT_Version=${CURRENT_Version}
-Openwrt_Maintainer=${OP_Maintainer}
-Openwrt_Branch=${OP_BRANCH}
+OP_Maintainer=${OP_Maintainer}
+OP_BRANCH=${OP_BRANCH}
+OP_REPO_NAME=${OP_REPO_NAME}
 AutoBuild_Firmware=${AutoBuild_Firmware}
-Openwrt_Repo_Name=${OP_REPO_NAME}
 Egrep_Firmware=${Egrep_Firmware}
 EOF
 	cat >> VARIABLE_FILE_Sec <<EOF
