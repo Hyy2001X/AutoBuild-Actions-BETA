@@ -9,16 +9,16 @@ GET_INFO() {
 	[[ ${Short_Firmware_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
 	Author_Repository="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	[[ -z ${Author} ]] && Author="$(echo "${Author_Repository}" | cut -d "/" -f4)"
-	Openwrt_Maintainer="$(echo "${Openwrt_Repo}" | cut -d "/" -f4)"
-	Openwrt_Repo_Name="$(echo "${Openwrt_Repo}" | cut -d "/" -f5)"
-	Openwrt_Branch="$(GET_BRANCH)"
-	if [[ ${Openwrt_Branch} == master || ${Openwrt_Branch} == main ]];then
+	OP_Maintainer="$(echo "${Openwrt_Repository}" | cut -d "/" -f4)"
+	OP_REPO_NAME="$(echo "${Openwrt_Repository}" | cut -d "/" -f5)"
+	OP_BRANCH="$(GET_BRANCH)"
+	if [[ ${OP_BRANCH} == master || ${OP_BRANCH} == main ]];then
 		Openwrt_Version_Head="R$(date +%y.%m)-"
 	else
-		Openwrt_Branch="$(echo ${Openwrt_Branch} | egrep -o "[0-9]+.[0-9]+")"
-		Openwrt_Version_Head="R${Openwrt_Branch}-"
+		OP_BRANCH="$(echo ${OP_BRANCH} | egrep -o "[0-9]+.[0-9]+")"
+		Openwrt_Version_Head="R${OP_BRANCH}-"
 	fi
-	case "${Openwrt_Maintainer}" in
+	case "${OP_Maintainer}" in
 	coolsnowwolf)
 		Version_File=package/lean/default-settings/files/zzz-default-settings
 		zzz_Default_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
@@ -65,7 +65,7 @@ GET_INFO() {
 	esac
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 
-	case "${Openwrt_Maintainer}" in
+	case "${OP_Maintainer}" in
 	immortalwrt)
 		Firmware_Head=immortalwrt
 	;;
@@ -73,9 +73,9 @@ GET_INFO() {
 		Firmware_Head=openwrt
 	;;
 	esac
-	case "${Openwrt_Branch}" in
+	case "${OP_BRANCH}" in
 	19.07 | 18.06)
-		case "${Openwrt_Maintainer}" in
+		case "${OP_Maintainer}" in
 		immortalwrt)
 			Legacy_Tail=combined-squashfs
 			UEFI_Tail=uefi-gpt-squashfs
@@ -96,8 +96,8 @@ GET_INFO() {
 	x86_64)
 		Default_Legacy_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${Legacy_Tail}.${Firmware_Type}"
 		Default_UEFI_Firmware="${Firmware_Head}-${TARGET_BOARD}-${TARGET_SUBTARGET}-${UEFI_Tail}.${Firmware_Type}"
-		AutoBuild_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-${CURRENT_Version}-${x86_64_Boot}-${SHA5BIT}.${Firmware_Type}'
-		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_64_Boot}.[0-9a-z]+.${Firmware_Type}'
+		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-${x86_64_Boot}-${SHA5BIT}.${Firmware_Type}'
+		Egrep_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_64_Boot}.[0-9a-z]+.${Firmware_Type}'
 	;;
 	*)
 		case ${TARGET_BOARD} in
@@ -124,8 +124,8 @@ GET_INFO() {
 		;;
 		esac
 		
-		AutoBuild_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-${CURRENT_Version}-${SHA5BIT}.${Firmware_Type}'
-		Egrep_Firmware='AutoBuild-${Openwrt_Repo_Name}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Type}'
+		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-${SHA5BIT}.${Firmware_Type}'
+		Egrep_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Type}'
 	;;
 	esac
 	Firmware_Path="bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
@@ -138,10 +138,10 @@ TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
 Firmware_Type=${Firmware_Type}
 CURRENT_Version=${CURRENT_Version}
-Openwrt_Maintainer=${Openwrt_Maintainer}
-Openwrt_Branch=${Openwrt_Branch}
+Openwrt_Maintainer=${OP_Maintainer}
+Openwrt_Branch=${OP_BRANCH}
 AutoBuild_Firmware=${AutoBuild_Firmware}
-Openwrt_Repo_Name=${Openwrt_Repo_Name}
+Openwrt_Repo_Name=${OP_REPO_NAME}
 Egrep_Firmware=${Egrep_Firmware}
 EOF
 	cat >> VARIABLE_FILE_Sec <<EOF
@@ -186,12 +186,12 @@ Firmware-Diy_Base() {
 		Copy Scripts/AutoUpdate.sh package/base-files/files/bin
 	}
 	[[ ${INCLUDE_Argon} == true ]] && {
-		case "${Openwrt_Maintainer}" in
+		case "${OP_Maintainer}" in
 		coolsnowwolf)
 			AddPackage git lean luci-theme-argon jerrykuku 18.06
 		;;
 		*)
-			case "${Openwrt_Branch}" in
+			case "${OP_BRANCH}" in
 			19.07)
 				AddPackage git other luci-theme-argon jerrykuku v2.2.5
 			;;
@@ -202,25 +202,21 @@ Firmware-Diy_Base() {
 				AddPackage git other luci-theme-argon jerrykuku 18.06
 			;;
 			*)
-				TIME "[ERROR] Unknown Openwrt branch: [${Openwrt_Branch}] !"
+				TIME "[ERROR] Unknown Openwrt branch: [${OP_BRANCH}] !"
 			;;
 			esac
 		;;
 		esac
 		AddPackage git other luci-app-argon-config jerrykuku
 	}
-	[[ -n ${Defined_IP_Address} ]] && Default_LAN_IP="${Defined_IP_Address}"
-	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} != false ]] && {
-		if [[ ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
-			Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
-			if [[ ! ${Default_LAN_IP} == ${Old_IP_Address} ]];then
-				TIME "Setting default IP Address to ${Default_LAN_IP} ..."
-				sed -i "s/${Old_IP_Address}/${Default_LAN_IP}/g" package/base-files/files/bin/config_generate
-			fi
-		else
-			TIME "[ERROR] ${Default_LAN_IP} is not an IP Address !"
+	[[ -n ${Before_IP_Address} ]] && Default_LAN_IP="${Before_IP_Address}"
+	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
+		Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' package/base-files/files/bin/config_generate | awk 'NR==1')
+		if [[ ! ${Default_LAN_IP} == ${Old_IP_Address} ]];then
+			TIME "Setting default IP Address to ${Default_LAN_IP} ..."
+			sed -i "s/${Old_IP_Address}/${Default_LAN_IP}/g" package/base-files/files/bin/config_generate
 		fi
-	}
+	} || TIME "[ERROR] [${Default_LAN_IP}] is not an IP Address,skip .."
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_PROFILE} == x86_64 ]] && {
 		Copy CustomFiles/Depends/DRM-I915 target/linux/x86
 		for X in $(ls -1 target/linux/x86 | grep "config-"); do echo -e "\n$(cat target/linux/x86/DRM-I915)" >> target/linux/x86/${X}; done
@@ -230,7 +226,7 @@ Firmware-Diy_Base() {
 	} || AutoUpdate_Version=OFF
 	Copy CustomFiles/Depends/profile package/base-files/files/etc
 	Copy CustomFiles/Depends/base-files-essential package/base-files/files/lib/upgrade/keep.d
-	case "${Openwrt_Maintainer}" in
+	case "${OP_Maintainer}" in
 	coolsnowwolf)
 		sed -i "/dns_caching_dns/d" $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
 		echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
@@ -244,12 +240,12 @@ Firmware-Diy_Base() {
 	immortalwrt)
 		sed -i "/dns_caching_dns/d" $(PKG_Finder d "package feeds" luci-app-turboacc)/root/etc/config/turboacc
 		echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d "package feeds" luci-app-turboacc)/root/etc/config/turboacc
-		Copy CustomFiles/Depends/openwrt_release_${Openwrt_Maintainer} package/base-files/files/etc openwrt_release
+		Copy CustomFiles/Depends/openwrt_release_${OP_Maintainer} package/base-files/files/etc openwrt_release
 		Copy CustomFiles/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 		sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 	;;
 	esac
-	case "${Openwrt_Maintainer}" in
+	case "${OP_Maintainer}" in
 	immortalwrt)
 		Copy CustomFiles/Depends/banner $(PKG_Finder d package default-settings)/files openwrt_banner
 		sed -i "s?By?By ${Author}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
@@ -268,34 +264,34 @@ Other_Scripts() {
 	source ./VARIABLE_FILE_Sec
 	case "${INCLUDE_Obsolete_PKG_Compatible}" in
 	19.07)
-		Openwrt_Branch=19.07
+		OP_BRANCH=19.07
 		Force_mode=1
 		INCLUDE_Obsolete_PKG_Compatible=true
 	;;
 	21.02)
-		Openwrt_Branch=21.02
+		OP_BRANCH=21.02
 		Force_mode=1
 		INCLUDE_Obsolete_PKG_Compatible=true
 	;;
 	esac
 	if [[ ${INCLUDE_Obsolete_PKG_Compatible} == true ]];then
 		TIME "Start to run Obsolete_Package_Compatible Scripts ..."
-		if [[ ${Openwrt_Maintainer} == openwrt || ${Force_mode} == 1 ]];then
-			case "${Openwrt_Branch}" in
+		if [[ ${OP_Maintainer} == openwrt || ${Force_mode} == 1 ]];then
+			case "${OP_BRANCH}" in
 			19.07 | 21.02)
-				Copy CustomFiles/Patches/0003-upx-ucl-${Openwrt_Branch}.patch ./
-				cat 0003-upx-ucl-${Openwrt_Branch}.patch | patch -p1 > /dev/null 2>&1
+				Copy CustomFiles/Patches/0003-upx-ucl-${OP_BRANCH}.patch ./
+				cat 0003-upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
 				# AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
 				TIME "Start to convert zh-cn translation files to zh_Hans ..."
 				Copy Scripts/Convert_Translation.sh package
 				cd ./package && bash ./Convert_Translation.sh && cd ..
 			;;
 			*)
-				TIME "Current branch: [${Openwrt_Branch}] is not supported,skip..."
+				TIME "Current branch: [${OP_BRANCH}] is not supported,skip..."
 			;;
 			esac
 		else
-			TIME "Current source: [${Openwrt_Maintainer}] is not supported,skip..."
+			TIME "Current source: [${OP_Maintainer}] is not supported,skip..."
 		fi
 	fi
 	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
@@ -414,7 +410,7 @@ AddPackage() {
 	PKG_NAME="$3"
 	REPO_URL="https://github.com/$4"
 	[[ -z $5 ]] && REPO_BRANCH=master || REPO_BRANCH="$5"
-	[[ ${REPO_URL} =~ "${Openwrt_Maintainer}/${Openwrt_Repo_Name}" ]] && return 0
+	[[ ${REPO_URL} =~ "${OP_Maintainer}/${OP_REPO_NAME}" ]] && return 0
 
 	mkdir -p package/${PKG_DIR}
 	[[ -d package/${PKG_DIR}/${PKG_NAME} ]] && {
