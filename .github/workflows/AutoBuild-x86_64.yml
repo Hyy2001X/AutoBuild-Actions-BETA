@@ -4,9 +4,9 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: AutoBuild-x86_64
+name: x86_64
 
-### 以下内容请保持不变 (修改 环境变量设置 中的信息)
+### 以下内容请保持不变 (请修改下方: 环境变量设置)
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -28,8 +28,8 @@ on:
 
 ### 环境变量设置
 env:
-# 设备名称 (可在 README 中找到获取方法)
-  TARGET_PROFILE: x86_64
+# 编译时调用的 [.config] 文件名称
+  CONFIG_FILE: x86_64
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
@@ -38,7 +38,7 @@ env:
   UPLOAD_ARTIFACTS: false
 # 上传 bin 文件夹到 Github Artifacts
   UPLOAD_BIN_ARTIFACTS: false
-# 删除无用文件以释放更多空间
+# 删除无用文件以增加编译空间
   DELETE_USELESS_FILES: true
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: true
@@ -54,13 +54,13 @@ jobs:
 
     - name: Initialization Define Info
       run: |
-        TARGET_PROFILE=${{ env.TARGET_PROFILE }}
+        CONFIG_FILE=${{ env.CONFIG_FILE }}
         DEFAULT_SOURCE=${{ env.DEFAULT_SOURCE }}
         DELETE_USELESS_FILES=${{ env.DELETE_USELESS_FILES }}
-        echo "TARGET_PROFILE=$TARGET_PROFILE" >> $GITHUB_ENV
+        echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
         echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
-        [ ! -f "$GITHUB_WORKSPACE/Configs/$TARGET_PROFILE" ] && {
-            echo "[ERROR] config-file [/Config/$TARGET_PROFILE] is not detected!"
+        [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG_FILE" ] && {
+            echo "Config_File: [/Config/$CONFIG_FILE] is not detected!"
             exit 1
         }
         export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
@@ -68,7 +68,6 @@ jobs:
         [ -z $REPO_BRANCH ] && REPO_BRANCH=master
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-        echo -e "TARGET_PROFILE: $TARGET_PROFILE\nSOURCE: $REPO_URL:$REPO_BRANCH"
 
     - name: Initialization Environment
       env:
@@ -80,7 +79,6 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
         if [ "$DELETE_USELESS_FILES" == true ];then
-            echo "Deleting useless files,please wait ..."
             docker rmi $(docker images -q)
             sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php
             sudo -E apt-get -y autoremove --purge
@@ -88,8 +86,8 @@ jobs:
         fi
         echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/Openwrt.info
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Defined_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Openwrt_Repo=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Before_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Openwrt_Repository=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
         touch Release_info
 
@@ -104,14 +102,14 @@ jobs:
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$TARGET_PROFILE openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware-Diy_Base
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$TARGET_PROFILE .config
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
     - name: Compile
       run: |
@@ -135,14 +133,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.TARGET_PROFILE }}_${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
+        name: ${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
-        name: ${{ env.TARGET_PROFILE }}_${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
+        name: ${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Github Releases
