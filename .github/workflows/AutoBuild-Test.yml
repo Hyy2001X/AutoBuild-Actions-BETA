@@ -15,7 +15,7 @@ on:
         description: 'SSH 连接到 Actions'
         required: true
         default: 'false'
-      CONFIG:
+      CONFIG_FILE:
         description: '调用的 [.config] 文件名称'
         default: 'x86_64'
       DEFAULT_SOURCE:
@@ -51,13 +51,13 @@ jobs:
 
     - name: Initialization Define Info
       run: |
-        CONFIG=${{ github.event.inputs.CONFIG }}
+        CONFIG_FILE=${{ github.event.inputs.CONFIG_FILE }}
         DEFAULT_SOURCE=${{ github.event.inputs.DEFAULT_SOURCE }}
         DELETE_USELESS_FILES=${{ github.event.inputs.DELETE_USELESS_FILES }}
-        echo "CONFIG=$CONFIG" >> $GITHUB_ENV
+        echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
         echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
-        [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG" ] && {
-            echo "Config_File: [/Config/$CONFIG] is not detected!"
+        [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG_FILE" ] && {
+            echo "Config_File: [/Config/$CONFIG_FILE] is not detected!"
             exit 1
         }
         export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
@@ -99,14 +99,14 @@ jobs:
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$CONFIG openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware-Diy_Base
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG .config
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
     - name: SSH Connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
