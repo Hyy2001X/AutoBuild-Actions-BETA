@@ -209,7 +209,7 @@ LOAD_VARIABLE() {
 			}
 		;;
 		*)
-			ECHO r "暂不支持当前固件格式!"
+			ECHO r "[${TARGET_PROFILE}] 设备暂不支持当前固件格式!"
 			EXIT 1
 		;;
 		esac
@@ -280,8 +280,12 @@ CHANGE_BOOT() {
 
 UPDATE_SCRIPT() {
 	[[ $# != 2 ]] && SHELL_HELP
+	ECHO b "脚本下载地址: $2"
 	ECHO b "脚本保存路径: $1"
-	ECHO b "下载地址: $2"
+	[[ -f $1 ]] && {
+		ECHO r "AutoUpdate 脚本保存路径有误,请重新输入!"
+		EXIT 1
+	}
 	ECHO "开始更新 AutoUpdate 脚本,请耐心等待..."
 	[[ ! -d $1 ]] && mkdir -p $1
 	${Downloader} /tmp/AutoUpdate.sh $2
@@ -571,12 +575,30 @@ AutoUpdate_LOG() {
 		}
 	} || {
 		while [[ $1 ]];do
-			[[ ! $1 =~ path= && $1 != rm && $1 != del ]] && SHELL_HELP
+			case $1 in
+			path=/* | rm | del)
+				:
+			;;
+			*)
+				SHELL_HELP
+			;;
+			esac
 			if [[ $1 =~ path= ]];then
 				LOG_PATH="$(echo $1 | cut -d "=" -f2)"
+				[[ ${LOG_PATH} == ${AutoUpdate_Log_Path} ]] && {
+					ECHO y "AutoUpdate 日志保存路径相同,无需修改!"
+					EXIT 0
+				}
+				[[ -f ${LOG_PATH} ]] && {
+					ECHO r "错误的参数: [${LOG_PATH}]"
+					ECHO r "AutoUpdate 日志保存路径有误,请重新输入!"
+					EXIT 1
+				}
 				EDIT_VARIABLE rm ${Custom_Variable} AutoUpdate_Log_Path
 				EDIT_VARIABLE edit ${Custom_Variable} AutoUpdate_Log_Path ${LOG_PATH}
 				[[ ! -d ${LOG_PATH} ]] && mkdir -p ${LOG_PATH}
+				[[ -f ${AutoUpdate_Log_Path}/AutoUpdate.log ]] && mv ${AutoUpdate_Log_Path}/AutoUpdate.log ${LOG_PATH}
+				AutoUpdate_Log_Path=${LOG_PATH}
 				ECHO y "AutoUpdate 日志保存路径已修改为: ${LOG_PATH}"
 				EXIT 0
 			fi
@@ -648,7 +670,7 @@ AutoUpdate_Main() {
 		;;
 		--check)
 		    shift && [[ -n $* ]] && SHELL_HELP
-			CHECK_DEPENDS bash x86:gzip x86:wget-ssl uclient-fetch curl wget openssl
+			CHECK_DEPENDS bash x86:gzip x86:wget-ssl uclient-fetch curl wget openssl which
 		;;
 		--env)
 			shift
@@ -694,12 +716,20 @@ AutoUpdate_Main() {
 			[[ $? == 0 ]] && EXIT 0 || EXIT 1
 		;;
 		-x)
+			shift
 			while [[ $1 ]];do
+				case $1 in
+				url=* | path=/*)
+					:
+				;;
+				*)
+					SHELL_HELP
+				;;
+				esac
 				if [[ $1 =~ url= ]];then
 					[[ $1 =~ url= ]] && {
 					[[ -z $(echo $1 | cut -d "=" -f2) ]] && ECHO r "脚本地址不能为空!" && EXIT 1
 						AutoUpdate_Script_URL="$(echo $1 | cut -d "=" -f2)"
-						ECHO "使用自定义脚本地址: ${AutoUpdate_Script_URL}"
 					}
 				fi
 				[[ $1 =~ path= ]] && {
@@ -778,7 +808,7 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.4.3
+Version=V6.4.4
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
