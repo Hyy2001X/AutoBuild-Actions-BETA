@@ -179,9 +179,15 @@ Firmware-Diy_Base() {
 		Copy Scripts/AutoUpdate.sh package/base-files/files/bin
 	}
 	[[ ${INCLUDE_Argon} == true ]] && {
-		case "${OP_Maintainer}" in
-		coolsnowwolf)
+		case "${OP_Maintainer},${OP_BRANCH}" in
+		coolsnowwolf,master)
 			AddPackage git lean luci-theme-argon jerrykuku 18.06
+		;;
+		[L][l]ienol,main)
+			AddPackage git other luci-theme-argon jerrykuku master
+		;;
+		[L][l]ienol,19.07)
+			AddPackage git other luci-theme-argon jerrykuku v2.2.5
 		;;
 		*)
 			case "${OP_BRANCH}" in
