@@ -190,20 +190,22 @@ Firmware-Diy_Base() {
 			AddPackage git other luci-theme-argon jerrykuku v2.2.5
 		;;
 		*)
-			case "${OP_BRANCH}" in
-			19.07)
-				AddPackage git other luci-theme-argon jerrykuku v2.2.5
-			;;
-			21.02)
-				AddPackage git other luci-theme-argon jerrykuku master
-			;;
-			18.06)
-				AddPackage git other luci-theme-argon jerrykuku 18.06
-			;;
-			*)
-				TIME "[ERROR] Unknown Openwrt branch: [${OP_BRANCH}] !"
-			;;
-			esac
+			[[ ${OP_Maintainer} ! = immortalwrt ]] && {
+				case "${OP_BRANCH}" in
+				19.07)
+					AddPackage git other luci-theme-argon jerrykuku v2.2.5
+				;;
+				21.02)
+					AddPackage git other luci-theme-argon jerrykuku master
+				;;
+				18.06)
+					AddPackage git other luci-theme-argon jerrykuku 18.06
+				;;
+				*)
+					TIME "[ERROR] Unknown Openwrt branch: [${OP_BRANCH}] !"
+				;;
+				esac
+			} || :
 		;;
 		esac
 		AddPackage git other luci-app-argon-config jerrykuku
