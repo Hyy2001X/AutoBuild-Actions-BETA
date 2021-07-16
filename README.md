@@ -67,11 +67,11 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 ```
 **其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
 ```
-   [使用 git clone 拉取文件]  AddPackage git 存放位置 软件包名 仓库名称 分支
+   [使用 git clone 拉取文件]  AddPackage git 存放位置 仓库名称 仓库作者 分支
 
-   [使用 svn co 拉取文件]  AddPackage svn 存放位置 软件包名 仓库地址/branches/分支/路径
+   [使用 svn co 拉取文件]  AddPackage svn 存放位置 软件包名 仓库作者/仓库名称/branches/分支名称/路径(可选)
 
-   [复制 /CustomFiles 文件到源码] Copy 文件(夹)名称 目标路径 新名称[可选]
+   [复制 /CustomFiles 文件到源码] Copy 文件(夹)名称 目标路径 新名称(可选)
 ```
 ## 编译固件(STEP 3):
 
