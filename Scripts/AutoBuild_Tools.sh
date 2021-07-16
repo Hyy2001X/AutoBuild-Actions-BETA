@@ -359,7 +359,7 @@ while :
 do
 	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	clear
-	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n"
+	echo -e "AutoBuild 固件更新简易菜单/AutoUpdate ${AutoUpdate_Version}\n"
 	echo "1. 更新固件 [保留配置]"
 	echo "2. 强制更新固件 (跳过版本号验证,自动安装缺失的软件包) [保留配置]"
 	echo "3. 不保留配置更新固件 [全新安装]"
@@ -394,7 +394,7 @@ do
 		bash /bin/AutoUpdate.sh -n
 	;;
 	4)
-		bash /bin/AutoUpdate.sh --list
+		bash /bin/AutoUpdate.sh -L
 		Enter
 	;;
 	5)
