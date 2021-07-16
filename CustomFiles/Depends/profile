@@ -12,7 +12,7 @@ Sysinfo() {
 	cat <<EOF
 
             $(echo -e "设备名称:		${Yellow}$(uname -n) / ${TARGET_PROFILE}${White}")
-            $(echo -e "固件版本:		${Skyb}${CURRENT_Version}${White}")
+            $(echo -e "固件版本:		${Grey}${CURRENT_Version}${White}")
             内核版本:		$(uname -rs)$([ -n "${TEMP}" ] && echo -e "\n            核心温度:		${TEMP}")
             后台地址: 		${IP_Address}
             可用空间:		${Overlay_Available} / ${Tmp_Available}
@@ -25,12 +25,12 @@ export White="\e[0m"
 export Yellow="\e[33m"
 export Red="\e[31m"
 export Blue="\e[34m"
-export Skyb="\e[36m"
+export Grey="\e[36m"
 
 clear
 
 [ -e /tmp/.failsafe ] && export FAILSAFE=1
-[ -f /etc/banner ] && echo -e "${Skyb}$(cat /etc/banner)${White}"
+[ -f /etc/banner ] && echo -e "${Grey}$(cat /etc/banner)${White}"
 [ -n "$FAILSAFE" ] && cat /etc/banner.failsafe
 
 fgrep -sq '/ overlay ro,' /proc/mounts && {
