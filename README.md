@@ -27,25 +27,25 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 1. 进入你的`AutoBuild-Actions`仓库,**下方所有操作都将在你的`AutoBuild-Actions`仓库下进行**
 
-   建议使用 `Github Desktop` 进行操作,修改文件或者同步最新改动都很方便 [[Github Desktop](https://desktop.github.com/)] [[Notepad++](https://notepad-plus-plus.org/downloads/)]
+   建议使用`Github Desktop`进行操作,修改文件或者同步最新改动都很方便 [[Github Desktop](https://desktop.github.com/)] [[Notepad++](https://notepad-plus-plus.org/downloads/)]
 
-   **提示**: 下文中所有的 `TARGET_PROFILE` 均为你的设备名称,可以在`.config`中找到,例如`d-team_newifi-d2`
+   **提示**: 下文中所有的`TARGET_PROFILE`均为你的设备名称,可以在`.config`中找到,例如: `d-team_newifi-d2`
 
    本地获取: `egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
    
-   或者: `grep 'TARGET_PROFILE' .config`,名称中不应含有 `DEVICE_`
+   或者: `grep 'TARGET_PROFILE' .config`,名称中不应含有`DEVICE_`
 
-2. 把本地的 `.config` 文件**重命名**并上传到仓库的`Configs`目录
+2. 把本地的`.config`文件**重命名**并上传到仓库的`/Configs`目录
 
-3. 编辑`.github/workflows/*.yml`文件,修改`第 7 行`为易于自己识别的名称
+3. 编辑`/.github/workflows/*.yml`文件,修改`第 7 行`为易于自己识别的名称
 
-4. 编辑`.github/workflows/*.yml`文件,修改`第 32 行`为上传的 `.config` 文件名称
+4. 编辑`/.github/workflows/*.yml`文件,修改`第 32 行`为上传的`.config`文件名称
 
-   **使用其他源码** 修改`第 34 行`为源码的`仓库地址:Branch 或 Tag`,例如 `openwrt:openwrt-21.02`、`openwrt:v19.07.7`
+   **使用其他源码** 修改`第 34 行`,例如: `openwrt:openwrt-21.02`、`openwrt:v19.07.7`
 
-5. 按照需求编辑并定制`Scripts/AutoBuild_DiyScript.sh`文件
+5. 按照你的需求编辑`/Scripts/AutoBuild_DiyScript.sh`文件
 
-   **额外的软件包列表** 编辑或自行创建`CustomPackages`目录下要编译设备名称的`TARGET_PROFILE`文件 (可选)
+   **额外的软件包列表** 编辑或自行创建`/CustomPackages`目录下要编译设备名称的`TARGET_PROFILE`文件 (可选)
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
@@ -63,9 +63,13 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
    
+   Load_CustomPackages_List 启用后,将自动加载 /CustomPackages 下对应设备的软件包列表
+   
+   Checkout_Virtual_Images 上传 x86 设备虚拟磁盘镜像到 Release (类型需自行在 .config 勾选)
+   
    注: 若要启用某项功能,请将该值修改为 true,禁用某项功能则修改为 false 或留空
 ```
-**其他指令:** 编辑`Scripts/AutoBuild_DiyScript.sh`,参照下方语法:
+**其他指令:** 参照下方语法:
 ```
    [使用 git clone 拉取文件]  AddPackage git 存放位置 仓库名称 仓库作者 分支
 
@@ -87,13 +91,19 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
    首先需要打开`TTYD 终端`或者在浏览器输入`IP 地址:7681`,按需输入下方指令:
 
-   检查并更新固件(保留配置),输入: `autoupdate`或`bash /bin/AutoUpdate.sh`
+   更新固件: `autoupdate`或`bash /bin/AutoUpdate.sh`
 
-   更新固件(FastGit 镜像加速): `autoupdate -P`
+   更新固件(优先使用镜像加速): `autoupdate -P`
 
-   更新固件(不保留配置): `autoupdate -n`或`autoupdate -n -P`
+   更新固件(不保留配置): `autoupdate -n`
+   
+   强制刷入固件: `autoupdate -F`
+   
+   跳过 sha256 校验: `autoupdate --skip`
+   
+   **注意:** 参数可叠加,例如: `autoupdate -n -P -F --skip path=/mnt/sda1`
 
-   查看更多使用方法: `autoUpdate --help`
+   查看更多参数/使用方法: `autoupdate --help`
 
    **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Features`为`true`**
 
