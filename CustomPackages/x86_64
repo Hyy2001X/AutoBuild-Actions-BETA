@@ -1,2 +1,8 @@
-git other openwrt-passwall xiaorouji main
-git other luci-app-shutdown Hyy2001X
+#!/bin/bash
+
+case "${OP_Maintainer},${OP_BRANCH}" in
+coolsnowwolf,master)
+	AddPackage git other openwrt-passwall xiaorouji main
+	AddPackage git other luci-app-shutdown Hyy2001X
+;;
+esac

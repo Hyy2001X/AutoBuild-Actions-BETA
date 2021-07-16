@@ -1,1 +1,7 @@
-git other luci-app-usb3disable rufengsuixing
+#!/bin/bash
+
+case "${OP_Maintainer},${OP_BRANCH}" in
+coolsnowwolf,master)
+	AddPackage git other luci-app-usb3disable rufengsuixing
+;;
+esac

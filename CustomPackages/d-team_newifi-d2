@@ -1,2 +1,8 @@
-git other luci-app-usb3disable rufengsuixing
-svn package/kernel mt76 openwrt/openwrt/trunk/package/kernel
+#!/bin/bash
+
+case "${OP_Maintainer},${OP_BRANCH}" in
+coolsnowwolf,master)
+	AddPackage git other luci-app-usb3disable rufengsuixing
+	# AddPackage svn package/kernel mt76 openwrt/openwrt/trunk/package/kernel
+;;
+esac
