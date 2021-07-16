@@ -107,15 +107,15 @@ jobs:
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware-Diy_Base
-        source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE_Sec && Firmware-Diy
+        Firmware-Diy_Main
+        source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE && Firmware-Diy
         rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
     - name: Compile
       run: |
         export Compile_Result=false
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Other_Scripts
+        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware-Diy_Other
         rm -rf ./tmp && ./scripts/feeds install -a > /dev/null 2>&1
         make defconfig
         make download -j$(nproc)
@@ -127,7 +127,7 @@ jobs:
       if: env.Compile_Result == 'true' && !cancelled()
       run: |
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && PS_Firmware
+        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware-Diy_End
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
