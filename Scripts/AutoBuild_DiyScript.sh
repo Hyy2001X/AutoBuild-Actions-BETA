@@ -11,15 +11,16 @@ Diy_Core() {
 	INCLUDE_DRM_I915=true
 	INCLUDE_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
+	
+	Load_CustomPackages_List=true
+	Checkout_Virtual_Images=true
 }
 
 Firmware-Diy() {
 	case "${TARGET_PROFILE}" in
 	d-team_newifi-d2)
 		Copy CustomFiles/mac80211.sh package/kernel/mac80211/files/lib/wifi
-		Copy CustomFiles/system_${TARGET_PROFILE} package/base-files/files/etc/config system
+		# Copy CustomFiles/system_${TARGET_PROFILE} package/base-files/files/etc/config system
 	;;
-	*)
-		:
 	esac
 }
