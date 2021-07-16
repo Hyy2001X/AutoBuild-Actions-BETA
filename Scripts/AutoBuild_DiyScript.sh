@@ -5,7 +5,7 @@
 Diy_Core() {
 	Author=Hyy2001
 	Short_Firmware_Date=true
-	Default_LAN_IP=false
+	Default_LAN_IP=192.168.1.1
 
 	INCLUDE_AutoBuild_Features=true
 	INCLUDE_DRM_I915=true
@@ -13,14 +13,14 @@ Diy_Core() {
 	INCLUDE_Obsolete_PKG_Compatible=false
 	
 	Load_CustomPackages_List=true
-	Checkout_Virtual_Images=true
+	Checkout_Virtual_Images=false
 }
 
 Firmware-Diy() {
 	case "${TARGET_PROFILE}" in
 	d-team_newifi-d2)
 		Copy CustomFiles/mac80211.sh package/kernel/mac80211/files/lib/wifi
-		# Copy CustomFiles/system_${TARGET_PROFILE} package/base-files/files/etc/config system
+		Copy CustomFiles/system_${TARGET_PROFILE} package/base-files/files/etc/config system
 	;;
 	esac
 	case "${TARGET_BOARD}" in
