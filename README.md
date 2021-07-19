@@ -29,7 +29,7 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
    建议使用`Github Desktop`进行操作,修改文件或者同步最新改动都很方便 [[Github Desktop](https://desktop.github.com/)] [[Notepad++](https://notepad-plus-plus.org/downloads/)]
 
-   **提示**: 下文中所有的`TARGET_PROFILE`均为你的设备名称,可以在`.config`中找到,例如: `d-team_newifi-d2`
+   **提示**: 文中的`TARGET_PROFILE`为设备名称,可以在`.config`中获取,例如: `d-team_newifi-d2`
 
    本地获取: `egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/'`
    
@@ -45,7 +45,7 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 5. 按照你的需求编辑`/Scripts/AutoBuild_DiyScript.sh`文件
 
-   **额外的软件包列表** 编辑或自行创建`/CustomPackages`目录下要编译设备名称的`TARGET_PROFILE`文件 (可选)
+   **额外的软件包列表** 按照现有语法和提示编辑`/Scripts/AutoBuild_ExtraPackages.sh`文件
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
