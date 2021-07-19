@@ -94,14 +94,15 @@ Firmware-Diy_Main() {
 	Firmware-Diy_Before
 	mkdir -p package/base-files/files/etc/AutoBuild
 	[ -f VARIABLE_Main ] && cp VARIABLE_Main package/base-files/files/etc/AutoBuild/Default_Variable
-	[[ ${Load_CustomPackages_List} == true ]] && {
-		[[ -f ${GITHUB_WORKSPACE}/CustomPackages/Common ]] && . ${GITHUB_WORKSPACE}/CustomPackages/Common
-		[[ -f ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE} ]] && . ${GITHUB_WORKSPACE}/CustomPackages/${TARGET_PROFILE}
-	}
 	Copy CustomFiles/Depends/Custom_Variable package/base-files/files/etc/AutoBuild
 	chmod +x -R ${GITHUB_WORKSPACE}/Scripts
 	chmod 777 -R ${GITHUB_WORKSPACE}/CustomFiles
-	chmod 777 -R ${GITHUB_WORKSPACE}/CustomPackages
+	[[ ${Load_CustomPackages_List} == true ]] && {
+		bash -n ${GITHUB_WORKSPACE}/Scripts/AutoBuild_ExtraPackages.sh
+		[[ ! $? == 0 ]] && TIME "AutoBuild_ExtraPackages.sh syntax error,skip ..." || {
+			. ${GITHUB_WORKSPACE}/Scripts/AutoBuild_ExtraPackages.sh
+		}
+	}
 	[[ ${INCLUDE_AutoBuild_Features} == true ]] && {
 		Copy Scripts/AutoBuild_Tools.sh package/base-files/files/bin
 		Copy Scripts/AutoUpdate.sh package/base-files/files/bin
@@ -203,14 +204,14 @@ Firmware-Diy_Other() {
 	esac
 	if [[ ${PKG_Compatible} == true ]];then
 		if [[ ${OP_Maintainer} == openwrt || ${OP_Maintainer} == [Ll]ienol || ${Force_mode} == 1 ]];then
-			TIME "Start to run Obsolete_Package_Compatible Scripts ..."
+			TIME "Starting to run Obsolete_Package_Compatible Scripts ..."
 			case "${OP_BRANCH}" in
 			19.07 | 21.02 | main)
 				[[ ${OP_BRANCH} == main ]] && OP_BRANCH=21.02
 				Copy CustomFiles/Patches/0003-upx-ucl-${OP_BRANCH}.patch ./
 				cat 0003-upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
 				# AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
-				TIME "Start to convert zh-cn translation files to zh_Hans ..."
+				TIME "Starting to convert zh-cn translation files to zh_Hans ..."
 				Copy Scripts/Convert_Translation.sh package
 				cd ./package && bash ./Convert_Translation.sh && cd ..
 			;;
@@ -339,18 +340,28 @@ PKG_Finder() {
 
 AddPackage() {
 	[[ $# -lt 4 ]] && {
-		TIME "Error options: [$#] [$*] !"
+		TIME "Syntax error: [$#] [$*] !"
 		return 0
 	}
-	[[ $* =~ "#" ]] && return 0
-	PKG_PROTO="$1"
-	PKG_DIR="$2"
-	PKG_NAME="$3"
+	PKG_PROTO=$1
+	case "${PKG_PROTO}" in
+	git | svn)
+		:
+	;;
+	*)
+		TIME "Unknown type: ${PKG_PROTO}"
+	;;
+	esac
+	PKG_DIR=$2
+	PKG_NAME=$3
 	REPO_URL="https://github.com/$4"
-	[[ -z $5 ]] && REPO_BRANCH=master || REPO_BRANCH="$5"
+	[[ -z $5 ]] && {
+		TIME "WARNING: Missing <Branch>,will use default branch: [master]"
+		REPO_BRANCH=master
+	} || REPO_BRANCH=$5
 	[[ ${REPO_URL} =~ "${OP_Maintainer}/${OP_REPO_NAME}" ]] && return 0
 
-	mkdir -p package/${PKG_DIR}
+	mkdir -p package/${PKG_DIR} || TIME "Can't create download dir: [package/${PKG_DIR}]" && return 0
 	[[ -d package/${PKG_DIR}/${PKG_NAME} ]] && {
 		TIME "Removing old package: [${PKG_NAME}] ..."
 		rm -rf package/${PKG_DIR}/${PKG_NAME}
@@ -368,7 +379,7 @@ AddPackage() {
 	esac
 	[[ -f ${PKG_NAME}/Makefile || -n $(ls -A ${PKG_NAME}) ]] && {
 		mv -f "${PKG_NAME}" "package/${PKG_DIR}"
-	}
+	} || TIME "Package: ${PKG_NAME} failed to download"
 }
 
 Copy() {
