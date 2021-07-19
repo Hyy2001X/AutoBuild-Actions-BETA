@@ -1,31 +1,35 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoBuild_Tools for Openwrt
-# Depends on bash wget curl block-mount e2fsprogs smartmontools
+# Depends on: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.4
+Version=V1.5
 
-TIME() {
-	[[ ! -d ${log_Path} ]] && mkdir -p "${log_Path}"
-	[[ ! -f ${log_Path}/AutoBuild_Tools.log ]] && touch "${log_Path}/AutoBuild_Tools.log"
+ECHO() {
+	local Color
 	[[ -z $1 ]] && {
-		echo -ne "\n\e[36m[$(date "+%H:%M:%S")]\e[0m "
+		echo -ne "\n${Grey}[$(date "+%H:%M:%S")]${White} "
 	} || {
 	case $1 in
-		r) Color="\e[31m";;
-		g) Color="\e[32m";;
-		b) Color="\e[34m";;
-		y) Color="\e[33m";;
-		x) Color="\e[36m";;
+		r) Color="${Red}";;
+		g) Color="${Green}";;
+		b) Color="${Blue}";;
+		y) Color="${Yellow}";;
+		x) Color="${Grey}";;
 	esac
 		[[ $# -lt 2 ]] && {
-			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m $1"
-			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $1" >> ${log_Path}/AutoBuild_Tools.log
+			echo -e "\n${Grey}[$(date "+%H:%M:%S")]${White} $1"
+			LOGGER $1
 		} || {
-			echo -e "\n\e[36m[$(date "+%H:%M:%S")]\e[0m ${Color}$2\e[0m"
-			echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $2" >> ${log_Path}/AutoBuild_Tools.log
+			echo -e "\n${Grey}[$(date "+%H:%M:%S")]${White} ${Color}$2${White}"
+			LOGGER $2
 		}
 	}
+}
+
+LOGGER() {
+	[[ ! -f ${Main_tmp}/AutoBuild_Tools.log ]] && touch ${Main_tmp}/AutoBuild_Tools.log
+	echo "[$(date "+%Y-%m-%d-%H:%M:%S")] $*" >> ${Main_tmp}/AutoBuild_Tools.log
 }
 
 AutoBuild_Tools() {
@@ -45,7 +49,7 @@ do
 	read -p "请从上方选择一个操作:" Choose
 	case $Choose in
 	q)
-		rm -rf ${AutoBuild_Tools_Temp}
+		rm -rf ${Main_tmp}
 		clear
 		exit 0
 	;;
@@ -53,26 +57,26 @@ do
 		[ -f /bin/AutoUpdate.sh ] && {
 			AutoUpdate_UI
 		} || {
-			TIME r "未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
+			ECHO r "未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
 		}
 	;;
 	x)
 		
-		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh
+		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${Main_tmp}/AutoBuild_Tools.sh
 		if [[ $? == 0 ]];then
-			TIME y "[AutoBuild_Tools] 脚本更新成功!"
+			ECHO y "[AutoBuild_Tools] 脚本更新成功!"
 			rm -f /bin/AutoBuild_Tools.sh.sh
-			mv -f ${AutoBuild_Tools_Temp}/AutoBuild_Tools.sh /bin
+			mv -f ${Main_tmp}/AutoBuild_Tools.sh /bin
 			chmod +x /bin/AutoBuild_Tools.sh
 		else
-			TIME r "[AutoBuild_Tools] 脚本更新失败!"
+			ECHO r "[AutoBuild_Tools] 脚本更新失败!"
 		fi
 		sleep 2
 	;;
 	1)
 		which block > /dev/null 2>&1
 		[[ ! $? -eq 0 ]] && {
-			TIME r "缺少相应依赖包,请先安装 [block-mount] !"
+			ECHO r "缺少相应依赖包,请先安装 [block-mount] !"
 			sleep 3
 		} || {
 			uci set fstab.@global[0].auto_mount='0'
@@ -96,7 +100,7 @@ do
 	5)
 		which smartctl > /dev/null 2>&1
 		[[ ! $? -eq 0 ]] && {
-			TIME r "缺少相应依赖包,请先安装 [smartmontools] !"
+			ECHO r "缺少相应依赖包,请先安装 [smartmontools] !"
 			sleep 3
 		} || Smart_Info
 	;;
@@ -137,10 +141,10 @@ AutoExpand_UI() {
 			[[ $? -eq 0 ]] && {
 				AutoExpand_Core
 			} || {
-				TIME r "缺少相应依赖包,请先安装 [e2fsprogs] !" && sleep 3
+				ECHO r "缺少相应依赖包,请先安装 [e2fsprogs] !" && sleep 3
 			}			
 		} || {
-			TIME r "选择错误,请输入正确的选项!"
+			ECHO r "选择错误,请输入正确的选项!"
 			sleep 2 && AutoExpand_UI
 			exit
 		}
@@ -150,7 +154,7 @@ AutoExpand_UI() {
 
 USB_Check_Core() {
 	block mount
-	rm -rf ${AutoExpend_Temp}/*
+	rm -rf ${Main_tmp}/*
 	echo "$(block info)" > ${Block_Info}
 	Check_Disk="$(cat ${Block_Info} | awk  -F ':' '/sd/{print $1}')"
 	[[ -n ${Check_Disk} ]] && {
@@ -181,7 +185,7 @@ AutoExpand_Core() {
 	read -p "是否继续本次操作?[Y/n]:" Choose
 	[[ ${Choose} == [Yy] ]] && sleep 3 && echo "" || {
 		sleep 3
-		TIME "用户已取消操作."
+		ECHO "用户已取消操作."
 		break
 	}
 	[[ $(mount) =~ ${Choosed_Disk} ]] > /dev/null 2>&1 && {
@@ -193,20 +197,20 @@ AutoExpand_Core() {
 			exit 1
 		}
 	}
-	TIME "正在格式化硬盘: '${Choosed_Disk}',请耐心等待 ..."
+	ECHO "正在格式化硬盘: '${Choosed_Disk}',请耐心等待 ..."
 	mkfs.ext4 -F ${Choosed_Disk} > /dev/null 2>&1
-	TIME "硬盘格式化完成! 挂载硬盘: '${Choosed_Disk}' 到 ' /tmp/extroot' ..."
+	ECHO "硬盘格式化完成! 挂载硬盘: '${Choosed_Disk}' 到 ' /tmp/extroot' ..."
 	mkdir -p /tmp/introot && mkdir -p /tmp/extroot
 	mount --bind / /tmp/introot
 	mount ${Choosed_Disk} /tmp/extroot
-	TIME "正在备份系统文件到硬盘: '${Choosed_Disk}',请耐心等待 ..."
+	ECHO "正在备份系统文件到硬盘: '${Choosed_Disk}',请耐心等待 ..."
 	tar -C /tmp/introot -cf - . | tar -C /tmp/extroot -xf -
-	TIME "取消挂载: '/tmp/introot' '/tmp/extroot' ..."
+	ECHO "取消挂载: '/tmp/introot' '/tmp/extroot' ..."
 	umount /tmp/introot && umount /tmp/extroot
 	[ ! -d /mnt/bak ] && mkdir -p /mnt/bak
 	mount ${Choosed_Disk} /mnt/bak
 	sync
-	TIME "写入 '分区表' 到 '/etc/config/fstab' ..."
+	ECHO "写入 '分区表' 到 '/etc/config/fstab' ..."
 	block detect > /etc/config/fstab
 	sed -i "s?/mnt/bak?/?g" /etc/config/fstab
 	for ((i=0;i<=${Disk_Number};i++));
@@ -215,14 +219,14 @@ AutoExpand_Core() {
 	done
 	uci commit fstab
 	umount -l /mnt/bak
-	TIME y "操作结束,外接硬盘: '${Choosed_Disk}' 已挂载到 '/'"
+	ECHO y "操作结束,外接硬盘: '${Choosed_Disk}' 已挂载到 '/'"
 	read -p "挂载完成后需要重启生效,是否立即重启路由器?[Y/n]:" Choose
 	[[ ${Choose} == [Yy] ]] && {
-		sleep 3 && TIME g "\n正在重启路由器,请耐心等待 ..."
+		sleep 3 && ECHO g "\n正在重启路由器,请耐心等待 ..."
 		sync
 		reboot
 	} || {
-		TIME "用户已取消重启操作."
+		ECHO "用户已取消重启操作."
 		sleep 3
 		break
 	}
@@ -235,6 +239,10 @@ List_Disk() {
 }
 
 AutoSamba_UI() {
+	USB_Check_Core
+	Samba_tmp="${Main_tmp}/AutoSamba"
+	Samba_UCI_List="${Main_tmp}/UCI_List"
+	[[ ! -d ${Main_tmp} ]] && mkdir -p "${Main_tmp}"
 	while :
 	do
 		clear
@@ -260,9 +268,9 @@ AutoSamba_UI() {
 				uci set samba.@samba[0].autoshare='0'
 				autosamba_mode="关闭"
 			}
-			TIME y "已${autosamba_mode} Samba 自动共享!"
+			ECHO y "已${autosamba_mode} Samba 自动共享!"
 			uci commit samba
-			sleep 3
+			sleep 2
 		;;
 		q)
 			break
@@ -277,37 +285,40 @@ Remove_Samba_Settings() {
 		Samba_config="$(grep "sambashare" /etc/config/samba | wc -l)"
 		[[ ${Samba_config} -eq 0 ]] && break
 		uci delete samba.@sambashare[0]
-		uci commit
+		uci commit samba > /dev/null 2>&1
 	done
-	TIME y "已删除所有 Samba 挂载点!"
+	ECHO y "已删除所有 Samba 挂载点!"
 	sleep 2
 }
 
 Mount_Samba_Devices() {
-	echo "$(cat /proc/mounts  | awk  -F ':' '/sd/{print $1}')" > ${Samba_Disk_List}
-	Disk_Number=$(sed -n '$=' ${Samba_Disk_List})
-	echo ""
+	Disk_Number=$(sed -n '$=' ${Disk_Processed_List})
 	for ((i=1;i<=${Disk_Number};i++));
 	do
-		Disk_Name=$(sed -n ${i}p ${Samba_Disk_List} | awk '{print $1}')
-		Disk_Mounted_Point=$(sed -n ${i}p ${Samba_Disk_List} | awk '{print $2}')
+		Disk_Name=$(sed -n ${i}p ${Disk_Processed_List} | awk '{print $1}')
+		Disk_Mounted_Point=$(sed -n ${i}p ${Disk_Processed_List} | awk '{print $2}')
 		Samba_Name=${Disk_Mounted_Point#*/mnt/}
+		Samba_Name=$(echo ${Samba_Name} | cut -d "/" -f2-5)
 		uci show 2>&1 | grep "sambashare" > ${Samba_UCI_List}
-		if [[ ! $(cat ${Samba_UCI_List}) =~ ${Disk_Name} ]] > /dev/null 2>&1 ;then
-			TIME g "共享硬盘: '${Disk_Name}' on '${Disk_Mounted_Point}' 到 '${Samba_Name}' ..."
-			echo -e "\nconfig sambashare" >> ${Samba_Config}
-			echo -e "\toption auto '1'" >> ${Samba_Config}
-			echo -e "\toption name '${Samba_Name}'" >> ${Samba_Config}
-			echo -e "\toption device '${Disk_Name}'" >> ${Samba_Config}
-			echo -e "\toption path '${Disk_Mounted_Point}'" >> ${Samba_Config}
-			echo -e "\toption read_only 'no'" >> ${Samba_Config}
-			echo -e "\toption guest_ok 'yes'" >> ${Samba_Config}
-			echo -e "\toption create_mask '0666'" >> ${Samba_Config}
-			echo -e "\toption dir_mask '0777'" >> ${Samba_Config}
+		if [[ ! $(cat ${Samba_UCI_List}) =~ ${Disk_Mounted_Point} ]] > /dev/null 2>&1 ;then
+			ECHO g "设置挂载点 '${Samba_Name}' ..."
+			cat >> /etc/config/samba <<EOF
+
+config sambashare
+	option auto '1'
+	option name '${Samba_Name}'
+	option device '${Disk_Name}'
+	option path '${Disk_Mounted_Point}'
+	option read_only 'no'
+	option guest_ok 'yes'
+	option create_mask '0666'
+	option dir_mask '0777'
+EOF
 		else
-			TIME y "硬盘: '${Disk_Name}' 已设置共享点: '${Samba_Name}' !"
+			ECHO y "'${Disk_Mounted_Point}' 挂载点已存在 !"
 		fi
 	done
+	uci commit samba
 	/etc/init.d/samba restart
 	sleep 3
 }
@@ -359,7 +370,7 @@ while :
 do
 	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	clear
-	echo -e "AutoBuild 固件更新简易菜单/AutoUpdate ${AutoUpdate_Version}\n"
+	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n"
 	echo "1. 更新固件 [保留配置]"
 	echo "2. 强制更新固件 (跳过版本号验证,自动安装缺失的软件包) [保留配置]"
 	echo "3. 不保留配置更新固件 [全新安装]"
@@ -375,13 +386,13 @@ do
 		break
 	;;
 	x)
-		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${AutoBuild_Tools_Temp}/AutoUpdate.sh
+		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${Main_tmp}/AutoUpdate.sh
 		[[ $? == 0 ]] && {
-			TIME y "脚本更新成功!"
+			ECHO y "脚本更新成功!"
 			rm -f /bin/AutoUpdate.sh
-			mv -f ${AutoBuild_Tools_Temp}/AutoUpdate.sh /bin
+			mv -f ${Main_tmp}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoUpdate.sh
-		} || TIME r "脚本更新失败!"
+		} || ECHO r "脚本更新失败!"
 		sleep 2
 	;;
 	1)
@@ -394,7 +405,7 @@ do
 		bash /bin/AutoUpdate.sh -n
 	;;
 	4)
-		bash /bin/AutoUpdate.sh -L
+		bash /bin/AutoUpdate.sh --list
 		Enter
 	;;
 	5)
@@ -405,7 +416,7 @@ do
 		echo ""
 		read -p "请输入新的 Github 地址:" Github_URL
 		[[ -n ${Github_URL} ]] && bash /bin/AutoUpdate.sh -C ${Github_URL} || {
-			TIME r "Github 地址不能为空!"
+			ECHO r "Github 地址不能为空!"
 		}
 		sleep 2
 	;;
@@ -413,7 +424,7 @@ do
 		echo ""
 		read -p "请输入你想要的启动方式[UEFI/Legacy]:" _BOOT
 		[[ -n ${_BOOT} ]] && bash /bin/AutoUpdate.sh -B ${_BOOT} || {
-			TIME r "启动方式不能为空!"
+			ECHO r "启动方式不能为空!"
 		}
 		sleep 2
 	;;
@@ -422,7 +433,7 @@ done
 }
 
 Smart_Info() {
-	TIME g "Loading disk information ,please wait..."
+	ECHO g "Loading disk information ,please wait..."
 	USB_Check_Core
 	clear
 	smartctl -v | awk 'NR==1'
@@ -514,8 +525,8 @@ AutoInstall_UI_mod() {
 Install_opkg_mod() {
 	opkg install ${*}
 	[[ $(opkg list | awk '{print $1}') =~ $1 ]] > /dev/null 2>&1 && {
-		TIME y "$1 安装成功!"
-	} || TIME r "$1 安装失败!"
+		ECHO y "$1 安装成功!"
+	} || ECHO r "$1 安装失败!"
 	sleep 2
 }
 
@@ -523,27 +534,19 @@ Enter() {
 	echo "" && read -p "按下[回车]键以继续..." Key
 }
 
-export White="\e[0m"
-export Yellow="\e[33m"
-export Red="\e[31m"
-export Blue="\e[34m"
-export Skyb="\e[36m"
+White="\e[0m"
+Yellow="\e[33m"
+Red="\e[31m"
+Blue="\e[34m"
+Skyb="\e[36m"
 
-AutoBuild_Tools_Temp="/tmp/AutoBuild_Tools"
-AutoExpend_Temp="${AutoBuild_Tools_Temp}/AutoExpand"
-log_Path=/tmp
-Disk_List="${AutoExpend_Temp}/Disk_List"
-Block_Info="${AutoExpend_Temp}/Block_Info"
-Disk_Processed_List="${AutoExpend_Temp}/Disk_Processed_List"
-Phy_Disk_List="${AutoExpend_Temp}/Phy_Disk_List"
-Smart_Info1="${AutoExpend_Temp}/Smart_Info1"
-Smart_Info2="${AutoExpend_Temp}/Smart_Info2"
-[[ ! -d ${AutoExpend_Temp} ]] && mkdir -p "${AutoExpend_Temp}"
-Samba_Config="/etc/config/samba"
-Samba_Temp="${AutoBuild_Tools_Temp}/AutoSamba"
-Samba_Disk_List="${Samba_Temp}/Disk_List"
-Samba_UCI_List="${Samba_Temp}/UCI_List"
-[[ ! -d ${Samba_Temp} ]] && mkdir -p "${Samba_Temp}"
+Main_tmp="/tmp/AutoBuild_Tools"
+Disk_List="${Main_tmp}/Disk_List"
+Block_Info="${Main_tmp}/Block_Info"
+Disk_Processed_List="${Main_tmp}/Disk_Processed_List"
+Phy_Disk_List="${Main_tmp}/Phy_Disk_List"
+Smart_Info1="${Main_tmp}/Smart_Info1"
+Smart_Info2="${Main_tmp}/Smart_Info2"
+[[ ! -d ${Main_tmp} ]] && mkdir -p "${Main_tmp}"
 Github_Raw="https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
-[ -f /etc/openwrt_info ] && source /etc/openwrt_info
 AutoBuild_Tools
