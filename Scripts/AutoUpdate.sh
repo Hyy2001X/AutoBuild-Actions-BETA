@@ -63,7 +63,7 @@ SHOW_VARIABLE() {
 固件作者 URL:		${Github}
 Release URL:		${Github_Release_URL}
 Release API:		${Github_API}
-OpenWrt 源码 URL:	https://github.com/${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}	
+OpenWrt 源码 URL:	https://github.com/${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}
 固件匹配框架:		$(GET_VARIABLE Egrep_Firmware ${Default_Variable})
 固件格式:		${Firmware_Type}
 固件保存路径:		${AutoUpdate_Path}
@@ -312,17 +312,28 @@ CHECK_DEPENDS() {
 				PKG="$(echo $1 | cut -d ":" -f2)"
 				[[ $(echo ${PKG} | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 				echo -e "${PKG}${Tab}$(CHECK_PKG ${PKG})"
-				LOGGER "Checking ${PKG}... $(CHECK_PKG ${PKG})"
+				LOGGER "[CHECK_DEPENDS] Checking [${PKG}] ... $(CHECK_PKG ${PKG})"
 			}
 		else
 			[[ $(echo $1 | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 			echo -e "$1${Tab}$(CHECK_PKG $1)"
-			LOGGER "Checking $1... $(CHECK_PKG $1)"
+			LOGGER "[CHECK_DEPENDS] Checking [$1] ... $(CHECK_PKG $1)"
 		fi
 		shift
 	done
 	ECHO y "AutoUpdate 依赖检测结束,若某项检测结果为 [false],请尝试手动安装!"
 	EXIT
+}
+
+FW_VERSION_CHECK() {
+	[[ $# -gt 1 ]] && echo "false" && return
+	[[ $1 =~ R[1-9.]{2}.+-[0-9]{8} ]] && {
+		echo "true"
+		LOGGER "[FW_VERSION_CHECK] Checking [$1] ... true"
+	} || {
+		echo "false"
+		LOGGER "[FW_VERSION_CHECK] Checking [$1] ... false"
+	}
 }
 
 GET_FW_LOG() {
@@ -342,8 +353,10 @@ GET_FW_LOG() {
 	esac
 	${Downloader} ${AutoUpdate_Path}/Update_Logs.json ${Release_URL}/Update_Logs.json
 	[[ $? == 0 ]] && {
-		Update_Log=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${AutoUpdate_Path}/Update_Logs.json)
+		Update_Log=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${AutoUpdate_Path}/Update_Logs.json)	
 		rm -f ${AutoUpdate_Path}/Update_Logs.json
+	}
+	[[ -n ${Update_Log} ]] && {
 		echo -e "\n${Grey}${FW_Version} for ${TARGET_PROFILE} 更新日志:"
 		echo -e "\n${Green}${Update_Log}${White}"
 	}
@@ -353,25 +366,22 @@ GET_CLOUD_INFO() {
 	[[ -f ${AutoUpdate_Path}/Github_Tags ]] && rm -f ${AutoUpdate_Path}/Github_Tags
 	${Downloader} ${AutoUpdate_Path}/Github_Tags ${Github_API}
 	[[ $? != 0 || ! -s ${AutoUpdate_Path}/Github_Tags ]] && {
-		echo 0
-	} || echo 1
+		echo "false"
+	} || echo "true"
 }
 
-GET_CLOUD_FW() {
+GET_CLOUD_VERSION() {
 	local X
-	[[ $(GET_CLOUD_INFO) == 0 ]] && {
+	[[ $(GET_CLOUD_INFO) == false ]] && {
 		ECHO r "检查更新失败,请稍后重试!"
 		EXIT 1
 	}
 	eval X=$(GET_VARIABLE Egrep_Firmware ${Default_Variable})
 	FW_Name=$(egrep -o "${X}" ${AutoUpdate_Path}/Github_Tags | awk 'END {print}')
 	[[ -z ${FW_Name} ]] && ECHO "云端固件名称获取失败!" && EXIT 1
-}
-
-GET_CLOUD_VERSION() {
-	GET_CLOUD_FW
 	CLOUD_Firmware_Version=$(echo "${FW_Name}" | egrep -o "R[0-9].*202[1-2][0-9]+")
-	[[ -z ${CLOUD_Firmware_Version} ]] && ECHO "云端固件版本获取失败!" && EXIT 1
+	[[ -z ${CLOUD_Firmware_Version} ]] && ECHO r "云端固件版本获取失败!" && EXIT 1
+	[[ ! $(FW_VERSION_CHECK ${CLOUD_Firmware_Version}) == true ]] && ECHO r "云端固件版本号合法性检查失败!"
 }
 
 CHECK_UPDATES() {
@@ -387,13 +397,13 @@ CHECK_UPDATES() {
 			Upgrade_Stopped=2
 		}
 	}
-	SHA5BIT=$(echo ${FW_Name} | egrep -o "[a-zA-Z0-9]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
+	# SHA5BIT=$(echo ${FW_Name} | egrep -o "[a-zA-Z0-9]+.${Firmware_Type}" | sed -r "s/(.*).${Firmware_Type}/\1/")
 }
 
 PREPARE_UPGRADES() {
 	TITLE
 	[[ $* =~ -f && $* =~ -F ]] && SHELL_HELP
-	Upgrade_Option="${Upgrade_Command} -q"
+	Upgrade_Option="sysupgrade -q"
 	MSG="更新固件"
 	while [[ $1 ]];do
 		case "$1" in
@@ -454,7 +464,7 @@ PREPARE_UPGRADES() {
 			Proxy_Mode=1
 		}
 	fi
-	CHECK_UPDATES continue
+	CHECK_UPDATES
 	[[ -z ${CLOUD_Firmware_Version} ]] && {
 		ECHO r "云端固件信息获取失败!"
 		EXIT 1
@@ -628,6 +638,7 @@ AutoUpdate_Main() {
 	[[ -z $* ]] && PREPARE_UPGRADES $*
 	[[ $1 =~ path=/ && ! $* =~ -x && ! $* =~ -U ]] && PREPARE_UPGRADES $*
 	[[ $1 =~ --skip ]] && PREPARE_UPGRADES $*
+	
 	[[ $* =~ -T || $* =~ --verbose ]] && {
 		Downloader="$(echo ${Downloader/ --quiet / })"
 		Downloader="$(echo ${Downloader/ --silent / })"
@@ -758,7 +769,10 @@ AutoUpdate_Main() {
 			;;
 			*)
 				[[ -z $* ]] && EXIT 0
-				[[ ! $1 =~ R[0-9] ]] && SHELL_HELP || GET_FW_LOG -v $1
+				[[ $(FW_VERSION_CHECK $1) == true ]] && GET_FW_LOG -v $1 || {
+					ECHO r "固件版本号合法性检查失败!"
+					EXIT 1
+				}
 			;;
 			esac
 			EXIT
@@ -807,11 +821,10 @@ AutoUpdate_Main() {
 	done
 }
 
-Version=V6.4.5
+Version=V6.4.6
 AutoUpdate_Path=/tmp/AutoUpdate
 AutoUpdate_Log_Path=/tmp
 AutoUpdate_Script_URL=https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh
-Upgrade_Command=sysupgrade
 Default_Variable=/etc/AutoBuild/Default_Variable
 Custom_Variable=/etc/AutoBuild/Custom_Variable
 [[ -n $* ]] && Run_Command="$0 $*" || Run_Command="$0"
