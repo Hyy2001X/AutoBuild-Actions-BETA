@@ -355,13 +355,13 @@ AddPackage() {
 	PKG_DIR=$2
 	PKG_NAME=$3
 	REPO_URL="https://github.com/$4"
-	[[ -z $5 ]] && {
-		TIME "WARNING: Missing <Branch>,will use default branch: [master]"
-		REPO_BRANCH=master
-	} || REPO_BRANCH=$5
+	REPO_BRANCH=$5
 	[[ ${REPO_URL} =~ "${OP_Maintainer}/${OP_REPO_NAME}" ]] && return 0
 
-	mkdir -p package/${PKG_DIR} || TIME "Can't create download dir: [package/${PKG_DIR}]" && return 0
+	mkdir -p package/${PKG_DIR} || {
+		TIME "Can't create download dir: [package/${PKG_DIR}]"
+		return 0
+	}
 	[[ -d package/${PKG_DIR}/${PKG_NAME} ]] && {
 		TIME "Removing old package: [${PKG_NAME}] ..."
 		rm -rf package/${PKG_DIR}/${PKG_NAME}
@@ -369,7 +369,10 @@ AddPackage() {
 	TIME "Checking out package [${PKG_NAME}] to package/${PKG_DIR} ..."
 	case "${PKG_PROTO}" in
 	git)
-		
+		[[ -z ${REPO_BRANCH} ]] && {
+			TIME "WARNING: Missing <branch> ,using default branch: [master]"
+			REPO_BRANCH=master
+		}
 		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
 		git clone -b ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} > /dev/null 2>&1
 	;;
