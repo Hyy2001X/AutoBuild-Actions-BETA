@@ -4,16 +4,15 @@
 
 Diy_Core() {
 	Author=Hyy2001
-	Short_Firmware_Date=true
 	Default_LAN_IP=192.168.1.1
+	Load_CustomPackages_List=true
+	Short_Firmware_Date=true
+	Checkout_Virtual_Images=false
 
 	INCLUDE_AutoBuild_Features=true
 	INCLUDE_DRM_I915=true
 	INCLUDE_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
-	
-	Load_CustomPackages_List=true
-	Checkout_Virtual_Images=false
 }
 
 Firmware-Diy() {
