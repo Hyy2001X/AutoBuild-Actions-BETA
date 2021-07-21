@@ -7,7 +7,9 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 测试通过的设备: `x86_64`
 
-支持的源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt`
+支持的 OpenWrt 源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt`、`lienol/openwrt`
+
+现仅适配上述列出的源码,暂**不支持**自己 Fork 后的源码
 
 ## 部署环境(STEP 1):
 
@@ -49,25 +51,25 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
-   Author 作者名称,若该项留空将自动获取
-   
-   Short_Firmware_Date 固件日期样式,当设置为 true: [20210601] false: [202106012359]
-   
+   Author 作者名称,若留空将自动获取为 Github 用户名
+
    Default_LAN_IP 固件默认 LAN IP 地址
+
+   Short_Firmware_Date 简短的固件日期 true: [20210601]; false: [202106012359]
+
+   Load_CustomPackages_List 启用后,将自动运行 /Scripts/AutoBuild_ExtraPackages.sh 脚本
+
+   Checkout_Virtual_Images 额外上传编译完成的  x86 虚拟磁盘镜像到 Release
 
    INCLUDE_AutoBuild_Features 自动添加 AutoBuild 特性到固件
 
-   INCLUDE_DRM_I915 自动启用 Intel Graphics i915 驱动
+   INCLUDE_DRM_I915 自动启用 Intel Graphics i915 驱动 (仅 x86 设备)
 
    INCLUDE_Argon 自动添加 luci-theme-argon 主题和控制器
 
    INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
    
-   Load_CustomPackages_List 启用后,将自动加载 /CustomPackages 下对应设备的软件包列表
-   
-   Checkout_Virtual_Images 上传 x86 设备虚拟磁盘镜像到 Release (类型需自行在 .config 勾选)
-   
-   注: 若要启用某项功能,请将该值修改为 true,禁用某项功能则修改为 false 或留空
+   注: 若要启用某项功能,请将该项的值修改为 true,禁用某项功能则修改为 false 或留空
 ```
 **其他指令:** 参照下方语法:
 ```
