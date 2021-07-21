@@ -35,7 +35,7 @@ d-team_newifi-d2,coolsnowwolf,master)
 x86_64,coolsnowwolf,master)
 	AddPackage git other openwrt-passwall xiaorouji main
 	AddPackage git other luci-app-shutdown Hyy2001X master
-	AddPackage svn other luci-app-ddnsto linkease/nas-packages/trunk/luci
-	AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
+	# AddPackage svn other luci-app-ddnsto linkease/nas-packages/trunk/luci
+	# AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
 ;;
 esac
