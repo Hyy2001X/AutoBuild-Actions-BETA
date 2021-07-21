@@ -59,11 +59,11 @@ Firmware-Diy_Before() {
 	case "${TARGET_BOARD}" in
 	x86)
 		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-${FW_Boot_Type}-$(Get_sha256 $1).${Firmware_Type_Defined}'
-		Egrep_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_Boot}.[0-9a-z]+.${Firmware_Type}'
+		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_Boot}.[0-9a-z]+.${Firmware_Type}'
 	;;
 	*)
 		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-$(Get_sha256 $1).${Firmware_Type_Defined}'
-		Egrep_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Type}'
+		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Type}'
 	;;
 	esac
 	cat >> VARIABLE_Main <<EOF
@@ -77,7 +77,7 @@ CURRENT_Version=${CURRENT_Version}
 OP_Maintainer=${OP_Maintainer}
 OP_BRANCH=${OP_BRANCH}
 OP_REPO_NAME=${OP_REPO_NAME}
-Egrep_Firmware=${Egrep_Firmware}
+REGEX_Firmware=${REGEX_Firmware}
 EOF
 	cat >> VARIABLE_FILE <<EOF
 Home=${Home}
