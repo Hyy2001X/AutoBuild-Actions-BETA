@@ -3,7 +3,8 @@
 # AutoUpdate for Openwrt
 # Depends on: bash wget-ssl/wget/uclient-fetch curl x86:gzip openssl
 
-Version=V6.5.0
+Version=V6.5.1
+ENV_DEPENDS="Author Github TARGET_PROFILE TARGET_BOARD TARGET_SUBTARGET Firmware_Type CURRENT_Version OP_Maintainer OP_BRANCH OP_REPO_NAME REGEX_Firmware"
 
 TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version} [${DL}]"
@@ -39,7 +40,7 @@ SHELL_HELP() {
 	-L, --log < | del>		<打印 | 删除> AutoUpdate 历史运行日志
 	    --log path=<PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
 	--backup path=<PATH>		备份当前系统配置文件到提供的绝对路径 <PATH>
-	--check-depends			检查 AutoUpdate 依赖软件包
+	--check-depends			检查 AutoUpdate 运行环境
 	--clean				清理 AutoUpdate 缓存
 	--env-list < | 1 | 2>		打印 AutoUpdate 环境变量 <全部 | 变量名称 | 值>
 	--fw-log < | cloud | *>		打印 <当前 | 云端 | 指定版本> 版本的固件更新日志
@@ -77,6 +78,8 @@ EOF
 		echo "固件引导模式:		${x86_Boot}"
 	}
 	echo
+	LIST_ENV 0
+	echo
 	EXIT 0
 }
 
@@ -102,6 +105,13 @@ LIST_ENV() {
 		;;
 		esac
 	}
+	done
+}
+
+CHECK_ENV() {
+	while [[ $1 ]];do
+		[[ $(LIST_ENV 1) =~ $1 ]] && ECHO y "Checking env $1 ... true" || ECHO r "Checking env $1 ... Not found"
+		shift
 	done
 }
 
@@ -297,17 +307,16 @@ CHECK_DEPENDS() {
 				PKG="$(echo "$1" | cut -d ":" -f2)"
 				[[ $(echo "${PKG}" | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 				echo -e "${PKG}${Tab}$(CHECK_PKG ${PKG})"
-				LOGGER "[CHECK_DEPENDS] Checking [${PKG}] ... $(CHECK_PKG ${PKG})"
+				LOGGER "[CHECK_DEPENDS] Checking ${PKG} ... $(CHECK_PKG ${PKG})"
 			}
 		else
 			[[ $(echo "$1" | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 			echo -e "$1${Tab}$(CHECK_PKG $1)"
-			LOGGER "[CHECK_DEPENDS] Checking [$1] ... $(CHECK_PKG $1)"
+			LOGGER "[CHECK_DEPENDS] Checking $1 ... $(CHECK_PKG $1)"
 		fi
 		shift
 	done
 	ECHO y "AutoUpdate 依赖检测结束,若某项检测结果为 [false],请尝试手动安装!"
-	EXIT
 }
 
 FW_VERSION_CHECK() {
@@ -690,6 +699,7 @@ AutoUpdate_Main() {
 	--check-depends)
 		shift && [[ -n $* ]] && SHELL_HELP
 		CHECK_DEPENDS bash x86:gzip uclient-fetch curl wget openssl
+		CHECK_ENV ${ENV_DEPENDS}
 	;;
 	--env-list)
 		shift
