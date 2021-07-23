@@ -8,6 +8,11 @@
 # OP_BRANCH			Openwrt 源码分支,例如 [master] [main] [openwrt-21.02] [v21.02.0-rc3] ...
 # TARGET_PROFILE	设备名称,例如 [asus_rt-acrh17] [d-team_newifi-d2] [redmi_ax6] ...
 # TARGET_BOARD		设备架构,例如 [x86] [ramips] [ipq807x] [ath79] ...
+#
+# [git] 推荐: AddPackage git 存放位置 仓库名称 仓库作者 分支
+# 或者(等同于上方指令): git clone -b 分支 仓库地址 存放位置
+# [svn] 推荐: AddPackage svn 存放位置 软件包名 仓库作者/仓库名称/branches/分支/路径(可选)
+# 或者(等同于上方指令): svn checkout 仓库地址/branches/分支/路径(可选) 存放位置
 
 ## coolsnowwolf:master 通用软件包
 case "${OP_Maintainer},${OP_BRANCH}" in
@@ -23,7 +28,6 @@ coolsnowwolf,master)
 ;;
 esac
 
-## coolsnowwolf:master 设备独有软件包
 case "${TARGET_PROFILE},${OP_Maintainer},${OP_BRANCH}" in
 asus_rt-acrh17,coolsnowwolf,master)
 	AddPackage git other luci-app-usb3disable rufengsuixing
