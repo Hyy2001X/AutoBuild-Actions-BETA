@@ -3,6 +3,7 @@
 # AutoBuild Functions
 
 Firmware-Diy_Before() {
+	TIME "[Firmware-Diy_Before]"
 	Diy_Core
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	[[ -f ${GITHUB_WORKSPACE}/Openwrt.info ]] && source ${GITHUB_WORKSPACE}/Openwrt.info
@@ -92,6 +93,7 @@ EOF
 
 Firmware-Diy_Main() {
 	Firmware-Diy_Before
+	TIME "[Firmware-Diy_Main]"
 	mkdir -p package/base-files/files/etc/AutoBuild
 	[ -f VARIABLE_Main ] && cp VARIABLE_Main package/base-files/files/etc/AutoBuild/Default_Variable
 	Copy CustomFiles/Depends/Custom_Variable package/base-files/files/etc/AutoBuild
@@ -189,6 +191,7 @@ Firmware-Diy_Main() {
 }
 
 Firmware-Diy_Other() {
+	TIME "[Firmware-Diy_Other]"
 	source ./VARIABLE_FILE
 	case "${PKG_Compatible}" in
 	19.07)
@@ -234,6 +237,7 @@ Firmware-Diy_Other() {
 }
 
 Firmware-Diy_End() {
+	TIME "[Firmware-Diy_End]"
 	source ./VARIABLE_FILE
 	mkdir -p bin/Firmware
 	sha256sums="${Firmware_Path}/sha256sums"
