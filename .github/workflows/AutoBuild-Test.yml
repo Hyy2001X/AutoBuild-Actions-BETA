@@ -98,10 +98,17 @@ jobs:
 
     - name: Run AutoBuild_DiyScript.sh
       run: |
+        #!/bin/bash
         chmod +x Scripts/AutoBuild_*.sh
         cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
-        make defconfig > /dev/null 2>&1
+        egrep -v "^#|LEVEL|DEFAULT|=[0-9]" .config | grep "CONFIG_PACKAGE" | sed '/^\s*$/d' | while read X;do
+        line=$(grep -n "${X}" .config | cut -d ':' -f1)
+        [[ ! ${X} =~ '=' || -z $(echo ${X} | cut -d '=' -f2) || ! $(echo ${X} | cut -d '=' -f2) =~ [nym] ]] && {
+            echo "ERROR in line ${line}:	${X}"
+        }
+        done
+        make defconfig
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware-Diy_Main
