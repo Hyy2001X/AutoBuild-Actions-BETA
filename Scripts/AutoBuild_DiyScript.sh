@@ -22,9 +22,4 @@ Firmware-Diy() {
 		Copy CustomFiles/system_${TARGET_PROFILE} package/base-files/files/etc/config system
 	;;
 	esac
-	case "${TARGET_BOARD}" in
-	ramips)
-		sed -i 's/5.10/5.4/' target/linux/ramips/Makefile
-	;;
-	esac
 }
