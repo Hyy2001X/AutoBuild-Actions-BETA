@@ -39,6 +39,8 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 2. 把本地的`.config`文件**重命名**并上传到仓库的`/Configs`目录
 
+    **/Configs/Common**: 通用配置文件,将在编译开始前被追加到 .config,主要用于同时管理多个设备,如果不需要删除即可
+
 3. 编辑`/.github/workflows/*.yml`文件,修改`第 7 行`为易于自己识别的名称
 
 4. 编辑`/.github/workflows/*.yml`文件,修改`第 32 行`为上传的`.config`文件名称
