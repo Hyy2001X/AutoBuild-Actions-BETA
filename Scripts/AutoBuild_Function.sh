@@ -227,11 +227,11 @@ Firmware-Diy_Other() {
 		fi
 	fi
 	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
-		[[ ! "$(cat .config)" =~ "## DO NOT MERGE" ]] && {
+		[[ ! "$(cat .config)" =~ "## TEST" ]] && {
 			TIME "Merging [Configs/Common] to .config ..."
 			echo -e "\n$(cat $GITHUB_WORKSPACE/Configs/Common)" >> .config
 		} || {
-			sed -i '/## DO NOT MERGE/d' .config >/dev/null 2>&1
+			sed -i '/## TEST/d' .config >/dev/null 2>&1
 		}
 	fi
 }
