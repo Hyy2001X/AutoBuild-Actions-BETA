@@ -1,0 +1,5 @@
+CONFIG_TARGET_ramips=y
+CONFIG_TARGET_ramips_mt7621=y
+CONFIG_TARGET_ramips_mt7621_DEVICE_lenovo_newifi-d1=y
+
+## TEST
