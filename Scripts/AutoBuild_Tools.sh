@@ -120,16 +120,16 @@ AutoExpand_UI() {
 	*)
 		[[ ${Choose} =~ [0-9] && ${Choose} -le ${Logic_Disk_Count} && ${Choose} -gt 0 ]] > /dev/null 2>&1 && {
 			which mkfs.ext4 > /dev/null 2>&1
-			[[ $? == 0 ]] && {
+			if [[ $? == 0 ]];then
 				Choose_Disk=$(sed -n ${Choose}p ${Disk_Processed_List} | awk '{print $1}')
 				Choose_Mount=$(grep "${Choose_Disk}" ${Disk_Processed_List} | awk '{print $4}')
 				AutoExpand_Core ${Choose_Disk} ${Choose_Mount}
-			} || {
+			else
 				ECHO r "\n系统缺少相应依赖包,请先安装 [e2fsprogs] !" && sleep 3
 				return
-			}
+			fi
 		} || {
-			ECHO r "\n选择错误,请输入正确的选项!"
+			ECHO r "\n输入错误,请输入正确的选项!"
 			sleep 2 && AutoExpand_UI
 		}
 	;;
@@ -161,13 +161,18 @@ USB_Info() {
 }
 
 List_Disk() {
-	echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4	$5"
+	[[ $4 == / ]] && {
+		echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4		$5"
+	} || {
+		echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4	$5"
+	}
 }
 
 AutoExpand_Core() {
 	ECHO r "\n警告: 操作开始后请不要中断任务或进行其他操作,否则可能导致设备数据丢失 !"
+	ECHO r "同时连接多个 USB 设备可能导致分区错位路由器不能正常启动 !"
 	ECHO r "\n本操作将把设备 '$1' 格式化为 ext4 格式,请提前做好数据备份工作 !"
-	read -p "是否继续进行格式化操作?[Y/n]:" Choose
+	read -p "是否执行格式化操作?[Y/n]:" Choose
 	[[ ${Choose} == [Yesyes] ]] && {
 		ECHO y "\n开始运行脚本 ..."
 		sleep 3
@@ -232,14 +237,14 @@ config mount
 EOF
 	uci commit fstab
 	ECHO y "\n运行结束,外接设备 '$1' 已挂载到系统分区 !\n"
-	ECHO r "\n警告: 固件更新将会导致扩容失效,当前硬盘数据将会丢失,请提前做好备份工作 !"
+	ECHO r "警告: 固件更新将会导致扩容失效,当前硬盘数据将会丢失,请提前做好备份工作 !\n"
 	read -p "操作需要重启生效,是否立即重启?[Y/n]:" Choose
 	[[ ${Choose} == [Yesyes] ]] && {
 		ECHO g "\n正在重启设备,请耐心等待 ..."
 		sync
 		reboot
 		exit
-	} || return 
+	} || exit
 }
 
 AutoSamba_UI() {
