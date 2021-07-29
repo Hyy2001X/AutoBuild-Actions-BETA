@@ -21,9 +21,10 @@ config timeserver 'ntp'
 config led
 	option default '0'
 	option name 'WAN'
+	option trigger 'netdev'
+	option mode 'link tx rx'
+	option dev 'wan'
 	option sysfs 'blue:internet'
-	option trigger 'switch0'
-	option port_mask '0x10'
 
 config led
 	option default '0'
