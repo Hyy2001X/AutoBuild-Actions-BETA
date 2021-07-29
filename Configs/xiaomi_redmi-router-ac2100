@@ -3,10 +3,12 @@ CONFIG_TARGET_ramips_mt7621=y
 CONFIG_TARGET_ramips_mt7621_DEVICE_xiaomi_redmi-router-ac2100=y
 
 # Wireless 驱动程序
-CONFIG_PACKAGE_kmod-mt76=y
-# CONFIG_PACKAGE_kmod-mt7615d_dbdc=y
+CONFIG_PACKAGE_kmod-mt7603=y
+CONFIG_PACKAGE_kmod-mt7615e=y
+# CONFIG_PACKAGE_kmod-mt7603e is not set
 # CONFIG_PACKAGE_kmod-mt7615d is not set
 # CONFIG_PACKAGE_luci-app-mtwifi is not set
+# CONFIG_PACKAGE_mt_wifi is not set
 
 # LUCI Appliciations
 CONFIG_PACKAGE_luci-app-accesscontrol=y
@@ -33,3 +35,5 @@ CONFIG_PACKAGE_luci-app-webadmin=y
 CONFIG_PACKAGE_luci-app-wol=y
 CONFIG_PACKAGE_luci-app-wireguard=y
 CONFIG_PACKAGE_luci-app-zerotier=y
+
+CONFIG_PACKAGE_wpad=y
