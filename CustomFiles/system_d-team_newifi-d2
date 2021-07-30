@@ -19,12 +19,11 @@ config timeserver 'ntp'
 	list server 'cn.pool.ntp.org'
 
 config led
-	option default '0'
 	option name 'WAN'
-	option trigger 'netdev'
-	option mode 'link tx rx'
-	option dev 'wan'
 	option sysfs 'blue:internet'
+	option trigger 'switch0'
+	option port_mask '0x10'
+	option default '0'
 
 config led
 	option default '0'
@@ -32,7 +31,7 @@ config led
 	option sysfs 'blue:wlan2g'
 	option trigger 'netdev'
 	option dev 'wlan0'
-	option mode 'link tx rx'
+	option mode 'link'
 
 config led
 	option default '0'
@@ -40,4 +39,5 @@ config led
 	option sysfs 'blue:wlan5g'
 	option trigger 'netdev'
 	option dev 'wlan1'
-	option mode 'link tx rx'
+	option mode 'link'
+
