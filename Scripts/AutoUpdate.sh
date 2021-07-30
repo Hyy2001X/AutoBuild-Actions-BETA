@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Depends on: bash wget-ssl/wget/uclient-fetch curl x86:gzip openssl
 
-Version=V6.5.2
+Version=V6.5.3
 ENV_DEPENDS="Author Github TARGET_PROFILE TARGET_BOARD TARGET_SUBTARGET Firmware_Type CURRENT_Version OP_Maintainer OP_BRANCH OP_REPO_NAME REGEX_Firmware"
 
 TITLE() {
@@ -37,6 +37,7 @@ SHELL_HELP() {
 	-H, --help			打印 AutoUpdate 帮助信息
 	-L, --log < | del>		<打印 | 删除> AutoUpdate 历史运行日志
 	    --log path=<PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
+	-P <FastGit | Ghproxy>		使用 <FastGit | Ghproxy> 镜像加速
 	--backup path=<PATH>		备份当前系统配置文件到提供的绝对路径 <PATH>
 	--check-depends			检查 AutoUpdate 运行环境
 	--clean				清理 AutoUpdate 缓存
@@ -441,7 +442,19 @@ PREPARE_UPGRADES() {
 			Special_Commands="${Special_Commands} [测试模式]"
 		;;
 		-P | --proxy)
-			Proxy_Mode=1
+			case $2 in
+			[Ff]ast[Gg]it)
+				Proxy_Type="${Release_FastGit_URL}"
+				shift
+			;;
+			[Gg]h[Pp]roxy)
+				Proxy_Type="${Release_Goproxy_URL}"
+				shift
+			;;
+			*)
+				Proxy_Type="${Release_Goproxy_URL}"
+			;;
+			esac
 			Special_Commands="${Special_Commands} [镜像加速]"
 		;;
 		-F | --force-write)
@@ -490,17 +503,17 @@ PREPARE_UPGRADES() {
 		ECHO r "云端固件信息获取失败,请检查网络后重试!"
 		EXIT 1
 	}
-	if [[ $(CHECK_PKG curl) == true && ${Proxy_Mode} != 1 ]];then
+	if [[ $(CHECK_PKG curl) == true && -z ${Proxy_Type} ]];then
 		Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 		LOGGER "Google_Check: ${Google_Check}"
 		[[ ${Google_Check} != 301 ]] && {
 			ECHO r "网络连接不佳,优先使用镜像加速!"
-			Proxy_Mode=1
+			Proxy_Type=${Release_Goproxy_URL}
 		}
 	fi
 	CHECK_UPDATES
-	[[ ${Proxy_Mode} == 1 ]] && {
-		CLOUD_FW_URL="${Release_Goproxy_URL}"
+	[[ -n ${Proxy_Type} ]] && {
+		CLOUD_FW_URL="${Proxy_Type}"
 	} || CLOUD_FW_URL="${Release_URL}"
 	cat <<EOF
 
@@ -528,7 +541,7 @@ EOF
 	Retry_Times=5
 	ECHO "${Proxy_Echo}正在下载固件,请耐心等待 ..."
 	while [[ ${Retry_Times} -ge 0 ]];do
-		if [[ ! ${PROXY_Mode} == 1 && ${Retry_Times} == 4 ]];then
+		if [[ -z ${Proxy_Type} && ${Retry_Times} == 4 ]];then
 			ECHO g "尝试使用 [FastGit] 镜像加速下载固件!"
 			CLOUD_FW_URL="${Release_FastGit_URL}"
 		fi
