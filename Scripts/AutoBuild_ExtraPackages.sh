@@ -9,37 +9,32 @@
 # TARGET_PROFILE	设备名称,例如 [asus_rt-acrh17] [d-team_newifi-d2] [redmi_ax6] ...
 # TARGET_BOARD		设备架构,例如 [x86] [ramips] [ipq807x] [ath79] ...
 #
-# [git] 推荐: AddPackage git 存放位置 仓库名称 仓库作者 分支
-# 或者(等同于上方指令): git clone -b 分支 仓库地址 存放位置
-# [svn] 推荐: AddPackage svn 存放位置 软件包名 仓库作者/仓库名称/branches/分支/路径(可选)
-# 或者(等同于上方指令): svn checkout 仓库地址/branches/分支/路径(可选) 存放位置
+# [git] AddPackage git 存放位置 仓库名称 仓库作者 分支
+# [svn] AddPackage svn 存放位置 软件包名 仓库作者/仓库名称/branches/分支/路径(可选)
 
-## coolsnowwolf:master 通用软件包
-case "${OP_Maintainer},${OP_BRANCH}" in
-coolsnowwolf,master)
+## e.g. 当前使用源码为 coolsnowwolf/lede:master 时添加下列软件包
+case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
+coolsnowwolf/lede:master)
 	AddPackage svn other luci-app-smartdns kenzok8/openwrt-packages/trunk
-	AddPackage git other luci-app-serverchan tty228
+	AddPackage git other luci-app-serverchan tty228 master
 	AddPackage svn other luci-app-socat Lienol/openwrt-package/trunk
 	AddPackage git other luci-app-onliner Hyy2001X
 	AddPackage git other luci-app-adguardhome Hyy2001X
 	AddPackage svn other luci-app-eqos kenzok8/openwrt-packages/trunk
 	AddPackage git other OpenClash vernesong master
 	AddPackage git other luci-app-adblock-plus small-5 master
-;;
-esac
-
-case "${TARGET_PROFILE},${OP_Maintainer},${OP_BRANCH}" in
-asus_rt-acrh17,coolsnowwolf,master)
-	AddPackage git other luci-app-usb3disable rufengsuixing
-;;
-d-team_newifi-d2,coolsnowwolf,master)
-	AddPackage git other luci-app-usb3disable rufengsuixing
-	# AddPackage svn package/kernel mt76 openwrt/openwrt/trunk/package/kernel
-;;
-x86_64,coolsnowwolf,master)
-	AddPackage git other openwrt-passwall xiaorouji main
-	AddPackage git other luci-app-shutdown Hyy2001X master
+	# AddPackage git other OpenAppFilter destan19 master
 	# AddPackage svn other luci-app-ddnsto linkease/nas-packages/trunk/luci
 	# AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
+	
+	case "${TARGET_PROFILE}" in
+	asus_rt-acrh17 | d-team_newifi-d2 | xiaoyu_xy-c5)
+		AddPackage git other luci-app-usb3disable rufengsuixing master
+	;;
+	x86_64)
+		AddPackage git other openwrt-passwall xiaorouji main
+		AddPackage git other luci-app-shutdown Hyy2001X master
+	;;
+	esac
 ;;
 esac
