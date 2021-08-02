@@ -34,7 +34,6 @@ coolsnowwolf/lede:master)
 	x86_64)
 		AddPackage git other openwrt-passwall xiaorouji main
 		AddPackage git other luci-app-shutdown Hyy2001X master
-		AddPackage svn feeds/luci luci-app-pppoe-server immortalwrt/luci/branches/openwrt-18.06/applications
 	;;
 	esac
 ;;
