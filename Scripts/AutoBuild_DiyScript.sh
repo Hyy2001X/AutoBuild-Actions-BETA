@@ -22,4 +22,9 @@ Firmware-Diy() {
 		Copy CustomFiles/system_${TARGET_PROFILE} package/base-files/files/etc/config system
 	;;
 	esac
+	case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
+	coolsnowwolf/lede:master)
+		sed -i "s?/bin/login?/usr/libexec/login.sh?g" package/feeds/packages/ttyd/files/ttyd.config
+	;;
+	esac
 }
