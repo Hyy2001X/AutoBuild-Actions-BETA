@@ -63,7 +63,7 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
    Checkout_Virtual_Images 额外上传编译完成的  x86 虚拟磁盘镜像到 Release
 
-   INCLUDE_AutoBuild_Features 自动添加 AutoBuild 特性到固件
+   INCLUDE_AutoBuild_Features 自动添加 AutoBuild 固件特性,例如: 一键更新、部分优化
 
    INCLUDE_DRM_I915 自动启用 Intel Graphics i915 驱动 (仅 x86 设备)
 
