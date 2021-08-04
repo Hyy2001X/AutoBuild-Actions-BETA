@@ -3,6 +3,7 @@
 # AutoBuild DiyScript
 
 Diy_Core() {
+
 	Author=Hyy2001
 	Default_LAN_IP=192.168.1.1
 	Load_CustomPackages_List=true
@@ -16,18 +17,26 @@ Diy_Core() {
 }
 
 Firmware-Diy() {
+
 	# 部分可调用变量如下
 	# OP_Maintainer		源码作者
 	# OP_REPO_NAME		仓库名称
 	# OP_BRANCH			源码分支
 	# TARGET_PROFILE	设备名称
 	# TARGET_BOARD		设备架构
-	# CustomFiles		仓库 /CustomFiles 路径
-	# Scripts			仓库 /Scripts 路径
-	# Home				源码存放位置,等同 ${GITHUB_WORKSPACE}/openwrt
-	# feeds_luci		等同 ${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
-	# feeds_pkgs		等同 ${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
-	# base_files		等同 ${GITHUB_WORKSPACE}/openwrt/package/base-files/files
+
+	# CustomFiles		仓库 /CustomFiles 绝对路径
+	# Scripts			仓库 /Scripts 绝对路径
+	# Home				源码存放绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt
+	# feeds_luci		绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
+	# feeds_pkgs		绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
+	# base_files		绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt/package/base-files/files
+
+	case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
+	coolsnowwolf/lede:master)
+		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${feeds_pkgs}/ttyd/files/ttyd.config
+	;;
+	esac
 
 	case "${TARGET_PROFILE}" in
 	d-team_newifi-d2)
@@ -35,11 +44,5 @@ Firmware-Diy() {
 		Copy ${CustomFiles}/system_d-team_newifi-d2 ${base_files}/etc/config system
 	;;
 	esac
-	case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
-	coolsnowwolf/lede:master)
-		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${feeds_pkgs}/ttyd/files/ttyd.config
-		sed -i "/dns_caching_dns/d" $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
-		echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
-	;;
-	esac
+
 }

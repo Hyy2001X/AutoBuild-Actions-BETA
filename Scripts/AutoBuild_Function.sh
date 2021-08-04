@@ -3,7 +3,8 @@
 # AutoBuild Functions
 
 Firmware-Diy_Before() {
-	TIME "[Firmware-Diy_Before]"
+	ECHO "[Firmware-Diy_Before] Start ..."
+	CD ${GITHUB_WORKSPACE}/openwrt
 	Diy_Core
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	[[ -f ${GITHUB_WORKSPACE}/Openwrt.info ]] && source ${GITHUB_WORKSPACE}/Openwrt.info
@@ -44,7 +45,7 @@ Firmware-Diy_Before() {
 	} || {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" .config | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
-	[[ -z ${TARGET_PROFILE} ]] && TIME "Unable to obtain the [TARGET_PROFILE] !"
+	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to obtain the [TARGET_PROFILE] !"
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
 	case "${TARGET_BOARD}" in
@@ -94,41 +95,73 @@ base_files=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
 EOF
 	echo "$(cat ${Home}/VARIABLE_Main)" >> ${Home}/VARIABLE_FILE
 	echo -e "### SYS-VARIABLE LIST ###\n$(cat ${Home}/VARIABLE_FILE)\n"
+	ECHO "[Firmware-Diy_Before] Done."
 }
 
 Firmware-Diy_Main() {
 	Firmware-Diy_Before
-	TIME "[Firmware-Diy_Main]"
-	source ${GITHUB_WORKSPACE}/openwrt/VARIABLE_FILE
-	mkdir -p ${base_files}/etc/AutoBuild
-	[ -f ${GITHUB_WORKSPACE}/openwrt/VARIABLE_Main ] && cp VARIABLE_Main ${base_files}/etc/AutoBuild/Default_Variable
-	Copy ${CustomFiles}/Depends/Custom_Variable ${base_files}/etc/AutoBuild
+	ECHO "[Firmware-Diy_Main] Start ..."
+	CD ${Home}
+	source ${Home}/VARIABLE_FILE
 	chmod +x -R ${Scripts}
 	chmod 777 -R ${CustomFiles}
 	[[ ${Load_CustomPackages_List} == true ]] && {
 		bash -n ${Scripts}/AutoBuild_ExtraPackages.sh
-		[[ ! $? == 0 ]] && TIME "AutoBuild_ExtraPackages.sh syntax error,skip ..." || {
+		[[ ! $? == 0 ]] && ECHO "AutoBuild_ExtraPackages.sh syntax error,skip ..." || {
 			. ${Scripts}/AutoBuild_ExtraPackages.sh
 		}
 	}
-	[[ ${INCLUDE_AutoBuild_Features} == true ]] && {
+	if [[ ${INCLUDE_AutoBuild_Features} == true ]];then
+		MKDIR ${base_files}/etc/AutoBuild
+		cp ${Home}/VARIABLE_Main ${base_files}/etc/AutoBuild/Default_Variable
+		Copy ${CustomFiles}/Depends/Custom_Variable ${base_files}/etc/AutoBuild
 		Copy ${Scripts}/AutoBuild_Tools.sh ${base_files}/bin
 		Copy ${Scripts}/AutoUpdate.sh ${base_files}/bin
 		AddPackage git lean luci-app-autoupdate Hyy2001X main
-	}
+		Copy ${CustomFiles}/Depends/profile ${base_files}/etc
+		Copy ${CustomFiles}/Depends/base-files-essential ${base_files}/lib/upgrade/keep.d
+		AutoUpdate_Version=$(egrep -o "V[0-9].+" ${base_files}/bin/AutoUpdate.sh | awk 'NR==1')
+		case "${OP_Maintainer}/${OP_REPO_NAME}" in
+		coolsnowwolf/lede)
+			Copy ${CustomFiles}/Depends/coremark.sh ${Home}/$(PKG_Finder d "package feeds" coremark)
+			Copy ${CustomFiles}/Depends/cpuinfo_x86 ${Home}/$(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
+			sed -i "s?iptables?#iptables?g" ${Version_File}
+			sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
+			sed -i "/dns_caching_dns/d" $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
+			echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
+		;;
+		immortalwrt/immortalwrt)
+			Copy ${CustomFiles}/Depends/openwrt_release_${OP_Maintainer} ${base_files}/etc openwrt_release
+			Copy ${CustomFiles}/Depends/cpuinfo_x86 ${Home}/$(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
+			sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
+		;;
+		esac
+		case "${OP_Maintainer}/${OP_REPO_NAME}" in
+		immortalwrt/immortalwrt)
+			Copy ${CustomFiles}/Depends/banner ${Home}/$(PKG_Finder d package default-settings)/files openwrt_banner
+			sed -i "s?By?By ${Author}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
+			sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
+		;;
+		*)
+			Copy ${CustomFiles}/Depends/banner ${base_files}/etc
+			sed -i "s?By?By ${Author}?g" ${base_files}/etc/banner
+			sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" ${base_files}/etc/banner
+		;;
+		esac
+	fi
 	[[ ${INCLUDE_Argon} == true ]] && {
-		case "${OP_Maintainer},${OP_BRANCH}" in
-		coolsnowwolf,master)
+		case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
+		coolsnowwolf/lede:master)
 			AddPackage git lean luci-theme-argon jerrykuku 18.06
 		;;
-		[Ll]ienol,main)
+		[Ll]ienol/openwrt:main)
 			AddPackage git other luci-theme-argon jerrykuku master
 		;;
-		[Ll]ienol,19.07)
+		[Ll]ienol/openwrt:19.07)
 			AddPackage git other luci-theme-argon jerrykuku v2.2.5
 		;;
 		*)
-			[[ ${OP_Maintainer} != immortalwrt ]] && {
+			[[ ! ${OP_Maintainer}/${OP_REPO_NAME} = immortalwrt/immortalwrt ]] && {
 				case "${OP_BRANCH}" in
 				19.07)
 					AddPackage git other luci-theme-argon jerrykuku v2.2.5
@@ -140,62 +173,48 @@ Firmware-Diy_Main() {
 					AddPackage git other luci-theme-argon jerrykuku 18.06
 				;;
 				esac
-			} || :
+			} || {
+				ECHO "[${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}]: Current Source is not supported ..."
+				Argon_Skip=1
+			}
 		;;
 		esac
-		AddPackage git other luci-app-argon-config jerrykuku master
+		[[ ! ${Argon_Skip} == 1 ]] && AddPackage git other luci-app-argon-config jerrykuku master
 	}
 	[[ -n ${Before_IP_Address} ]] && Default_LAN_IP="${Before_IP_Address}"
 	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
 		Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${base_files}/bin/config_generate | awk 'NR==1')
 		if [[ ! ${Default_LAN_IP} == ${Old_IP_Address} ]];then
-			TIME "Setting default IP Address to ${Default_LAN_IP} ..."
+			ECHO "Setting default IP Address to ${Default_LAN_IP} ..."
 			sed -i "s/${Old_IP_Address}/${Default_LAN_IP}/g" ${base_files}/bin/config_generate
 		fi
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_BOARD} == x86 ]] && {
-		Copy ${CustomFiles}/Depends/DRM-I915 target/linux/x86
+		Copy ${CustomFiles}/Depends/DRM-I915 ${Home}/target/linux/x86
 		for X in $(ls -1 target/linux/x86 | grep "config-"); do echo -e "\n$(cat target/linux/x86/DRM-I915)" >> target/linux/x86/${X}; done
 	}
-	[ -f ${base_files}/bin/AutoUpdate.sh ] && {
-		AutoUpdate_Version=$(egrep -o "V[0-9].+" ${base_files}/bin/AutoUpdate.sh | awk 'END{print}')
-	} || AutoUpdate_Version=OFF
-	Copy ${CustomFiles}/Depends/profile ${base_files}/etc
-	Copy ${CustomFiles}/Depends/base-files-essential ${base_files}/lib/upgrade/keep.d
-	case "${OP_Maintainer}" in
-	coolsnowwolf)
-		Copy ${CustomFiles}/Depends/coremark.sh $(PKG_Finder d "package feeds" coremark)
-		Copy ${CustomFiles}/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
+	case "${OP_Maintainer}/${OP_REPO_NAME}" in
+	coolsnowwolf/lede)
+		TIME "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
 		AddPackage git other helloworld fw876 master
-		sed -i 's/143/143,8080/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
-		sed -i "s?iptables?#iptables?g" ${Version_File}
-		sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
+		sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 	;;
-	immortalwrt)
-		sed -i "/dns_caching_dns/d" $(PKG_Finder d "package feeds" luci-app-turboacc)/root/etc/config/turboacc
-		echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d "package feeds" luci-app-turboacc)/root/etc/config/turboacc
-		Copy ${CustomFiles}/Depends/openwrt_release_${OP_Maintainer} ${base_files}/etc openwrt_release
-		Copy ${CustomFiles}/Depends/cpuinfo_x86 $(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
-		sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
+	immortalwrt/immortalwrt)
+		:
 	;;
-	esac
-	case "${OP_Maintainer}" in
-	immortalwrt)
-		Copy ${CustomFiles}/Depends/banner $(PKG_Finder d package default-settings)/files openwrt_banner
-		sed -i "s?By?By ${Author}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
-		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
+	openwrt/openwrt)
+		:
 	;;
-	*)
-		Copy ${CustomFiles}/Depends/banner ${base_files}/etc
-		sed -i "s?By?By ${Author}?g" ${base_files}/etc/banner
-		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" ${base_files}/etc/banner
+	[Ll]ienol/openwrt)
+		:
 	;;
 	esac
-	TIME "[Firmware-Diy_Main] All done !"
+	ECHO "[Firmware-Diy_Main] Done."
 }
 
 Firmware-Diy_Other() {
-	TIME "[Firmware-Diy_Other]"
+	ECHO "[Firmware-Diy_Other] Start ..."
+	CD ${GITHUB_WORKSPACE}/openwrt
 	source ${GITHUB_WORKSPACE}/openwrt/VARIABLE_FILE
 	case "${PKG_Compatible}" in
 	19.07)
@@ -211,38 +230,40 @@ Firmware-Diy_Other() {
 	esac
 	if [[ ${PKG_Compatible} == true ]];then
 		if [[ ${OP_Maintainer} == openwrt || ${OP_Maintainer} == [Ll]ienol || ${Force_mode} == 1 ]];then
-			TIME "Starting to run Obsolete_Package_Compatible Scripts ..."
+			ECHO "Start running Obsolete_Package_Compatible Script ..."
 			case "${OP_BRANCH}" in
 			19.07 | 21.02 | main)
 				[[ ${OP_BRANCH} == main ]] && OP_BRANCH=21.02
-				Copy ${CustomFiles}/Patches/0003-upx-ucl-${OP_BRANCH}.patch ./
+				Copy ${CustomFiles}/Patches/0003-upx-ucl-${OP_BRANCH}.patch ${Home}
 				cat 0003-upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
 				# AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
-				TIME "Starting to convert zh-cn translation files to zh_Hans ..."
+				ECHO "Starting to convert zh-cn translation files to zh_Hans ..."
 				cd package && ${Scripts}/Convert_Translation.sh && cd -
 			;;
 			*)
-				TIME "Current branch: [${OP_BRANCH}] is not supported,skip..."
+				ECHO "[${OP_BRANCH}]: Current Branch is not supported ..."
 			;;
 			esac
 		else
-			TIME "Current source: [${OP_Maintainer}] is not supported,skip..."
+			ECHO "[${OP_Maintainer}]: Current Source_Maintainer is not supported ..."
 		fi
 	fi
 	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
 		[[ ! "$(cat .config)" =~ "## TEST" ]] && {
-			TIME "Merging [Configs/Common] to .config ..."
+			ECHO "Merging [Configs/Common] to .config ..."
 			echo -e "\n$(cat $GITHUB_WORKSPACE/Configs/Common)" >> .config
 		} || {
 			sed -i '/## TEST/d' .config >/dev/null 2>&1
 		}
 	fi
+	ECHO "[Firmware-Diy_Other] Done."
 }
 
 Firmware-Diy_End() {
-	TIME "[Firmware-Diy_End]"
+	ECHO "[Firmware-Diy_End] Start ..."
+	CD ${GITHUB_WORKSPACE}/openwrt
 	source ${GITHUB_WORKSPACE}/openwrt/VARIABLE_FILE
-	mkdir -p bin/Firmware
+	MKDIR bin/Firmware
 	sha256sums="${Firmware_Path}/sha256sums"
 	cd ${Firmware_Path}
 	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1 | egrep -v "packages|buildinfo|sha256sums|manifest")\n"
@@ -261,6 +282,7 @@ Firmware-Diy_End() {
 	[[ $(ls) =~ AutoBuild ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
 	cd ${Home}
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
+	ECHO "[Firmware-Diy_End] Done."
 }
 
 Eval_Firmware() {
@@ -285,9 +307,9 @@ Eval_Firmware_Core() {
 		esac
 		eval AutoBuild_Firmware=$(Get_Variable AutoBuild_Firmware=)
 		[[ -f $1 ]] && {
-			TIME "Copying [$1] to [${AutoBuild_Firmware}] ..."
+			ECHO "Copying [$1] to [${AutoBuild_Firmware}] ..."
 			cp -a $1 ${AutoBuild_Firmware}
-		} || TIME "Unable to access [${AutoBuild_Firmware}] ..."
+		} || ECHO "Unable to access [${AutoBuild_Firmware}] ..."
 		shift
 	done
 }
@@ -329,23 +351,37 @@ Get_Branches() {
     git -C $(pwd) rev-parse HEAD
 }
 
-TIME() {
+ECHO() {
 	echo "[$(date "+%H:%M:%S")] $*"
 }
 
 PKG_Finder() {
 	local Result
 	[[ $# -ne 3 ]] && {
-		TIME "Usage: PKG_Finder <f | d> Search_Path Target_Name/Target_Path"
+		ECHO "Usage: PKG_Finder <f | d> Search_Path Target_Name/Target_Path"
 		return 0
 	}
 	Result=$(find $2 -name $3 -type $1 -exec echo {} \;)
 	[[ -n ${Result} ]] && echo "${Result}"
 }
 
+CD() {
+	cd $1
+	[[ ! $? == 0 ]] && ECHO "Unable to enter target directory $1 ..." || ECHO "Current runnning directory: $(pwd)"
+}
+
+MKDIR() {
+	while [[ $1 ]];do
+		if [[ ! -d $1 ]];then
+			mkdir -p $1 || ECHO "Failed to create target directory: [$1] ..."
+		fi
+		shift
+	done
+}
+
 AddPackage() {
 	[[ $# -lt 4 ]] && {
-		TIME "Syntax error: [$#] [$*] !"
+		ECHO "Syntax error: [$#] [$*]"
 		return 0
 	}
 	PKG_PROTO=$1
@@ -354,7 +390,8 @@ AddPackage() {
 		:
 	;;
 	*)
-		TIME "Unknown type: ${PKG_PROTO}"
+		ECHO "Unknown content: ${PKG_PROTO}"
+		return 0
 	;;
 	esac
 	PKG_DIR=$2
@@ -364,19 +401,16 @@ AddPackage() {
 	REPO_BRANCH=$5
 	[[ ${REPO_URL} =~ "${OP_Maintainer}/${OP_REPO_NAME}" ]] && return 0
 
-	mkdir -p ${PKG_DIR} || {
-		TIME "Can't create download dir: [${PKG_DIR}] ..."
-		return 0
-	}
+	MKDIR ${PKG_DIR}
 	[[ -d ${PKG_DIR}/${PKG_NAME} ]] && {
-		TIME "Removing old package: [${PKG_NAME}] ..."
+		ECHO "Removing old package: [${PKG_NAME}] ..."
 		rm -rf ${PKG_DIR}/${PKG_NAME}
 	}
-	TIME "Checking out package [${PKG_NAME}] to ${PKG_DIR} ..."
+	ECHO "Checking out package [${PKG_NAME}] to ${PKG_DIR} ..."
 	case "${PKG_PROTO}" in
 	git)
 		[[ -z ${REPO_BRANCH} ]] && {
-			TIME "WARNING: Missing <branch> ,using default branch: [master]"
+			ECHO "WARNING: Syntax missing <branch> ,using default branch: [master]"
 			REPO_BRANCH=master
 		}
 		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
@@ -388,25 +422,26 @@ AddPackage() {
 	esac
 	[[ -f ${PKG_NAME}/Makefile || -n $(ls -A ${PKG_NAME}) ]] && {
 		mv -f "${PKG_NAME}" "${PKG_DIR}"
-	} || TIME "Failed to download package ${PKG_NAME} ..."
+		[[ $? == 0 ]] && ECHO "Done."
+	} || ECHO "Failed to download package ${PKG_NAME} ..."
 }
 
 Copy() {
 	[[ ! $# =~ [23] ]] && {
-		TIME "Error options: [$#] [$*]"
+		ECHO "Syntax error: [$#] [$*]"
 		return 0
 	}
 	[[ ! -f $1 ]] && [[ ! -d $1 ]] && {
-		TIME "$1: No such file or directory ..."
+		ECHO "$1: No such file or directory ..."
 		return 0
 	}
-	[[ ! -d ${GITHUB_WORKSPACE}/openwrt/$2 ]] && mkdir -p ${GITHUB_WORKSPACE}/openwrt/$2
-	
+	MKDIR $2
 	if [[ -z $3 ]];then
-		TIME "Copying $1 to $2 ..."
-		cp -a $1 ${GITHUB_WORKSPACE}/openwrt/$2
+		ECHO "Copying $1 to $2 ..."
+		cp -a $1 $2
 	else
-		TIME "Copy and renaming $1 to $2/$3 ..."
-		cp -a $1 ${GITHUB_WORKSPACE}/openwrt/$2/$3
+		ECHO "Copy and renaming $1 to $2/$3 ..."
+		cp -a $1 $2/$3
 	fi
+	[[ $? == 0 ]] && ECHO "Done." || ECHO "Failed."
 }
