@@ -195,7 +195,7 @@ Firmware-Diy_Main() {
 	}
 	case "${OP_Maintainer}/${OP_REPO_NAME}" in
 	coolsnowwolf/lede)
-		TIME "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
+		ECHO "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 	;;
