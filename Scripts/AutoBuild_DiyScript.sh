@@ -5,6 +5,7 @@
 Diy_Core() {
 
 	Author=Hyy2001
+	Message="Powered by AutoBuild-Actions"
 	Default_LAN_IP=192.168.1.1
 	Load_CustomPackages_List=true
 	Short_Firmware_Date=true

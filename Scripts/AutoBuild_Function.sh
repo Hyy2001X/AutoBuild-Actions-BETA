@@ -92,6 +92,7 @@ Scripts=${GITHUB_WORKSPACE}/Scripts
 feeds_luci=${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
 feeds_pkgs=${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
 base_files=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
+Message=${Message}
 EOF
 	echo "$(cat ${Home}/VARIABLE_Main)" >> ${Home}/VARIABLE_FILE
 	echo -e "### SYS-VARIABLE LIST ###\n$(cat ${Home}/VARIABLE_FILE)\n"
@@ -136,16 +137,16 @@ Firmware-Diy_Main() {
 			sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 		;;
 		esac
+		[[ -z ${Message} ]] && Message="Powered by AutoBuild-Actions"
+		sed -i "s?By?By ${Author}?g" ${CustomFiles}/Depends/banner
+		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" ${CustomFiles}/Depends/banner
+		sed -i "s?MSG?${Message}?g" ${CustomFiles}/Depends/banner
 		case "${OP_Maintainer}/${OP_REPO_NAME}" in
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/banner ${Home}/$(PKG_Finder d package default-settings)/files openwrt_banner
-			sed -i "s?By?By ${Author}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
-			sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" $(PKG_Finder d package default-settings)/files/openwrt_banner
 		;;
 		*)
 			Copy ${CustomFiles}/Depends/banner ${base_files}/etc
-			sed -i "s?By?By ${Author}?g" ${base_files}/etc/banner
-			sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" ${base_files}/etc/banner
 		;;
 		esac
 	fi

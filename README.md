@@ -54,6 +54,8 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 **AutoBuild_DiyScript.sh: Diy_Core() 函数中的变量解释:**
 ```
    Author 作者名称,若留空将自动获取为 Github 用户名
+   
+   Message 特殊信息,与作者名称一同在 Shell banner 展示
 
    Default_LAN_IP 固件默认 LAN IP 地址
 

@@ -2,22 +2,18 @@ Sysinfo() {
 	source /rom/etc/AutoBuild/Default_Variable > /dev/null 2>&1
 	[ -z "${CURRENT_Version}" ] && CURRENT_Version=未知
 	[ -z "${TARGET_PROFILE}" ] && local TARGET_PROFILE=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
-	local IP_Address=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:" | awk 'NR==1')
 	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
-	local Overlay_Available="$(df -hT / | grep 'overlay' | awk '{print $5}' | awk 'NR==1')"
-	local Tmp_Available="$(df -hT /tmp | grep '/tmp' | awk '{print $5}' | awk 'NR==1')"
-	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}')
-	cat <<EOF
-
-            $(echo -e "设备名称:		${Yellow}${TARGET_PROFILE}${Grey} | ${Yellow}$(uname -n)${White}")
-            $(echo -e "固件版本:		${Grey}${CURRENT_Version}${White}")
-            内核版本:		$(uname -rs)$([ -n "${TEMP}" ] && echo -e "\n            核心温度:		${TEMP}")
-            后台地址: 		${IP_Address}
-            $(echo -e "可用空间:		/: ${Overlay_Available}${Grey} | ${White}/tmp: ${Tmp_Available}")
-            运行时间: 		${Startup}$([ -n "${CoreMark}" ] && echo -e "\n            性能得分:		${CoreMark}")
-
-EOF
+	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}' | cut -d '+' -f2 | cut -d '.' -f1 | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
+	echo
+	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE} ${Div} $(uname -n)"
+	echo -e "            内核版本:		K$(uname -rs | egrep -o "[0-9].+")"
+	echo -e "            可用内存:		$(free | grep Mem | awk '{a=$7*100/$2};b=$7/1024 {printf("%.1fM \e[36m|\e[0m %.1f\n",b,a)}')%"
+	echo -e "            可用存储:		$(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024} {printf("%.1fM \e[36m|\e[0m %.1f\n",b,a)}')%"
+	[ -n "${TEMP}" ] && echo -e "            设备温度:		${TEMP}"
+	[ -n "${CoreMark}" ] && echo -e "            性能得分:		${CoreMark} Scores"
+	echo -e "            运行时间: 		${Startup}"
+	echo
 }
 
 export White="\e[0m"
@@ -26,6 +22,7 @@ export Red="\e[31m"
 export Blue="\e[34m"
 export Grey="\e[36m"
 export Green="\e[32m"
+Div="${Grey}|${White}"
 
 clear
 
@@ -73,6 +70,7 @@ Sysinfo
 alias reload='/etc/profile'
 alias autoupdate='bash /bin/AutoUpdate.sh'
 alias tools='bash /bin/AutoBuild_Tools.sh'
+alias coremarkd='bash /etc/coremark.sh'
 alias shutdown='sync && poweroff'
 alias ls='ls --color=auto'
 alias ll='ls -alF'
