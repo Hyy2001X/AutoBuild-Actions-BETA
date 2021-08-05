@@ -69,7 +69,7 @@ Firmware-Diy_Before() {
 	;;
 	esac
 	cat >> ${Home}/VARIABLE_Main <<EOF
-Author=${Author}
+Author="${Author}"
 Github=${Author_Repository}
 TARGET_PROFILE=${TARGET_PROFILE}
 TARGET_BOARD=${TARGET_BOARD}
@@ -83,8 +83,8 @@ REGEX_Firmware=${REGEX_Firmware}
 EOF
 	cat >> ${Home}/VARIABLE_FILE <<EOF
 Home=${Home}
-PKG_Compatible=${INCLUDE_Obsolete_PKG_Compatible}
-Checkout_Virtual_Images=${Checkout_Virtual_Images}
+PKG_Compatible="${INCLUDE_Obsolete_PKG_Compatible}"
+Checkout_Virtual_Images="${Checkout_Virtual_Images}"
 Firmware_Path=${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}
 AutoBuild_Firmware=${AutoBuild_Firmware}
 CustomFiles=${GITHUB_WORKSPACE}/CustomFiles
@@ -92,7 +92,7 @@ Scripts=${GITHUB_WORKSPACE}/Scripts
 feeds_luci=${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
 feeds_pkgs=${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
 base_files=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
-Message=${Message}
+Message="${Message}"
 EOF
 	echo "$(cat ${Home}/VARIABLE_Main)" >> ${Home}/VARIABLE_FILE
 	echo -e "### SYS-VARIABLE LIST ###\n$(cat ${Home}/VARIABLE_FILE)\n"
