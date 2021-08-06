@@ -1,5 +1,5 @@
 #!/bin/sh
 MHz_AVG="$(echo "$(grep 'MHz' /proc/cpuinfo | awk '{Freq_Sum += $4};END {print Freq_Sum}') / $(grep 'processor' /proc/cpuinfo | sort -u | wc -l)" | bc)"
-TEMP="$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}' | cut -d '+' -f2)"
-echo "$MHz_AVG MHz (CPU: $TEMP)"
+TEMP="$(echo "$(sensors 2>/dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc)"
+echo "$MHz_AVG MHz (CPU: ${TEMP}°C)"
 sleep 1

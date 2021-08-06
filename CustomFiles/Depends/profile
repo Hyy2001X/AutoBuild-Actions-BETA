@@ -4,7 +4,7 @@ Sysinfo() {
 	[ -z "${TARGET_PROFILE}" ] && local TARGET_PROFILE=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
 	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
-	local TEMP=$(sensors 2>/dev/null | grep 'Core 0' | awk '{print $3}' | cut -d '+' -f2 | cut -d '.' -f1 | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
+	local TEMP=$(echo "$(sensors 2>/dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
 	echo
 	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE} ${Div} $(uname -n)"
 	echo -e "            内核版本:		K$(uname -rs | egrep -o "[0-9].+")"
