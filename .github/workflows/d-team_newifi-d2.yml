@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: lenovo_newifi-y1
+name: Newifi_D2
 
 ### 以下内容请保持不变 (请修改下方: 环境变量设置)
 on:
@@ -29,7 +29,7 @@ on:
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
-  CONFIG_FILE: lenovo_newifi-y1
+  CONFIG_FILE: d-team_newifi-d2
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
@@ -89,7 +89,6 @@ jobs:
         echo "Before_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
         echo "Openwrt_Repository=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
-        touch Release_info
 
     - name: Clone Openwrt Source Code
       run: |
@@ -111,6 +110,13 @@ jobs:
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE && Firmware-Diy
         rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
+    - name: SSH Connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.SSH == 'true' && github.event.inputs.SSH  != 'false') || contains(github.event.action, 'SSH')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
     - name: Compile
       run: |
         export Compile_Result=false
@@ -120,8 +126,7 @@ jobs:
         make defconfig
         make download -j$(nproc)
         make -j$(nproc) || make -j1 V=s
-        [ $? == 0 ] && Compile_Result=true
-        echo "Compile_Result=$Compile_Result" >> $GITHUB_ENV
+        [ $? == 0 ] && echo "Compile_Result=true" >> $GITHUB_ENV
 
     - name: Process Firmware
       if: env.Compile_Result == 'true' && !cancelled()
@@ -143,15 +148,28 @@ jobs:
         name: ${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
         path: openwrt/bin
 
-    - name: Upload Firmware to Github Releases
-      uses: softprops/action-gh-release@v1
+    - name: Upload Firmware to Github Release
+      uses: svenstaro/upload-release-action@v2
       if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: AutoUpdate
-        body_path: Release_info
-        files: openwrt/bin/Firmware/*
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: openwrt/bin/Firmware/*
+        tag: AutoUpdate
+        overwrite: true
+        
+    - name: Download Github Release API
+      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+      run: |
+        wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
+        
+    - name: Re-Upload API to Github Release
+      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./API
+        tag: AutoUpdate
+        overwrite: true
 
     - name: Delete old Workflow Runs
       uses: GitRML/delete-workflow-runs@main
