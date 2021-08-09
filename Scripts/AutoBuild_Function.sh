@@ -13,20 +13,20 @@ Firmware-Diy_Before() {
 	[[ -z ${Author} ]] && Author="$(echo "${Author_Repository}" | cut -d "/" -f4)"
 	OP_Maintainer="$(echo "${Openwrt_Repository}" | cut -d "/" -f4)"
 	OP_REPO_NAME="$(echo "${Openwrt_Repository}" | cut -d "/" -f5)"
-	OP_BRANCH="$(Get_Branches)"
+	OP_BRANCH="$(Get_Branch)"
 	if [[ ${OP_BRANCH} == master || ${OP_BRANCH} == main ]];then
 		Openwrt_Version_Head="R$(date +%y.%m)-"
 	else
 		OP_BRANCH="$(echo ${OP_BRANCH} | egrep -o "[0-9]+.[0-9]+")"
 		Openwrt_Version_Head="R${OP_BRANCH}-"
 	fi
-	case "${OP_Maintainer}" in
-	coolsnowwolf)
+	case "${OP_Maintainer}/${OP_REPO_NAME}" in
+	coolsnowwolf/lede)
 		Version_File=package/lean/default-settings/files/zzz-default-settings
 		zzz_Default_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
 		CURRENT_Version="${zzz_Default_Version}-${Compile_Date}"
 	;;
-	immortalwrt)
+	immortalwrt/immortalwrt)
 		Version_File=${base_files}/etc/openwrt_release
 		CURRENT_Version="${Openwrt_Version_Head}${Compile_Date}"
 	;;
@@ -48,33 +48,35 @@ Firmware-Diy_Before() {
 	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to obtain the [TARGET_PROFILE] !"
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' .config)"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' .config)"
-	case "${TARGET_BOARD}" in
-	ramips | reltek | ipq40xx | ath79 | ipq807x)
-		Firmware_Type=bin
-	;;
-	rockchip | x86)
-		[[ $(cat ${Home}/.config) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
-			Firmware_Type=img.gz || Firmware_Type=img
-		}
-	;;
-	esac
+	[[ -z ${Firmware_Format} || ${Firmware_Format} == false ]] && {
+		case "${TARGET_BOARD}" in
+		ramips | reltek | ipq40xx | ath79 | ipq807x)
+			Firmware_Format=bin
+		;;
+		rockchip | x86)
+			[[ $(cat ${Home}/.config) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
+				Firmware_Format=img.gz || Firmware_Format=img
+			}
+		;;
+		esac
+	}
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-${FW_Boot_Type}-$(Get_sha256 $1).${Firmware_Type_Defined}'
-		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_Boot}.[0-9a-z]+.${Firmware_Type}'
+		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-${FW_Boot_Type}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
+		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_Boot}.[0-9a-z]+.${Firmware_Format}'
 	;;
 	*)
-		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-$(Get_sha256 $1).${Firmware_Type_Defined}'
-		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Type}'
+		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
+		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Format}'
 	;;
 	esac
 	cat >> ${Home}/VARIABLE_Main <<EOF
-Author="${Author}"
+Author=${Author}
 Github=${Author_Repository}
 TARGET_PROFILE=${TARGET_PROFILE}
 TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
-Firmware_Type=${Firmware_Type}
+Firmware_Format=${Firmware_Format}
 CURRENT_Version=${CURRENT_Version}
 OP_Maintainer=${OP_Maintainer}
 OP_BRANCH=${OP_BRANCH}
@@ -92,7 +94,8 @@ Scripts=${GITHUB_WORKSPACE}/Scripts
 feeds_luci=${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
 feeds_pkgs=${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
 base_files=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
-Message="${Message}"
+Banner_Title="${Banner_Title}"
+REGEX_Skip_Checkout="${REGEX_Skip_Checkout}"
 EOF
 	echo "$(cat ${Home}/VARIABLE_Main)" >> ${Home}/VARIABLE_FILE
 	echo -e "### SYS-VARIABLE LIST ###\n$(cat ${Home}/VARIABLE_FILE)\n"
@@ -137,10 +140,9 @@ Firmware-Diy_Main() {
 			sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 		;;
 		esac
-		[[ -z ${Message} ]] && Message="Powered by AutoBuild-Actions"
 		sed -i "s?By?By ${Author}?g" ${CustomFiles}/Depends/banner
 		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" ${CustomFiles}/Depends/banner
-		sed -i "s?MSG?${Message}?g" ${CustomFiles}/Depends/banner
+		[[ -n ${Banner_Title} ]] && sed -i "s?MSG?${Banner_Title}?g" ${CustomFiles}/Depends/banner
 		case "${OP_Maintainer}/${OP_REPO_NAME}" in
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/banner ${Home}/$(PKG_Finder d package default-settings)/files openwrt_banner
@@ -265,36 +267,36 @@ Firmware-Diy_End() {
 	CD ${GITHUB_WORKSPACE}/openwrt
 	source ${GITHUB_WORKSPACE}/openwrt/VARIABLE_FILE
 	MKDIR bin/Firmware
-	sha256sums="${Firmware_Path}/sha256sums"
+	SHA256_File="${Firmware_Path}/sha256sums"
 	cd ${Firmware_Path}
 	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1 | egrep -v "packages|buildinfo|sha256sums|manifest")\n"
 	case "${TARGET_BOARD}" in
 	x86)
 		[[ ${Checkout_Virtual_Images} == true ]] && {
-			Eval_Firmware $(List_Format)
+			Process_Firmware $(List_Format)
 		} || {
-			Eval_Firmware ${Firmware_Type}
+			Process_Firmware ${Firmware_Format}
 		}
 	;;
 	*)
-		Eval_Firmware ${Firmware_Type}
+		Process_Firmware ${Firmware_Format}
 	;;
 	esac
-	[[ $(ls) =~ AutoBuild ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
-	cd ${Home}
+	[[ $(ls) =~ 'AutoBuild-' ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
+	cd -
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 	ECHO "[Firmware-Diy_End] Done."
 }
 
-Eval_Firmware() {
+Process_Firmware() {
 	while [[ $1 ]];do
-		Eval_Firmware_Core $1 $(List_Firmware $1)
+		Process_Firmware_Core $1 $(List_Firmware $1)
 		shift
 	done
 }
 
-Eval_Firmware_Core() {
-	Firmware_Type_Defined=$1
+Process_Firmware_Core() {
+	Firmware_Format_Defined=$1
 	shift
 	while [[ $1 ]];do
 		case "${TARGET_BOARD}" in
@@ -317,12 +319,12 @@ Eval_Firmware_Core() {
 
 List_Firmware() {
 	[[ -z $* ]] && {
-		List_All | while read X;do
+		List_REGEX | while read X;do
 			echo $X | cut -d "*" -f2
 		done
 	} || {
 		while [[ $1 ]];do
-			for X in $(echo $(List_All));do
+			for X in $(echo $(List_REGEX));do
 				[[ $X == *$1 ]] && echo "$X" | cut -d "*" -f2
 			done
 			shift
@@ -331,22 +333,24 @@ List_Firmware() {
 }
 
 List_Format() {
-	echo "$(List_All | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
+	echo "$(List_REGEX | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
 }
 
-List_All() {
-	egrep -v "packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory" ${sha256sums} | tr -s '\n'
+List_REGEX() {
+	[[ -n ${REGEX_Skip_Checkout} ]] && {
+		egrep -v "${REGEX_Skip_Checkout}" ${SHA256_File} | tr -s '\n'
+	} || egrep -v "packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory" ${SHA256_File} | tr -s '\n'
 }
 
-Get_sha256() {
-	List_All | grep "$1" | cut -c1-5
+Get_SHA256() {
+	List_REGEX | grep "$1" | cut -c1-5
 }
 
 Get_Variable() {
 	grep "$1" ${GITHUB_WORKSPACE}/openwrt/VARIABLE_FILE | cut -c$(echo $1 | wc -c)-200 | cut -d ":" -f2
 }
 
-Get_Branches() {
+Get_Branch() {
     git -C $(pwd) rev-parse --abbrev-ref HEAD | grep -v HEAD || \
     git -C $(pwd) describe --exact-match HEAD || \
     git -C $(pwd) rev-parse HEAD
