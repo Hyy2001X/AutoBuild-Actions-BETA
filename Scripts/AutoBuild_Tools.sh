@@ -1,9 +1,9 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoBuild_Tools for Openwrt
-# Depends on: bash wget curl block-mount e2fsprogs smartmontools
+# Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.6
+Version=V1.7
 
 ECHO() {
 	local Color
@@ -25,14 +25,16 @@ do
 	ECHO y "$(cat /etc/banner)"
 	ECHO x "\n\nAutoBuild 固件工具箱 ${Version}\n"
 	echo "1. USB 空间扩展"
-	echo "2. Samba 一键共享"
+	echo "2. Samba 设置"
 	echo "3. 安装依赖包"
 	echo "4. 端口占用列表"
 	echo "5. 查看硬盘信息"
+	echo "6. 网络连接检查"
+	echo "7. 修复环境"
 	ECHO x "\nu. 固件更新"
 	ECHO y "x. 更新脚本"
-	echo -e "q. 退出程序\n"
-	read -p "请从上方选择一个操作:" Choose
+	echo -e "q. 退出\n"
+	read -p "请从上方选项中选择一个操作:" Choose
 	case $Choose in
 	q)
 		rm -rf ${Main_tmp}
@@ -40,16 +42,16 @@ do
 		exit 0
 	;;
 	u)
-		[ -f /bin/AutoUpdate.sh ] && {
+		[ -s /bin/AutoUpdate.sh ] && {
 			AutoUpdate_UI
 		} || {
 			ECHO r "\n未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
+			sleep 3
 		}
 	;;
 	x)
-		
 		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${Main_tmp}/AutoBuild_Tools.sh
-		if [[ $? == 0 ]];then
+		if [[ $? == 0 && -s ${Main_tmp}/AutoBuild_Tools.sh ]];then
 			ECHO y "\n[AutoBuild_Tools] 脚本更新成功!"
 			rm -f /bin/AutoBuild_Tools.sh.sh
 			mv -f ${Main_tmp}/AutoBuild_Tools.sh /bin
@@ -60,8 +62,7 @@ do
 		sleep 2
 	;;
 	1)
-		which block > /dev/null 2>&1
-		[[ ! $? -eq 0 ]] && {
+		[[ ! $(CHECK_PKG block) == true ]] && {
 			ECHO r "\n缺少相应依赖包,请先安装 [block-mount] !"
 			sleep 3
 		} || {
@@ -81,11 +82,33 @@ do
 		Enter
 	;;
 	5)
-		which smartctl > /dev/null 2>&1
-		[[ ! $? -eq 0 ]] && {
+		[[ ! $(CHECK_PKG smartctl) == true ]] && {
 			ECHO r "\n缺少相应依赖包,请先安装 [smartmontools] !"
 			sleep 3
 		} || Smart_Info
+	;;
+	6)
+		if [[ $(CHECK_PKG curl) == true ]];then
+			Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
+			case ${Google_Check} in
+			301)
+				ECHO y "\nGoogle 连接正常!"
+			;;
+			*)
+				ECHO r "\nGoogle 连接错误!"
+			;;
+			esac
+		fi
+		sleep 3
+	;;
+	7)
+		cp -a /rom/etc/AutoBuild/Default_Variable /etc/AutoBuild
+		cp -a /rom/etc/profile /etc
+		cp -a /rom/etc/banner /etc
+		cp -a /rom/bin/AutoUpdate.sh /bin
+		cp -a /rom/bin/AutoBuild_Tools.sh /bin
+		ECHO y "\n固件环境修复完成!"
+		sleep 2
 	;;
 	esac
 done
@@ -119,8 +142,7 @@ AutoExpand_UI() {
 	;;
 	*)
 		[[ ${Choose} =~ [0-9] && ${Choose} -le ${Logic_Disk_Count} && ${Choose} -gt 0 ]] > /dev/null 2>&1 && {
-			which mkfs.ext4 > /dev/null 2>&1
-			if [[ $? == 0 ]];then
+			if [[ $(CHECK_PKG mkfs.ext4) == true ]];then
 				Choose_Disk=$(sed -n ${Choose}p ${Disk_Processed_List} | awk '{print $1}')
 				Choose_Mount=$(grep "${Choose_Disk}" ${Disk_Processed_List} | awk '{print $4}')
 				AutoExpand_Core ${Choose_Disk} ${Choose_Mount}
@@ -257,10 +279,10 @@ AutoSamba_UI() {
 		clear
 		ECHO x "Samba 工具箱\n"
 		echo "1. 删除所有 Samba 挂载点"
-		echo "2. 自动生成 Samba 共享"
-		echo "3. 关闭/开启自动共享"
+		echo "2. 自动生成 Samba 挂载点"
+		echo "3. 关闭/开启 Samba 自动共享"
 		echo -e "\nq. 返回\n"
-		read -p "请从上方选择一个操作:" Choose
+		read -p "请从上方选项中选择一个操作:" Choose
 		case $Choose in
 		1)
 			Remove_Samba_Settings
@@ -340,6 +362,7 @@ do
 	AutoInstall_UI_mod 1 block-mount
 	AutoInstall_UI_mod 2 e2fsprogs
 	AutoInstall_UI_mod 3 smartmontools
+	AutoInstall_UI_mod 4 curl
 	echo "u. 更新软件包列表"
 	echo -e "\nq. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -352,14 +375,17 @@ do
 		opkg update
 		sleep 3
 	;;
-	2)
+	1)
 		Install_opkg_mod block-mount	
 	;;
-	3)
+	2)
 		Install_opkg_mod e2fsprogs
 	;;
-	4)
+	3)
 		Install_opkg_mod smartmontools
+	;;
+	4)
+		Install_opkg_mod curl
 	;;
 	esac
 done
@@ -386,8 +412,15 @@ do
 		break
 	;;
 	x)
-		bash /bin/AutoUpdate.sh -x
-		sleep 2
+		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${Main_tmp}/AutoUpdate.sh
+		if [[ $? == 0 && -s ${Main_tmp}/AutoUpdate.sh ]];then
+			ECHO y "\n[AutoUpdate] 脚本更新成功!"
+			rm -f /bin/AutoUpdate.sh
+			mv -f ${Main_tmp}/AutoUpdate.sh /bin
+			chmod +x /bin/AutoBuild_Tools.sh
+		else
+			ECHO r "\n[AutoUpdate] 脚本更新失败!"
+		fi
 	;;
 	1)
 		bash /bin/AutoUpdate.sh
@@ -400,11 +433,10 @@ do
 	;;
 	4)
 		bash /bin/AutoUpdate.sh --list
-		Enter
 	;;
 	5)
+		ECHO y "\n缓存清理完成!"
 		bash /bin/AutoUpdate.sh --clean
-		sleep 1
 	;;
 	6)
 		echo ""
@@ -412,7 +444,6 @@ do
 		[[ -n ${Github_URL} ]] && bash /bin/AutoUpdate.sh -C ${Github_URL} || {
 			ECHO r "\nGithub 地址不能为空!"
 		}
-		sleep 2
 	;;
 	7)
 		echo ""
@@ -420,9 +451,9 @@ do
 		[[ -n ${_BOOT} ]] && bash /bin/AutoUpdate.sh -B ${_BOOT} || {
 			ECHO r "\n启动方式不能为空!"
 		}
-		sleep 2
 	;;
 	esac
+	Enter
 done
 }
 
@@ -438,7 +469,7 @@ Smart_Info() {
 }
 
 getinf() {
-	grep "$1" $2 | sed "s/^[$1]*//g" 2>/dev/null | sed 's/^[ \t]*//g' 2>/dev/null
+	grep "$1" $2 | sed "s/^[$1]*//g" 2> /dev/null | sed 's/^[ \t]*//g' 2> /dev/null
 }
 
 GET_Smart_Info() {
@@ -522,6 +553,11 @@ Install_opkg_mod() {
 	sleep 2
 }
 
+CHECK_PKG() {
+	which $1 > /dev/null 2>&1
+	[[ $? == 0 ]] && echo "true" || echo "false"
+}
+
 Enter() {
 	echo "" && read -p "按下[回车]键以继续..." Key
 }
@@ -541,5 +577,5 @@ Disk_Processed_List="${Main_tmp}/Disk_Processed_List"
 Smart_Info1="${Main_tmp}/Smart_Info1"
 Smart_Info2="${Main_tmp}/Smart_Info2"
 [[ ! -d ${Main_tmp} ]] && mkdir -p "${Main_tmp}"
-Github_Raw="https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
+Github_Raw="https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
 AutoBuild_Tools
