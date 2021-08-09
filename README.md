@@ -9,8 +9,6 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 支持的 OpenWrt 源码: `coolsnowwolf/lede`、`immortalwrt/immortalwrt`、`openwrt/openwrt`、`lienol/openwrt`
 
-现仅适配上述列出的源码,暂**不支持**自己 Fork 后的源码
-
 ## 部署环境(STEP 1):
 
 1. 首先需要获取 **Github Token**: [点击这里](https://github.com/settings/tokens/new) 获取,
@@ -39,15 +37,13 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 2. 把本地的`.config`文件**重命名**并上传到仓库的`/Configs`目录
 
-    **/Configs/Common**: 通用配置文件,将在编译开始前被追加到 .config,主要用于同时管理多个设备,如果不需要删除即可
+    **/Configs/Common**: 通用配置文件,将在编译开始前被追加到 .config,用于同时管理多个设备,不需要删除即可
 
 3. 编辑`/.github/workflows/*.yml`文件,修改`第 7 行`为易于自己识别的名称
 
 4. 编辑`/.github/workflows/*.yml`文件,修改`第 32 行`为上传的`.config`文件名称
 
-   **使用其他源码** 修改`第 34 行`,例如: `openwrt:openwrt-21.02`、`openwrt:v19.07.7`
-
-5. 按照你的需求编辑`/Scripts/AutoBuild_DiyScript.sh`文件
+5. 按照需求且编辑`/Scripts/AutoBuild_DiyScript.sh`文件即可,`/Scripts`下的其他文件可以都不用修改
 
    **额外的软件包列表** 按照现有语法和提示编辑`/Scripts/AutoBuild_ExtraPackages.sh`文件
 
@@ -55,7 +51,7 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 ```
    Author 作者名称,若留空将自动获取为 Github 用户名
    
-   Message 特殊信息,与作者名称一同在 Shell banner 展示
+   Banner_Title Banner 标题,与作者名称一同在 Shell 展示
 
    Default_LAN_IP 固件默认 LAN IP 地址
 
@@ -63,17 +59,21 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
    Load_CustomPackages_List 启用后,将自动运行 /Scripts/AutoBuild_ExtraPackages.sh 脚本
 
-   Checkout_Virtual_Images 额外上传编译完成的  x86 虚拟磁盘镜像到 Release
+   Checkout_Virtual_Images 额外上传已检测到的  x86 虚拟磁盘镜像
+   
+   Firmware_Format 自定义固件格式,多设备编译请搭配 case 使用
+
+   REGEX_Skip_Checkout 固件检测屏蔽正则列表,用于过滤无用文件
 
    INCLUDE_AutoBuild_Features 自动添加 AutoBuild 固件特性,例如: 一键更新、部分优化
 
-   INCLUDE_DRM_I915 自动启用 Intel Graphics i915 驱动 (仅 x86 设备)
+   INCLUDE_DRM_I915 自动启用 x86 设备的 Intel Graphics i915 驱动
 
-   INCLUDE_Argon 自动添加 luci-theme-argon 主题和控制器
+   INCLUDE_Argon 自动添加 luci-theme-argon 主题和主题控制器
 
-   INCLUDE_Obsolete_PKG_Compatible 优化原生 OpenWrt-19.07、21.02 支持 (测试特性)
+   INCLUDE_Obsolete_PKG_Compatible 完善原生 OpenWrt-19.07、21.02 支持 (测试特性)
    
-   注: 若要启用某项功能,请将该项的值修改为 true,禁用某项功能则修改为 false 或留空
+   注: 禁用某项功能请将变量值修改为 false 或直接留空
 ```
 **其他指令:** 参照下方语法:
 ```
@@ -95,40 +95,32 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 ## 使用 AutoUpdate 一键更新脚本:
 
-   首先需要打开`TTYD 终端`或者在浏览器输入`IP 地址:7681`,按需输入下方指令:
+   首先需要打开`TTYD 终端`或者在使用`ssh`连接设备,按需输入下方指令:
 
    更新固件: `autoupdate`或`bash /bin/AutoUpdate.sh`
 
-   更新固件(优先使用镜像加速): `autoupdate -P`
+   更新固件(优先使用镜像加速 Ghproxy | FastGit): `autoupdate -P <G | F>`
 
    更新固件(不保留配置): `autoupdate -n`
    
    强制刷入固件: `autoupdate -F`
    
-   跳过 sha256 校验: `autoupdate --skip`
+   "我不管,我就是要更新!": `autoupdate -f`
    
-   **注意:** 参数可叠加,例如: `autoupdate -n -P -F --skip path=/mnt/sda1`
+   **注意:** 部分参数可一起使用,例如: `autoupdate -n -P -F --skip path=/mnt/sda1`
 
    查看更多参数/使用方法: `autoupdate --help`
-
-   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Features`为`true`**
-
-## 使用 AutoBuild 固件工具箱:
-
-   打开`TTYD 终端`,输入`tools`或`bash /bin/AutoBuild_Tools.sh`
-
-   **注意: 该功能需要在 Diy-Core() 函数中设置`INCLUDE_AutoBuild_Features`为`true`**
 
 ## 鸣谢
 
    - [Lean's Openwrt Source code](https://github.com/coolsnowwolf/lede)
-
-   - [P3TERX's Actions-OpenWrt Project](https://github.com/P3TERX/Actions-OpenWrt)
 
    - [P3TERX's Blog](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
 
    - [ImmortalWrt's Source code](https://github.com/immortalwrt)
 
    - [eSir 's workflow template](https://github.com/esirplayground/AutoBuild-OpenWrt/blob/master/.github/workflows/Build_OP_x86_64.yml)
+   
+   - 灵感来源/Based on: [openwrt-autoupdate](https://github.com/mab-wien/openwrt-autoupdate) [Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 
-   - 测试与建议: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber) [sirliu](https://github.com/sirliu) [teasiu](https://github.com/teasiu)
+   - 测试与建议: [CurssedCoffin](https://github.com/CurssedCoffin) [Licsber](https://github.com/Licsber) [sirliu](https://github.com/sirliu) [神雕](https://github.com/teasiu) [yehaku](https://www.right.com.cn/forum/space-uid-28062.html) [缘空空](https://github.com/NaiHeKK) [281677160](https://github.com/281677160)
