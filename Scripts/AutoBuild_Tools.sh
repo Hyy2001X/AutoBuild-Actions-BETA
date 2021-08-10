@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7
+Version=V1.7.1
 
 ECHO() {
 	local Color
@@ -397,13 +397,15 @@ do
 	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	clear
 	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n"
-	echo "1. 更新固件 [保留配置]"
-	echo "2. 强制更新固件 (跳过版本号、SHA256 校验,并强制刷写固件) [保留配置]"
+	ECHO g "1. 更新固件 [保留配置]"
+	echo "2. 更新固件 (强制刷入固件) [保留配置]"
 	echo "3. 不保留配置更新固件 [全新安装]"
 	echo "4. 列出固件信息"
 	echo "5. 清除固件下载缓存"
 	echo "6. 更改 Github API 地址"
-	echo "7. 指定 x86 设备下载 UEFI/Legacy 引导的固件"
+	echo "7. 指定 x86 设备下载 <UEFI|Legacy> 引导的固件"
+	echo "8. 打印运行日志 (反馈问题)"
+	echo "9. 检查运行环境"
 	ECHO y "\nx. 更新 [AutoUpdate] 脚本"
 	echo -e "q. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -426,7 +428,7 @@ do
 		bash /bin/AutoUpdate.sh
 	;;
 	2)
-		bash /bin/AutoUpdate.sh -f
+		bash /bin/AutoUpdate.sh -F
 	;;
 	3)
 		bash /bin/AutoUpdate.sh -n
@@ -451,6 +453,16 @@ do
 		[[ -n ${_BOOT} ]] && bash /bin/AutoUpdate.sh -B ${_BOOT} || {
 			ECHO r "\n启动方式不能为空!"
 		}
+	;;
+	8)
+		bash /bin/AutoUpdate.sh -L
+	;;
+	9)
+		bash /bin/AutoUpdate.sh --check
+	;;
+	*)
+		ECHO r "\n选择错误,请重新输入!"
+		sleep 1
 	;;
 	esac
 	Enter
