@@ -63,11 +63,9 @@ Firmware-Diy_Before() {
 	case "${TARGET_BOARD}" in
 	x86)
 		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-${FW_Boot_Type}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
-		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-${x86_Boot}.[0-9a-z]+.${Firmware_Format}'
 	;;
 	*)
 		AutoBuild_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-${CURRENT_Version}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
-		REGEX_Firmware='AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}-R[0-9.]+-[0-9]+-[0-9a-z]+.${Firmware_Format}'
 	;;
 	esac
 	cat >> ${Home}/VARIABLE_Main <<EOF
@@ -81,7 +79,6 @@ CURRENT_Version=${CURRENT_Version}
 OP_Maintainer=${OP_Maintainer}
 OP_BRANCH=${OP_BRANCH}
 OP_REPO_NAME=${OP_REPO_NAME}
-REGEX_Firmware=${REGEX_Firmware}
 EOF
 	cat >> ${Home}/VARIABLE_FILE <<EOF
 Home=${Home}
