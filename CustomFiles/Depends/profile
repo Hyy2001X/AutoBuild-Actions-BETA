@@ -7,8 +7,8 @@ Sysinfo() {
 	local TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
 	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE} ${Div} $(uname -n)"
 	echo -e "            内核版本:		K$(uname -rs | egrep -o "[0-9].+")"
-	echo -e "            可用内存:		$(free | grep Mem | awk '{a=$7*100/$2};b=$7/1024 {printf("%.1fM \e[36m|\e[0m %.1f\n",b,a)}')%"
-	echo -e "            可用存储:		$(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024} {printf("%.1fM \e[36m|\e[0m %.1f\n",b,a)}')%"
+	echo -e "            可用内存:		$(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
+	echo -e "            可用存储:		$(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
 	[ -n "${TEMP}" ] && echo -e "            设备温度:		${TEMP}"
 	[ -n "${CoreMark}" ] && echo -e "            性能得分:		${CoreMark} Scores"
 	echo -e "            运行时间: 		${Startup}"
