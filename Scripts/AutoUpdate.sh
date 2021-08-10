@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
-Version=V6.5.6
+Version=V6.5.7
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -150,7 +150,7 @@ function ECHO() {
 }
 
 function LOGGER() {
-	if [[ ! ${LOGGER_Block} == 1 ]];then
+	if [[ ! $* =~ (-H|--help|-L|--log) ]];then
 		[[ ! -d ${Log_Path} ]] && mkdir -p ${Log_Path}
 		[[ ! -f ${Log_Path}/AutoUpdate.log ]] && touch ${Log_Path}/AutoUpdate.log
 		echo "[$(date "+%Y-%m-%d-%H:%M:%S")] [$$] $*" >> ${Log_Path}/AutoUpdate.log
@@ -194,10 +194,9 @@ function GET_VARIABLE() {
 function LOAD_VARIABLE() {
 	while [[ $1 ]];do
 		[[ -f $1 ]] && {
-			LOGGER "检测到环境变量列表: [$1]"
 			chmod 777 $1
 			source $1
-		}
+		} || LOGGER "未检测到环境变量列表: [$1]"
 		shift
 	done
 	[[ -z ${TARGET_PROFILE} ]] && TARGET_PROFILE="$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')"
@@ -292,7 +291,7 @@ function UPDATE_SCRIPT() {
 	}
 	if [[ ! -d $1 ]];then
 		mkdir -p $1 2> /dev/null || {
-			ECHO r "脚本存放文件夹 [$1] 创建失败!"
+			ECHO r "脚本存放目录 [$1] 创建失败!"
 			EXIT 1
 		}
 	fi
@@ -377,8 +376,8 @@ function CHECK_TIME() {
 		LOGGER "[CHECK_TIME] 文件: [$1] 距离修改时间小于 $2 分钟!"
 		echo true
 	} || {
+		LOGGER "[CHECK_TIME] 文件: [$1] 验证失败!"
 		RM $1
-		LOGGER "[CHECK_TIME] 文件: [$1] 距离修改时间已经超过 $2 分钟!"
 		echo false
 	}
 }
@@ -699,9 +698,8 @@ function DOWNLOADER() {
 			shift
 			DL_Path="$1"
 			if [[ ! -d ${DL_Path} ]];then
-				LOGGER "创建下载文件夹: [${DL_Path}] ..."
 				mkdir -p ${DL_Path} 2> /dev/null || {
-					ECHO r "下载文件夹 [${DL_Path}] 创建失败!"
+					ECHO r "下载目录 [${DL_Path}] 创建失败!"
 					return 1
 				}
 			fi
@@ -927,8 +925,8 @@ function NETWORK_CHECK() {
 }
 
 function AutoUpdate_Main() {
+	LOGGER "[${COMMAND}] 开始运行"
 	if [[ ! $1 =~ (-H|--help) ]];then
-		LOGGER "[${COMMAND}] 开始运行"
 		[[ ! -f ${Default_Variable} ]] && {
 			ECHO r "脚本运行环境检测失败,无法正常运行脚本!"
 			EXIT 1
