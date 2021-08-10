@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl
 
-Version=V6.5.5
+Version=V6.5.6
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -13,8 +13,8 @@ function SHELL_HELP() {
 	TITLE
 	cat <<EOF
 
-使用方法:	bash $0 [-n] [-f] [-u] [-F] [-P] [path=<PATH>] 
-		bash $0 [-x] [path=<PATH>] [url=<URL>]
+使用方法:	bash $0 [-n] [-f] [-u] [-F] [-P] [-D <Downloader>] [--path <PATH>] 
+		bash $0 [-x] [--path <PATH>] [--url <URL>]
 
 更新固件:
 	-n			不保留配置更新固件 *
@@ -22,7 +22,7 @@ function SHELL_HELP() {
 	-f			跳过版本号、SHA256 校验,并强制刷写固件 (危险) *
 	-F, --force-write	强制刷写固件 *
 	-P, --proxy		优先开启镜像加速下载固件 *
-	-D <Downloader>		使用指定的下载器 <wget-ssl | wget | curl | uclient-fetch>
+	-D <Downloader>		使用指定的下载器 <wget-ssl | wget | curl | uclient-fetch> *
 	--decompress		解压 img.gz 固件后再更新固件 *
 	--skip-verify		跳过固件 SHA256 校验 (危险) *
 	--path <PATH>		保存固件到提供的绝对路径 <PATH> *
@@ -30,16 +30,16 @@ function SHELL_HELP() {
 更新脚本:
 	-x			更新 AutoUpdate.sh 脚本
 	-x --path <PATH>	更新 AutoUpdate.sh 脚本 (保存脚本到提供的绝对路径 <PATH>) *
-	-x url=<URL>		更新 AutoUpdate.sh 脚本 (使用提供的地址 <URL> 更新脚本) *
+	-x --url <URL>		更新 AutoUpdate.sh 脚本 (使用提供的地址 <URL> 更新脚本) *
 
 其他参数:
 	-B, --boot-mode <TYPE>		指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI Legacy)
 	-C <Github URL>			更改 Github 地址为提供的 <Github URL>
 	-H, --help			打印 AutoUpdate 帮助信息
 	-L, --log < | del>		<打印 | 删除> AutoUpdate 历史运行日志
-	    --log path=<PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
-	-P <F | G>			使用 <FastGit | Ghproxy> 镜像加速
-	--backup path=<PATH>		备份当前系统配置文件到提供的绝对路径 <PATH>
+	    --log --path <PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
+	-P <F | G>			使用 <FastGit | Ghproxy> 镜像加速 *
+	--backup --path <PATH>		备份当前系统配置文件并移动到提供的绝对路径 <PATH> (可选)
 	--check				检查 AutoUpdate 运行环境
 	--clean				清理 AutoUpdate 缓存
 	--fw-log < | [Cc]loud | *>	打印 <当前 | 云端 | 指定版本> 版本的固件更新日志
@@ -212,7 +212,6 @@ function LOAD_VARIABLE() {
 	Github_Release="${Github}/releases/download/AutoUpdate"
 	Github_Raw="https://raw.githubusercontent.com/${Firmware_Author}/master"
 	Github_API="https://api.github.com/repos/${Firmware_Author}/releases/latest"
-	Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh G@@1 F@@1 X@@1)"
 	case "${TARGET_BOARD}" in
 	x86)
 		case "${Firmware_Format}" in
@@ -312,7 +311,7 @@ function UPDATE_SCRIPT() {
 		ECHO y "[${Banner_Version} > ${Script_Version}] AutoUpdate 脚本更新成功!"
 		EXIT 0
 	else
-		ECHO r "AutoUpdate 脚本更新失败,请检查网络后重试!"
+		ECHO r "AutoUpdate 脚本更新失败!"
 		EXIT 1
 	fi
 }
@@ -388,19 +387,18 @@ function GET_CLOUD_FW() {
 	eval X="$(GET_VARIABLE REGEX_Firmware ${Default_Variable})"
 	case $1 in
 	[Aa]ll)
-		Y="$(egrep -o "${X}" ${Running_Path}/API | sort | uniq)"
+		egrep -o "${X}" ${Running_Path}/API | sort | uniq | grep -v "^$"
 	;;
 	*)
-		Y="$(egrep -o "${X}" ${Running_Path}/API | awk 'END {print}')"
+		Y=$(egrep -o "${X}" ${Running_Path}/API | awk 'END {print}')
+		[[ -n ${Y} ]] && echo ${Y}
 	;;
 	esac
-	[[ -n ${Y} ]] && echo ${Y}
 }
 
 function GET_CLOUD_VERSION() {
 	local X
-	X="$(GET_CLOUD_FW $1 | egrep -o "R[0-9].*202[1-2][0-9]+")"
-	[[ -n ${X} ]] && echo ${X}
+	GET_CLOUD_FW $1 | egrep -o "R[0-9.]+-[0-9]+"
 }
 
 function GET_CLOUD_FW_SIZE() {
@@ -606,7 +604,7 @@ function DOWNLOADER() {
 	local DL_Downloader DL_Name DL_URL DL_Path DL_Retries DL_Timeout DL_Type DL_Final Quiet_Mode No_URL_Name Print_Mode DL_Retires_All DL_URL_Final
 	LOGGER "开始解析传入参数 ..."
 	LOGGER "[$*]"
-	# --dl 下载器 --file-name 文件名称 --no-url-name --url 下载地址1@@重试次数&&下载地址2@@重试次数 --path 保存位置 --timeout 超时 --type 类型 --skip 文件 时间(分) --quiet --print
+	# --dl 下载器 --file-name 文件名称 --no-url-name --url 下载地址1@@重试次数 下载地址2@@重试次数 --path 保存位置 --timeout 超时 --type 类型 --skip 文件 时间(分) --quiet --print
 	while [[ $1 ]];do
 		case $1 in
 		--dl)
@@ -648,8 +646,14 @@ function DOWNLOADER() {
 		--url)
 			shift
 			DL_URL=($(echo $@ | egrep -o "https://.*@@[0-9]+|https://.*@@[0-9]+|ftp://.*@@[0-9]+"))
-			DL_URL_Count="${#DL_URL[@]}"
-			DL_Retires_All="$(echo ${DL_URL[*]} | egrep -o "@@[0-9]+" | egrep -o "[0-9]+" | awk '{Sum += $1};END {print Sum}')"
+			[[ -z ${DL_URL[*]} ]] && {
+				DL_URL=($1)
+				DL_URL_Count="${#DL_URL[@]}"
+				DL_Retires_All="${DL_URL_Count}"
+			} || {
+				DL_Retires_All="$(echo ${DL_URL[*]} | egrep -o "@@[0-9]+" | egrep -o "[0-9]+" | awk '{Sum += $1};END {print Sum}')"
+				DL_URL_Count="${#DL_URL[@]}"
+			}
 			LOGGER "URL 数量: [${DL_URL_Count}] 总重试次数: [${DL_Retires_All}]"
 			while [[ $1 ]];do
 				[[ $1 =~ '--' ]] && break
@@ -749,7 +753,7 @@ function DOWNLOADER() {
 	local E=0 u;while [[ ${E} != ${DL_URL_Count} ]];do
 		DL_URL_Cache="${DL_URL[$E]}"
 		DL_Retries="${DL_URL_Cache##*@@}"
-		[[ -z ${DL_Retries} ]] && DL_Retries=1
+		[[ -z ${DL_Retries} || ! ${DL_Retries} == [0-9] ]] && DL_Retries=1
 		DL_URL_Final="${DL_URL_Cache%*@@*}"
 		LOGGER "当前 URL: [${DL_URL_Final}] URL 重试次数: [${DL_Retries}]"
 		for u in $(seq ${DL_Retries});do
@@ -818,12 +822,12 @@ function REMOVE_CACHE() {
 	LOGGER "AutoUpdate 缓存清理完成!"
 }
 
-function AutoUpdate_LOG() {
+function LOG() {
 	[[ -z $1 ]] && {
 		[[ -s ${Log_Path}/AutoUpdate.log ]] && {
 			TITLE && echo
-			LOGGER "Opening log file: [${Log_Path}/AutoUpdate.log] ..."
 			cat ${Log_Path}/AutoUpdate.log
+			EXIT 0
 		}
 	} || {
 		while [[ $1 ]];do
@@ -905,7 +909,7 @@ function NETWORK_CHECK() {
 }
 
 function AutoUpdate_Main() {
-	if [[ ! $1 == -H && ! $1 == --help ]];then
+	if [[ ! $1 =~ (-H|--help) ]];then
 		LOGGER "[${COMMAND}] 开始运行"
 		[[ ! -f ${Default_Variable} ]] && {
 			ECHO r "脚本运行环境检测失败,无法正常运行脚本!"
@@ -920,8 +924,6 @@ function AutoUpdate_Main() {
 				EXIT 1
 			}
 		}
-	else
-		LOGGER_Block=1
 	fi
 
 	[[ -z $* ]] && UPGRADE $*
@@ -944,8 +946,9 @@ function AutoUpdate_Main() {
 		;;
 		--url)
 			Custom_URL="${Input[$((${E} + 1))]}"
-			[[ -z ${Custom_URL} ]] && {
-				ECHO r "请输入正确的链接!"
+			[[ -z ${Custom_URL} || ! ${Custom_URL} =~ (https://*|http://*|ftp://*) ]] && {
+				ECHO r "链接格式错误,请输入正确的链接!"
+				EXIT 1
 			}
 		;;
 		-D)
@@ -1027,8 +1030,9 @@ function AutoUpdate_Main() {
 			[[ -z $* ]] && echo "${CURRENT_Version}" && EXIT 1
 			case "$1" in
 			[Cc]loud)
+				shift
 				GET_API
-				GET_CLOUD_VERSION $2
+				GET_CLOUD_VERSION $*
 			;;
 			*)
 				SHELL_HELP
@@ -1074,6 +1078,7 @@ function AutoUpdate_Main() {
 			[[ -z $* ]] && echo ${Version} && EXIT 0
 			case "$1" in
 			[Cc]loud)
+				Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh G@@1)"
 				DOWNLOADER --dl ${DOWNLOADERS} --url ${Script_URL} --path /tmp --print | egrep -o "V[0-9].+"
 			;;
 			*)
@@ -1083,6 +1088,7 @@ function AutoUpdate_Main() {
 		;;
 		-x)
 			shift
+			Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh G@@1 F@@1 X@@1)"
 			[[ $(NETWORK_CHECK 223.5.5.5 2) == false ]] && {
 				ECHO r "网络连接错误,请稍后再试!"
 				EXIT 1
@@ -1110,8 +1116,7 @@ function AutoUpdate_Main() {
 		;;
 		-L | --log)
 			shift
-			AutoUpdate_LOG $*
-			EXIT 2
+			LOG $*
 		;;
 		*)
 			SHELL_HELP
