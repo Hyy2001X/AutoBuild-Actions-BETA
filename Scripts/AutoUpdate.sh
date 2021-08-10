@@ -1,7 +1,7 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoUpdate for Openwrt
-# Dependences: bash wget-ssl/wget/uclient-fetch curl openssl
+# Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
 Version=V6.5.6
 
@@ -38,6 +38,7 @@ function SHELL_HELP() {
 	-H, --help			打印 AutoUpdate 帮助信息
 	-L, --log < | del>		<打印 | 删除> AutoUpdate 历史运行日志
 	    --log --path <PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
+	-O				打印云端可用固件名称
 	-P <F | G>			使用 <FastGit | Ghproxy> 镜像加速 *
 	--backup --path <PATH>		备份当前系统配置文件并移动到提供的绝对路径 <PATH> (可选)
 	--check				检查 AutoUpdate 运行环境
@@ -69,7 +70,6 @@ Github Release:		${Github_Release}
 Github API:		${Github_API}
 Github Raw：		${Github_Raw}
 OpenWrt Source:		https://github.com/${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}
-固件匹配框架:		$(GET_VARIABLE REGEX_Firmware ${Default_Variable})
 固件格式:		${Firmware_Format}
 运行路径:		${Running_Path}
 日志路径:		${Log_Path}/AutoUpdate.log
@@ -82,13 +82,9 @@ EOF
 	echo
 }
 
-function GET_PID() {
-	local PID
-	while [[ $1 ]];do
-		PID=$(busybox ps | grep "$1" | grep -v "grep" | awk '{print $1}' | awk 'NR==1')
-		[[ -n ${PID} ]] && echo "${PID}"
-	shift
-	done
+function RM() {
+	rm -f $1 2> /dev/null
+	[[ $? == 0 ]] && LOGGER "已删除文件: [$1]" || LOGGER "文件: [$1] 不存在或删除失败!"
 }
 
 function LIST_ENV() {
@@ -97,7 +93,7 @@ function LIST_ENV() {
 	[[ ${X} =~ "=" ]] && {
 		case "$1" in
 		1 | 2)
-			[[ -n $(echo "${X}" | cut -d "=" -f1) ]] && echo "${X}" | cut -d "=" -f$1
+			[[ -n $(echo ${X} | cut -d "=" -f1) ]] && echo "${X}" | cut -d "=" -f$1
 		;;
 		0)
 			echo "${X}"
@@ -125,7 +121,7 @@ function ECHO() {
 		echo -ne "\n${Grey}[$(date "+%H:%M:%S")]${White} "
 	} || {
 		while [[ $1 ]];do
-			case $1 in
+			case "$1" in
 			r | g | b | y | x)
 				case "$1" in
 				r) Color="${Red}";;
@@ -163,7 +159,7 @@ function LOGGER() {
 
 function CHECK_PKG() {
 	which $1 > /dev/null 2>&1
-	[[ $? == 0 ]] && echo "true" || echo "false"
+	[[ $? == 0 ]] && echo true || echo false
 }
 
 function RANDOM() {
@@ -339,32 +335,35 @@ function CHECK_DEPENDS() {
 }
 
 function FW_VERSION_CHECK() {
-	[[ $# -gt 1 ]] && echo "false" && return
+	[[ $# -gt 1 ]] && echo false && return
 	[[ $1 =~ R[1-9.]{2}.+-[0-9]{8} ]] && {
-		echo "true"
+		echo true
 		LOGGER "[FW_VERSION_CHECK] 检查固件版本号: [$1] ... true"
 	} || {
-		echo "false"
+		echo false
 		LOGGER "[FW_VERSION_CHECK] 检查固件版本号: [$1] ... false"
 	}
 }
 
 function GET_FW_LOG() {
 	local Result
+	[[ ! $(cat ${API_File}) =~ Update_Logs.json ]] && return 1
 	case "$1" in
 	[Ll]ocal)
 		FW_Version="${CURRENT_Version}"
 	;;
 	[Cc]loud)
-		FW_Version="$(GET_CLOUD_VERSION)"
+		FW_Version="$(GET_CLOUD_INFO version)"
 	;;
 	-v)
 		shift
 		FW_Version="$1"
 	;;
 	esac
-	DOWNLOADER --path ${Running_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 3 --type 固件更新日志 --skip ${Running_Path}/Update_Logs.json 1 --quiet
-	[[ -n $(cat ${Running_Path}/Update_Logs.json 2> /dev/null) ]] && {
+	[[ $(CHECK_TIME ${Running_Path}/Update_Logs.json 2) == false ]] && {
+		DOWNLOADER --path ${Running_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 3 --type 固件更新日志 --quiet
+	}
+	[[ -s ${Running_Path}/Update_Logs.json ]] && {
 		Result=$(jsonfilter -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${FW_Version}"""'"]' < ${Running_Path}/Update_Logs.json 2> /dev/null)
 		[[ -n ${Result} ]] && {
 			echo -e "\n${Grey}${FW_Version} for ${TARGET_PROFILE} 更新日志:"
@@ -373,56 +372,84 @@ function GET_FW_LOG() {
 	}
 }
 
+function CHECK_TIME() {
+	[[ -s $1 && -n $(find $1 -type f -mmin -$2) ]] && {
+		LOGGER "[CHECK_TIME] 文件: [$1] 距离修改时间小于 $2 分钟!"
+		echo true
+	} || {
+		RM $1
+		LOGGER "[CHECK_TIME] 文件: [$1] 距离修改时间已经超过 $2 分钟!"
+		echo false
+	}
+}
+
 function GET_API() {
-	local X Y
-	DOWNLOADER --path ${Running_Path} --file-name API --dl ${DOWNLOADERS} --url "${Github_API}@@1 $(URL_X ${Github_Release}/API G@@1 F@@1)" --no-url-name --timeout 3 --type 固件信息 --skip ${Running_Path}/API 1 --quiet
-	[[ -z $(cat ${Running_Path}/API 2> /dev/null) ]] && {
-		ECHO r "Github API 请求错误,请检查网络后重试!"
+	local url name size version
+	local API_Dump=${Running_Path}/API_Dump
+	[[ $(CHECK_TIME ${API_File} 1) == false ]] && {
+		DOWNLOADER --path ${Running_Path} --file-name API_Dump --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 3 --type 固件信息 --quiet
+		[[ ! $? == 0 || -z $(cat ${API_Dump} 2> /dev/null) ]] && {
+			ECHO r "Github API 请求错误,请检查网络后重试!"
+			RM ${API_Dump}
+			EXIT 1
+		}
+		RM ${API_File} && touch -a ${API_File}
+		local i=1;while :;do
+			url=$(jsonfilter -e '@["assets"]' < ${API_Dump} | jsonfilter -e '@['"""$i"""'].browser_download_url' 2> /dev/null)
+			[[ ! $? == 0 ]] && break
+			size=$(jsonfilter -e '@["assets"]' < ${API_Dump} | jsonfilter -e '@['"""$i"""'].size' 2> /dev/null)
+			name=${url##*/}
+			size=$(echo $size | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
+			version=$(echo $name | egrep -o "R[0-9.]+-[0-9]+")
+			echo "${name}		${version}		${size}MB		${url}" | grep -v "API" >> ${API_File}
+			i=$(($i + 1))
+		done
+	}
+	[[ -z $(cat ${API_File} 2> /dev/null) ]] && {
+		ECHO r "Github API 解析失败,请尝试清理缓存后再试!"
+		RM ${API_File}
 		EXIT 1
 	}
 }
 
-function GET_CLOUD_FW() {
-	local X Y
-	eval X="$(GET_VARIABLE REGEX_Firmware ${Default_Variable})"
-	case $1 in
-	[Aa]ll)
-		egrep -o "${X}" ${Running_Path}/API | sort | uniq | grep -v "^$"
+function GET_CLOUD_INFO() {
+	local Info
+	[[ ! -f ${API_File} ]] && return
+	if [[ $1 =~ (All|all|-a) ]];then
+		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | sort | uniq)
+		shift
+	else
+		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | sort | uniq | awk 'END {print}')
+	fi
+	case "$1" in
+	name)
+		echo "${Info}" | awk '{print $1}'
 	;;
-	*)
-		Y=$(egrep -o "${X}" ${Running_Path}/API | awk 'END {print}')
-		[[ -n ${Y} ]] && echo ${Y}
+	version)
+		echo "${Info}" | awk '{print $2}'
+	;;
+	size)
+		echo "${Info}" | awk '{print $3}'
+	;;
+	url)
+		echo "${Info}" | awk '{print $4}'
 	;;
 	esac
 }
 
-function GET_CLOUD_VERSION() {
-	local X
-	GET_CLOUD_FW $1 | egrep -o "R[0-9.]+-[0-9]+"
-}
-
-function GET_CLOUD_FW_SIZE() {
-	local X Y
-	let X="$(grep -n "$1" ${Running_Path}/API | tail -1 | cut -d : -f 1)-4"
-	let Y="$(sed -n "${X}p" ${Running_Path}/API | egrep -o "[0-9]+" | awk '{print ($1)/1048576}' | awk -F. '{print $1}')+1"
-	[[ ${Y} =~ [0-9] ]] && echo "${Y}M"
-}
-
 function CHECK_UPDATES() {
-	local X
-	ECHO "正在检查版本更新 ..."
-	GET_API
-	X="$(GET_CLOUD_VERSION)"
-	[[ ! $(FW_VERSION_CHECK ${X}) == true ]] && {
+	local Version
+	Version="$(GET_CLOUD_INFO version)"
+	[[ $(FW_VERSION_CHECK ${Version}) == false ]] && {
 		ECHO r "固件版本合法性校验失败!"
 		EXIT 1
 	}
-	[[ ${X} == ${CURRENT_Version} ]] && {
+	[[ ${Version} == ${CURRENT_Version} ]] && {
 		CURRENT_Type="${Yellow} [已是最新]${White}"
 		Upgrade_Stopped=1
 	} || {
-		[[ $(echo ${X} | cut -d "-" -f2) -gt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && CURRENT_Type="${Green} [可更新]${White}"
-		[[ $(echo ${X} | cut -d "-" -f2) -lt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && {
+		[[ $(echo ${Version} | cut -d "-" -f2) -gt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && CURRENT_Type="${Green} [可更新]${White}"
+		[[ $(echo ${Version} | cut -d "-" -f2) -lt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && {
 			CHECKED_Type="${Red} [旧版本]${White}"
 			Upgrade_Stopped=2
 		}
@@ -436,6 +463,7 @@ function UPGRADE() {
 		ECHO r "网络连接错误,请稍后再试!"
 		EXIT 1
 	}
+	Firmware_Path="${Running_Path}"
 	Upgrade_Option="sysupgrade -q"
 	MSG="更新固件"
 	while [[ $1 ]];do
@@ -445,7 +473,7 @@ function UPGRADE() {
 			Special_Commands="${Special_Commands} [测试模式]"
 		;;
 		-P | --proxy)
-			case $2 in
+			case "$2" in
 			F | G)
 				Proxy_Type="$2"
 				shift
@@ -482,8 +510,8 @@ function UPGRADE() {
 			Special_MSG=" (不保留配置)"
 		;;
 		--path)
-			Running_Path="$2"
-			ECHO g "使用自定义固件保存路径: [${Running_Path}]"
+			Firmware_Path="$2"
+			ECHO g "使用自定义固件保存路径: [${Firmware_Path}]"
 			shift
 		;;
 		--skip-verify)
@@ -514,9 +542,13 @@ function UPGRADE() {
 			Proxy_Type="All"
 		}
 	fi
+	ECHO "正在检查版本更新 ..."
+	GET_API
 	CHECK_UPDATES
-	CLOUD_FW_Version="$(GET_CLOUD_VERSION)"
-	CLOUD_FW_Name="$(GET_CLOUD_FW)"
+	CLOUD_FW_Version="$(GET_CLOUD_INFO version)"
+	CLOUD_FW_Name="$(GET_CLOUD_INFO name)"
+	CLOUD_FW_Size="$(GET_CLOUD_INFO size)"
+	CLOUD_FW_Url="$(GET_CLOUD_INFO url)"
 	[[ -z ${CLOUD_FW_Name} ]] && {
 		ECHO r "云端固件名称获取失败!"
 		EXIT 1
@@ -535,7 +567,7 @@ $(echo -e "当前固件版本: ${CURRENT_Version}${CURRENT_Type}")
 $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 
 云端固件名称: ${CLOUD_FW_Name}
-云端固件体积: $(GET_CLOUD_FW_SIZE ${CLOUD_FW_Name})
+云端固件体积: ${CLOUD_FW_Size}
 EOF
 	GET_FW_LOG -v ${CLOUD_FW_Version}
 	case "${Upgrade_Stopped}" in
@@ -548,44 +580,41 @@ EOF
 		[[ ! ${Choose} =~ [Yy] ]] && EXIT 0
 	;;
 	esac
-	Github_Release_FastGit="https://download.fastgit.org/${Firmware_Author}/releases/download/AutoUpdate"
-	Github_Release_Goproxy="https://ghproxy.com/${Github_Release}"
 	local URL
-	case ${Proxy_Type} in
+	case "${Proxy_Type}" in
 	F | G)
-		URL="$(URL_X ${Github_Release} ${Proxy_Type}@@5)"
+		URL="$(URL_X ${CLOUD_FW_Url} ${Proxy_Type}@@5)"
 	;;
 	All)
-		URL="$(URL_X ${Github_Release} G@@2 F@@2 X@@1)"
+		URL="$(URL_X ${CLOUD_FW_Url} G@@2 F@@2 X@@1)"
 	;;
 	*)
-		URL="$(URL_X ${Github_Release} X@@2 G@@2 F@@1)"
+		URL="$(URL_X ${CLOUD_FW_Url} X@@2 G@@2 F@@1)"
 	;;
 	esac
-	DOWNLOADER --file-name ${CLOUD_FW_Name} --dl ${DOWNLOADERS} --url ${URL} --path ${Running_Path} --timeout 5 --type 固件 --skip /tmp/Verify_Succeed 1
-	[[ ! -s ${Running_Path}/${CLOUD_FW_Name} ]] && EXIT 1
+	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DOWNLOADERS} --url ${URL} --path ${Firmware_Path} --timeout 5 --type 固件
+	[[ ! -s ${Firmware_Path}/${CLOUD_FW_Name} ]] && EXIT 1
 	if [[ ! Force_Mode == 1 ]];then
-		LOCAL_SHA256=$(GET_SHA256SUM ${Running_Path}/${CLOUD_FW_Name} 5)
-		CLOUD_SHA256=$(echo "${CLOUD_FW_Name}" | egrep -o "[0-9a-z]+.${Firmware_Format}" | sed -r "s/(.*).${Firmware_Format}/\1/")
+		LOCAL_SHA256=$(GET_SHA256SUM ${Firmware_Path}/${CLOUD_FW_Name} 5)
+		CLOUD_SHA256=$(echo ${CLOUD_FW_Name} | egrep -o "[0-9a-z]+.${Firmware_Format}" | sed -r "s/(.*).${Firmware_Format}/\1/")
 		[[ ${LOCAL_SHA256} != ${CLOUD_SHA256} ]] && {
 			ECHO r "SHA256 校验失败,请检查网络后重试!"
 			REMOVE_CACHE
 			EXIT 1
 		}
-		touch /tmp/Verify_Succeed
 		LOGGER "固件 SHA256 比对通过!"
 	fi
 	case "${Firmware_Format}" in
 	img.gz)
 		if [[ ${Decompress_Mode} == 1 ]];then
 			ECHO "正在解压 [${Firmware_Format}] 固件 ..."
-			gzip -d -q -f -c ${Running_Path}/${CLOUD_FW_Name} > ${Running_Path}/$(echo "${CLOUD_FW_Name}" | sed -r 's/(.*).gz/\1/')
+			gzip -d -q -f -c ${Firmware_Path}/${CLOUD_FW_Name} > ${Firmware_Path}/$(echo ${CLOUD_FW_Name} | sed -r 's/(.*).gz/\1/')
 			[[ ! $? == 0 ]] && {
 				ECHO r "固件解压失败!"
 				EXIT 1
 			} || {
-				CLOUD_FW_Name="$(echo "${CLOUD_FW_Name}" | sed -r 's/(.*).gz/\1/')"
-				LOGGER "固件解压成功,固件已解压到: [${Running_Path}/${CLOUD_FW_Name}]"
+				CLOUD_FW_Name="$(echo ${CLOUD_FW_Name} | sed -r 's/(.*).gz/\1/')"
+				LOGGER "固件解压成功,固件已解压到: [${Firmware_Path}/${CLOUD_FW_Name}]"
 			}
 		else
 			[[ $(CHECK_PKG gzip) == true ]] && opkg remove gzip > /dev/null 2>&1
@@ -593,9 +622,9 @@ EOF
 	;;
 	esac
 	[[ ${Test_Mode} != 1 ]] && {
-		DO_UPGRADE ${Upgrade_Option} ${Running_Path}/${CLOUD_FW_Name}
+		DO_UPGRADE ${Upgrade_Option} ${Firmware_Path}/${CLOUD_FW_Name}
 	} || {
-		ECHO x "[测试模式] ${Upgrade_Option} ${Running_Path}/${CLOUD_FW_Name}"
+		ECHO x "[测试模式] ${Upgrade_Option} ${Firmware_Path}/${CLOUD_FW_Name}"
 		EXIT 0
 	}
 }
@@ -604,9 +633,9 @@ function DOWNLOADER() {
 	local DL_Downloader DL_Name DL_URL DL_Path DL_Retries DL_Timeout DL_Type DL_Final Quiet_Mode No_URL_Name Print_Mode DL_Retires_All DL_URL_Final
 	LOGGER "开始解析传入参数 ..."
 	LOGGER "[$*]"
-	# --dl 下载器 --file-name 文件名称 --no-url-name --url 下载地址1@@重试次数 下载地址2@@重试次数 --path 保存位置 --timeout 超时 --type 类型 --skip 文件 时间(分) --quiet --print
+	# --dl 下载器 --file-name 文件名称 --no-url-name --url 下载地址1@@重试次数 下载地址2@@重试次数 --path 保存位置 --timeout 超时 --type 类型 --quiet --print
 	while [[ $1 ]];do
-		case $1 in
+		case "$1" in
 		--dl)
 			shift
 			while [[ $1 ]];do	
@@ -705,17 +734,6 @@ function DOWNLOADER() {
 			done
 			LOGGER "[--DL_Type Finished] 文件类型: ${DL_Type}"
 		;;
-		--skip)
-			shift
-			[[ -f $1 && -n $(find $1 -type f -mmin -$2) ]] && {
-				LOGGER "[$2 Minute] 跳过下载文件: [${DL_Name}]"
-				return 0
-			} || rm -f $1 2> /dev/null
-			while [[ $1 ]];do
-				[[ $1 =~ '--' ]] && break
-				[[ ! $1 =~ '--' ]] && shift
-			done
-		;;
 		--quiet)
 			shift
 			LOGGER "Enabled Quiet Mode"
@@ -734,7 +752,7 @@ function DOWNLOADER() {
 		esac
 	done
 	LOGGER "传入参数解析完成!"
-	case ${DL_Downloader} in
+	case "${DL_Downloader}" in
 	wget | wget-ssl)
 		DL_Template="wget-ssl --quiet --no-check-certificate --no-dns-cache -x -4 --tries 1 --timeout 5 -O"
 	;;
@@ -773,7 +791,7 @@ function DOWNLOADER() {
 			fi
 			[[ -f ${DL_Path}/${DL_Name} ]] && {
 				LOGGER "删除已存在的文件: [${DL_Path}/${DL_Name}] ..."
-				rm -f ${DL_Path}/${DL_Name} 2> /dev/null
+				RM ${DL_Path}/${DL_Name}
 			}
 			LOGGER "执行下载: [${DL_Final}]"
 			${DL_Final}
@@ -781,7 +799,7 @@ function DOWNLOADER() {
 				ECHO y ${Quiet_Mode} "${DL_Type}下载成功!"
 				[[ ${Print_Mode} == 1 ]] && {
 					cat ${DL_Path}/${DL_Name} 2> /dev/null
-					rm -f ${DL_Path}/${DL_Name} 2> /dev/null
+					RM ${DL_Path}/${DL_Name}
 				}
 				touch -a ${DL_Path}/${DL_Name} 2> /dev/null
 				return 0
@@ -798,7 +816,7 @@ function DOWNLOADER() {
 		done
 		E=$((${E} + 1))
 	done
-	rm -f ${DL_Path}/${DL_Name} 2> /dev/null
+	RM ${DL_Path}/${DL_Name}
 	ECHO r ${Quiet_Mode} "${DL_Type}下载失败,请检查网络后重试!"
 	return 1
 }
@@ -818,7 +836,7 @@ function DO_UPGRADE() {
 function REMOVE_CACHE() {
 	rm -rf ${Running_Path}/API \
 		${Running_Path}/Update_Logs \
-		/tmp/Verify_Succeed 2> /dev/null
+		${Running_Path}/API_Dump 2> /dev/null
 	LOGGER "AutoUpdate 缓存清理完成!"
 }
 
@@ -849,7 +867,7 @@ function LOG() {
 				ECHO y "AutoUpdate 日志保存路径已修改为: [$2]!"
 			;;
 			del | rm | clean)
-				rm -f ${Log_Path}/AutoUpdate.log
+				RM ${Log_Path}/AutoUpdate.log
 			;;
 			*)
 				SHELL_HELP
@@ -883,7 +901,7 @@ URL_X() {
 	esac
 	while [[ $1 ]];do
 		local URL_Cache=$1 URL_Final
-		case $1 in
+		case "$1" in
 		F@@*)
 			URL_Final="${URL_Cache/F/${FastGit}}"
 		;;
@@ -905,7 +923,7 @@ URL_X() {
 
 function NETWORK_CHECK() {
 	ping $1 -c 1 -W $2 > /dev/null 2>&1
-	[[ $? == 0 ]] && echo "true" || echo "false"
+	[[ $? == 0 ]] && echo true || echo false
 }
 
 function AutoUpdate_Main() {
@@ -952,7 +970,7 @@ function AutoUpdate_Main() {
 			}
 		;;
 		-D)
-			case ${Input[$((${E} + 1))]} in
+			case "${Input[$((${E} + 1))]}" in
 			wget | curl | wget-ssl | uclient-fetch)
 				DOWNLOADERS=${Input[$((${E} + 1))]}
 			;;
@@ -1005,7 +1023,7 @@ function AutoUpdate_Main() {
 		;;
 		--check)
 			shift && [[ -n $* ]] && SHELL_HELP
-			CHECK_DEPENDS bash uclient-fetch curl wget openssl
+			CHECK_DEPENDS bash uclient-fetch curl wget openssl jsonfilter
 			[[ $(NETWORK_CHECK 223.5.5.5 2) == false ]] && {
 				ECHO r "网络连接错误!"
 			} || ECHO y "网络连接正常!"
@@ -1032,7 +1050,7 @@ function AutoUpdate_Main() {
 			[Cc]loud)
 				shift
 				GET_API
-				GET_CLOUD_VERSION $*
+				GET_CLOUD_INFO $* version
 			;;
 			*)
 				SHELL_HELP
@@ -1042,6 +1060,7 @@ function AutoUpdate_Main() {
 		;;
 		--fw-log)
 			shift
+			GET_API
 			[[ -z $* ]] && GET_FW_LOG local
 			case "$1" in
 			[Cc]loud)
@@ -1117,9 +1136,16 @@ function AutoUpdate_Main() {
 		-L | --log)
 			shift
 			LOG $*
+			EXIT 2
+		;;
+		-O)
+			GET_API
+			GET_CLOUD_INFO -a name
+			EXIT 0
 		;;
 		*)
 			SHELL_HELP
+			EXIT 1
 		;;
 		esac
 	done
@@ -1127,9 +1153,10 @@ function AutoUpdate_Main() {
 
 Running_Path=/tmp/AutoUpdate
 Log_Path=/tmp
+API_File=${Running_Path}/API
 Default_Variable=/etc/AutoBuild/Default_Variable
 Custom_Variable=/etc/AutoBuild/Custom_Variable
-ENV_DEPENDS="Author Github TARGET_PROFILE TARGET_BOARD TARGET_SUBTARGET Firmware_Format CURRENT_Version OP_Maintainer OP_BRANCH OP_REPO_NAME REGEX_Firmware"
+ENV_DEPENDS="Author Github TARGET_PROFILE TARGET_BOARD TARGET_SUBTARGET Firmware_Format CURRENT_Version OP_Maintainer OP_BRANCH OP_REPO_NAME"
 DOWNLOADERS="wget-ssl curl wget uclient-fetch"
 
 White="\e[0m"
