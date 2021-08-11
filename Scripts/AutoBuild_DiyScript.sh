@@ -39,6 +39,7 @@ Firmware-Diy() {
 	case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${feeds_pkgs}/ttyd/files/ttyd.config
+		sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 	;;
 	esac
 
