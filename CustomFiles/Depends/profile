@@ -4,7 +4,7 @@ Sysinfo() {
 	[ -z "${TARGET_PROFILE}" ] && local TARGET_PROFILE=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
 	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
-	local TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
+	[ -n "$(sensors 2> /dev/null | grep Core)" ] && local TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
 	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE} ${Div} $(uname -n)"
 	echo -e "            内核版本:		K$(uname -rs | egrep -o "[0-9].+")"
 	echo -e "            可用内存:		$(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
@@ -30,8 +30,8 @@ clear
 [ -n "$FAILSAFE" ] && cat /etc/banner.failsafe
 
 fgrep -sq '/ overlay ro,' /proc/mounts && {
-	echo -e "${Red}Your JFFS2-partition seems full and overlayfs is mounted read-only."
-	echo -e "Please try to remove files from /overlay/upper/... and reboot!${}"
+	echo -e "            ${Red}Your JFFS2-partition seems full and overlayfs is mounted read-only."
+	echo -e "            Please try to remove files from /overlay/upper/... and reboot!\n"
 }
 
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
@@ -57,11 +57,13 @@ if ( grep -qs '^root::' /etc/shadow && \
      [ -z "$FAILSAFE" ] )
 then
 cat << EOF
-=== WARNING! =====================================
-There is no root password defined on this device!
-Use the "passwd" command to set up a new password
-in order to prevent unauthorized SSH logins.
---------------------------------------------------
+
+            === WARNING! =====================================
+            There is no root password defined on this device!
+            Use the "passwd" command to set up a new password
+            in order to prevent unauthorized SSH logins.
+            --------------------------------------------------
+
 EOF
 fi
 
