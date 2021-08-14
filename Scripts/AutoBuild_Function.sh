@@ -82,6 +82,7 @@ OP_REPO_NAME=${OP_REPO_NAME}
 EOF
 	cat >> ${Home}/VARIABLE_FILE <<EOF
 Home=${Home}
+Load_Common_Config=${Load_Common_Config}
 PKG_Compatible="${INCLUDE_Obsolete_PKG_Compatible}"
 Checkout_Virtual_Images="${Checkout_Virtual_Images}"
 Firmware_Path=${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}
@@ -248,13 +249,12 @@ Firmware-Diy_Other() {
 			ECHO "[${OP_Maintainer}]: Current Source_Maintainer is not supported ..."
 		fi
 	fi
-	if [[ -s $GITHUB_WORKSPACE/Configs/Common ]];then
-		[[ ! "$(cat .config)" =~ "## TEST" ]] && {
+	if [[ ${Load_Common_Config} == true ]];then
+		if [[ -s $GITHUB_WORKSPACE/Configs/Common || ! "$(cat .config)" =~ "## TEST" ]];then
 			ECHO "Merging [Configs/Common] to .config ..."
 			echo -e "\n$(cat $GITHUB_WORKSPACE/Configs/Common)" >> .config
-		} || {
-			sed -i '/## TEST/d' .config >/dev/null 2>&1
-		}
+		fi
+		sed -i '/## TEST/d' .config >/dev/null 2>&1
 	fi
 	ECHO "[Firmware-Diy_Other] Done."
 }
@@ -279,7 +279,7 @@ Firmware-Diy_End() {
 		Process_Firmware ${Firmware_Format}
 	;;
 	esac
-	[[ $(ls) =~ 'AutoBuild-' ]] && mv -f AutoBuild-* ${Home}/bin/Firmware
+	[[ $(ls) =~ 'AutoBuild-' ]] && cp -a AutoBuild-* ${Home}/bin/Firmware
 	cd -
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 	ECHO "[Firmware-Diy_End] Done."

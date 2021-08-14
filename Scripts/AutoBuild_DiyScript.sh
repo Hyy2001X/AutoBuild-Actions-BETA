@@ -8,6 +8,7 @@ Diy_Core() {
 	Banner_Title="Powered by AutoBuild-Actions"
 	Default_LAN_IP=192.168.1.1
 
+	Load_Common_Config=true
 	Load_CustomPackages_List=true
 	Short_Firmware_Date=true
 	Checkout_Virtual_Images=false
