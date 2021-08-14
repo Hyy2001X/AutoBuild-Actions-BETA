@@ -37,8 +37,6 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
 
 2. 把本地的`.config`文件**重命名**并上传到仓库的`/Configs`目录
 
-    **/Configs/Common**: 通用配置文件,将在编译开始前被追加到 .config,用于同时管理多个设备,不需要删除即可
-
 3. 编辑`/.github/workflows/*.yml`文件,修改`第 7 行`为易于自己识别的名称
 
 4. 编辑`/.github/workflows/*.yml`文件,修改`第 32 行`为上传的`.config`文件名称
@@ -56,6 +54,8 @@ AutoBuild-Actions 稳定版/模板地址: [AutoBuild-Actions-Template](https://g
    Default_LAN_IP 固件默认 LAN IP 地址
 
    Short_Firmware_Date 简短的固件日期 true: [20210601]; false: [202106012359]
+   
+   Load_Common_Config 通用配置文件,启用后,将在编译开始前被追加到 .config
 
    Load_CustomPackages_List 启用后,将自动运行 /Scripts/AutoBuild_ExtraPackages.sh 脚本
 
