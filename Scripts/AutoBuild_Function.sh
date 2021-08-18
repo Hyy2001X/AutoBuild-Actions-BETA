@@ -126,7 +126,6 @@ Firmware-Diy_Main() {
 		case "${OP_Maintainer}/${OP_REPO_NAME}" in
 		coolsnowwolf/lede)
 			Copy ${CustomFiles}/Depends/coremark.sh ${Home}/$(PKG_Finder d "package feeds" coremark)
-			Copy ${CustomFiles}/Depends/cpuinfo_x86 ${Home}/$(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 			sed -i "s?iptables?#iptables?g" ${Version_File}
 			sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 			sed -i "/dns_caching_dns/d" $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
@@ -134,7 +133,6 @@ Firmware-Diy_Main() {
 		;;
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/openwrt_release_${OP_Maintainer} ${base_files}/etc openwrt_release
-			Copy ${CustomFiles}/Depends/cpuinfo_x86 ${Home}/$(PKG_Finder d package autocore | awk 'NR==1')/files/x86/sbin cpuinfo
 			sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 		;;
 		esac

@@ -17,6 +17,7 @@ case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
 coolsnowwolf/lede:master)
 	AddPackage git other luci-app-adguardhome Hyy2001X master
 	AddPackage git other luci-app-iperf3-server Hyy2001X master
+	AddPackage git lean autocore Hyy2001X master
 	AddPackage svn other luci-app-smartdns kenzok8/openwrt-packages/trunk
 	AddPackage git other luci-app-serverchan tty228 master
 	AddPackage svn other luci-app-socat Lienol/openwrt-package/trunk
