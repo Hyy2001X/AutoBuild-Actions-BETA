@@ -3,10 +3,9 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.1
+Version=V1.7.2
 
 ECHO() {
-	local Color
 	case $1 in
 		r) Color="${Red}";;
 		g) Color="${Green}";;
@@ -22,23 +21,25 @@ AutoBuild_Tools() {
 while :
 do
 	clear
-	ECHO y "$(cat /etc/banner)"
-	ECHO x "\n\nAutoBuild 固件工具箱 ${Version}\n"
-	echo "1. USB 空间扩展"
-	echo "2. Samba 设置"
-	echo "3. 安装依赖包"
-	echo "4. 端口占用列表"
-	echo "5. 查看硬盘信息"
-	echo "6. 网络连接检查"
-	echo "7. 修复环境"
-	ECHO x "\nu. 固件更新"
-	ECHO y "x. 更新脚本"
-	echo -e "q. 退出\n"
+	echo -e "$(cat /etc/banner)"
+	echo -e "
+AutoBuild 固件工具箱 ${Version}
+
+1. USB 空间扩展
+2. Samba 设置
+3. 端口占用列表
+4. 硬盘信息
+5. 网络检查
+6. 修复固件环境
+
+${Grey}u. 固件更新
+${Yellow}x. 更新脚本
+${White}q. 退出
+"
 	read -p "请从上方选项中选择一个操作:" Choose
 	case $Choose in
 	q)
-		rm -rf ${Main_tmp}
-		clear
+		rm -rf ${Tools_Cache}/*
 		exit 0
 	;;
 	u)
@@ -46,15 +47,15 @@ do
 			AutoUpdate_UI
 		} || {
 			ECHO r "\n未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
-			sleep 3
+			sleep 2
 		}
 	;;
 	x)
-		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${Main_tmp}/AutoBuild_Tools.sh
-		if [[ $? == 0 && -s ${Main_tmp}/AutoBuild_Tools.sh ]];then
+		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${Tools_Cache}/AutoBuild_Tools.sh
+		if [[ $? == 0 && -s ${Tools_Cache}/AutoBuild_Tools.sh ]];then
 			ECHO y "\n[AutoBuild_Tools] 脚本更新成功!"
 			rm -f /bin/AutoBuild_Tools.sh.sh
-			mv -f ${Main_tmp}/AutoBuild_Tools.sh /bin
+			mv -f ${Tools_Cache}/AutoBuild_Tools.sh /bin
 			chmod +x /bin/AutoBuild_Tools.sh
 		else
 			ECHO r "\n[AutoBuild_Tools] 脚本更新失败!"
@@ -64,44 +65,78 @@ do
 	1)
 		[[ ! $(CHECK_PKG block) == true ]] && {
 			ECHO r "\n缺少相应依赖包,请先安装 [block-mount] !"
-			sleep 3
-		} || {
-			AutoExpand_UI
-		}
+			sleep 2
+		} || AutoExpand_UI
 	;;
 	2)
-		AutoSamba_UI
+		[[ ! $(CHECK_PKG block) == true ]] && {
+			ECHO r "\n缺少相应依赖包,请先安装 [block-mount] !"
+			sleep 2
+		} || Samba_UI
 	;;
 	3)
-		AutoInstall_UI
+		ECHO y "\nLoading Service&Port Configuration ..."
+		Netstat1=${Tools_Cache}/Netstat1
+		Netstat2=${Tools_Cache}/Netstat2
+		ps_Info=${Tools_Cache}/ps_Info
+		rm -f ${Netstat2} && touch ${Netstat2}
+		netstat -ntupa | egrep ":::[0-9].+|0.0.0.0:[0-9]+|127.0.0.1:[0-9]+" | awk '{print $1" "$4" "$6" "$7}' | sed -r 's/0.0.0.0:/\1/;s/:::/\1/;s/127.0.0.1:/\1/;s/LISTEN/\1/' | sort | uniq > ${Netstat1}
+		ps -w > ${ps_Info}
+		local i=1;while :;do
+			Proto=$(sed -n ${i}p ${Netstat1} | awk '{print $1}')
+			[[ -z ${Proto} ]] && break
+			Port=$(sed -n ${i}p ${Netstat1} | awk '{print $2}')
+			_Service=$(sed -n ${i}p ${Netstat1} | awk '{print $3}')
+			[[ ${_Service} == '-' ]] && {
+				Service="Unknown"
+			} || {
+				Service=$(echo ${_Service} | cut -d '/' -f2)
+				PID=$(echo ${_Service} | cut -d '/' -f1)
+				Task=$(grep -v "grep" ${ps_Info} | grep "${PID}" | awk '{print $5}')
+			}
+			i=$(($i + 1))
+			echo -e "${Proto}	${Port}		${Service}	${PID}			${Task}" >> ${Netstat2}
+		done
+		clear
+		ECHO y "协议	   占用端口       服务名称        PID             进程信息"
+		local X;while read X;do
+			printf "%-10s %-14s %-15s %-15s %-10s\n" ${X}
+		done < ${Netstat2}
+		ENTER
 	;;
 	4)
-		clear
-		echo -e "端口		服务名称\n"
-		netstat -tanp | egrep ":::[0-9].+|0.0.0.0:[0-9]+|127.0.0.1:[0-9]+" | awk '{print $4"\t     "$7}' | sed -r 's/:::/\1/' | sed -r 's/0.0.0.0:/\1/' | sed -r 's/127.0.0.1:/\1/'| sed -r 's/[0-9]+.\//\1/' | sort | uniq
-		Enter
-	;;
-	5)
 		[[ ! $(CHECK_PKG smartctl) == true ]] && {
 			ECHO r "\n缺少相应依赖包,请先安装 [smartmontools] !"
-			sleep 3
-		} || Smart_Info
+			sleep 2
+		} || SmartInfo_UI
 	;;
-	6)
+	5)
 		if [[ $(CHECK_PKG curl) == true ]];then
+			ping 223.5.5.5 -c 1 -W 2 > /dev/null 2>&1
+			[[ $? == 0 ]] && {
+				ECHO y "\n基础网络连接正常!"
+			} || {
+				ECHO r "\n基础网络连接错误!"
+			}
+			ping www.baidu.com -c 1 -W 2 > /dev/null 2>&1
+			[[ $? == 0 ]] && {
+				ECHO y "Baidu 连接正常!"
+			} || {
+				ECHO r "Baidu 连接错误!"
+			}
 			Google_Check=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} | tail -n1)
 			case ${Google_Check} in
 			301)
-				ECHO y "\nGoogle 连接正常!"
+				ECHO y "Google 连接正常!"
 			;;
 			*)
-				ECHO r "\nGoogle 连接错误!"
+				ECHO r "Google 连接错误!"
 			;;
 			esac
 		fi
-		sleep 3
+		sleep 2
 	;;
-	7)
+	6)
 		cp -a /rom/etc/AutoBuild/Default_Variable /etc/AutoBuild
 		cp -a /rom/etc/profile /etc
 		cp -a /rom/etc/banner /etc
@@ -127,10 +162,10 @@ AutoExpand_UI() {
 		echo "r. 重新载入列表"
 	} || {
 		ECHO r "未检测到任何外接设备!"
-		sleep 3
+		sleep 2
 		return 1
 	}
-	local Logic_Disk_Count=$(sed -n '$=' ${Logic_Disk_List})
+	Logic_Disk_Count=$(sed -n '$=' ${Logic_Disk_List})
 	echo ""
 	read -p "请输入要操作的硬盘编号[1-${Logic_Disk_Count}]:" Choose
 	case ${Choose} in
@@ -147,7 +182,7 @@ AutoExpand_UI() {
 				Choose_Mount=$(grep "${Choose_Disk}" ${Disk_Processed_List} | awk '{print $4}')
 				AutoExpand_Core ${Choose_Disk} ${Choose_Mount}
 			else
-				ECHO r "\n系统缺少相应依赖包,请先安装 [e2fsprogs] !" && sleep 3
+				ECHO r "\n系统缺少相应依赖包,请先安装 [e2fsprogs] !" && sleep 2
 				return
 			fi
 		} || {
@@ -159,10 +194,13 @@ AutoExpand_UI() {
 }
 
 USB_Info() {
+	Logic_Disk_List="${Tools_Cache}/Logic_Disk_List"
+	Phy_Disk_List="${Tools_Cache}/Phy_Disk_List"
+	Block_Info="${Tools_Cache}/Block_Info"
+	Disk_Processed_List="${Tools_Cache}/Disk_Processed_List"
 	echo -ne "\nLoading USB Configuration ..."
-	local Disk_Name Logic_Mount Logic_Format Logic_Available
-	rm -f ${Block_Info} ${Logic_Disk_List} ${Disk_Processed_List} ${Phy_Disk_List} ${UUID_List}
-	touch ${Disk_Processed_List} ${UUID_List}
+	rm -f ${Block_Info} ${Logic_Disk_List} ${Disk_Processed_List} ${Phy_Disk_List}
+	touch ${Disk_Processed_List}
 	block mount
 	block info | grep -v "mtdblock" | grep "sd[a-z][0-9]" > ${Block_Info}
 	[[ -s ${Block_Info} ]] && {
@@ -183,21 +221,17 @@ USB_Info() {
 }
 
 List_Disk() {
-	[[ $4 == / ]] && {
-		echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4		$5"
-	} || {
-		echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4	$5"
-	}
+	echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4			$5"
 }
 
 AutoExpand_Core() {
-	ECHO r "\n警告: 操作开始后请不要中断任务或进行其他操作,否则可能导致设备数据丢失 !"
-	ECHO r "同时连接多个 USB 设备可能导致分区错位路由器不能正常启动 !"
-	ECHO r "\n本操作将把设备 '$1' 格式化为 ext4 格式,请提前做好数据备份工作 !"
+	ECHO r "\n警告: 操作开始后请不要中断任务或进行其他操作,否则可能导致设备数据丢失!"
+	ECHO r "同时连接多个 USB 设备可能导致分区错位路由器不能正常启动!"
+	ECHO r "\n本操作将把设备 '$1' 格式化为 ext4 格式,请提前做好数据备份工作!"
 	read -p "是否执行格式化操作?[Y/n]:" Choose
 	[[ ${Choose} == [Yesyes] ]] && {
 		ECHO y "\n开始运行脚本 ..."
-		sleep 3
+		sleep 2
 	} || return 0
 	echo "禁用自动挂载 ..."
 	uci set fstab.@global[0].auto_mount='0'
@@ -206,37 +240,37 @@ AutoExpand_Core() {
 		echo "卸载设备 '$1' 位于 '$2' ..."
 		umount -l $2 > /dev/null 2>&1
 		[[ $? != 0 ]] && {
-			ECHO r "设备 '$2' 卸载失败 !"
+			ECHO r "设备 '$2' 卸载失败!"
 			exit 1
 		}
 	}
 	echo "正在格式化设备 '$1' 为 ext4 格式,请耐心等待 ..."
 	mkfs.ext4 -F $1 > /dev/null 2>&1
 	[[ $? == 0 ]] && {
-		echo "设备 '$1' 已成功格式化为 ext4 格式 !"
+		echo "设备 '$1' 已成功格式化为 ext4 格式!"
 		USB_Info
 	} || {
-		ECHO r "设备 '$1' 格式化失败 !"
+		ECHO r "设备 '$1' 格式化失败!"
 		exit 1
 	}
-	local UUID=$(grep "$1" ${Disk_Processed_List} | awk '{print $2}')
+	UUID=$(grep "$1" ${Disk_Processed_List} | awk '{print $2}')
 	echo "UUID: ${UUID}"
 	echo "挂载设备 '$1' 到 ' /tmp/extroot' ..."
 	mkdir -p /tmp/introot || {
-		ECHO r "临时文件夹 '/tmp/introot' 创建失败 !"
+		ECHO r "临时文件夹 '/tmp/introot' 创建失败!"
 		exit 1
 	}
 	mkdir -p /tmp/extroot || {
-		ECHO r "临时文件夹 '/tmp/extroot' 创建失败 !"
+		ECHO r "临时文件夹 '/tmp/extroot' 创建失败!"
 		exit 1
 	}
 	mount --bind / /tmp/introot || {
-		ECHO r "挂载 '/' 到 '/tmp/introot' 失败 !"
+		ECHO r "挂载 '/' 到 '/tmp/introot' 失败!"
 		exit 1
 
 	}
 	mount $1 /tmp/extroot || {
-		ECHO r "挂载 '$1' 到 '/tmp/extroot' 失败 !"
+		ECHO r "挂载 '$1' 到 '/tmp/extroot' 失败!"
 		exit 1
 
 	}
@@ -258,8 +292,8 @@ config mount
 
 EOF
 	uci commit fstab
-	ECHO y "\n运行结束,外接设备 '$1' 已挂载到系统分区 !\n"
-	ECHO r "警告: 固件更新将会导致扩容失效,当前硬盘数据将会丢失,请提前做好备份工作 !\n"
+	ECHO y "\n运行结束,外接设备 '$1' 已挂载到系统分区!\n"
+	ECHO r "警告: 固件更新将会导致扩容失效,当前硬盘数据将会丢失,请提前做好备份工作!\n"
 	read -p "操作需要重启生效,是否立即重启?[Y/n]:" Choose
 	[[ ${Choose} == [Yesyes] ]] && {
 		ECHO g "\n正在重启设备,请耐心等待 ..."
@@ -269,11 +303,11 @@ EOF
 	} || exit
 }
 
-AutoSamba_UI() {
+Samba_UI() {
 	USB_Info
-	Samba_tmp="${Main_tmp}/AutoSamba"
-	Samba_UCI_List="${Main_tmp}/UCI_List"
-	[[ ! -d ${Main_tmp} ]] && mkdir -p "${Main_tmp}"
+	Samba_tmp="${Tools_Cache}/AutoSamba"
+	Samba_UCI_List="${Tools_Cache}/UCI_List"
+	[[ ! -d ${Tools_Cache} ]] && mkdir -p "${Tools_Cache}"
 	while :
 	do
 		clear
@@ -285,10 +319,18 @@ AutoSamba_UI() {
 		read -p "请从上方选项中选择一个操作:" Choose
 		case $Choose in
 		1)
-			Remove_Samba_Settings
+			while :
+			do
+				Samba_config="$(grep "sambashare" /etc/config/samba | wc -l)"
+				[[ ${Samba_config} -eq 0 ]] && break
+				uci delete samba.@sambashare[0]
+				uci commit samba > /dev/null 2>&1
+			done
+			ECHO y "\n已删除所有 Samba 挂载点!"
+			sleep 2
 		;;
 		2)
-			Mount_Samba_Devices
+			Samba_AutoMount
 		;;
 		3)
 			autosamba="$(uci get samba.@samba[0].autoshare)"
@@ -310,19 +352,7 @@ AutoSamba_UI() {
 	done
 }
 
-Remove_Samba_Settings() {
-	while :
-	do
-		Samba_config="$(grep "sambashare" /etc/config/samba | wc -l)"
-		[[ ${Samba_config} -eq 0 ]] && break
-		uci delete samba.@sambashare[0]
-		uci commit samba > /dev/null 2>&1
-	done
-	ECHO y "\n已删除所有 Samba 挂载点!"
-	sleep 2
-}
-
-Mount_Samba_Devices() {
+Samba_AutoMount() {
 	Logic_Disk_Count=$(sed -n '$=' ${Disk_Processed_List})
 	for ((i=1;i<=${Logic_Disk_Count};i++));
 	do
@@ -346,49 +376,12 @@ config sambashare
 	option dir_mask '0777'
 EOF
 		else
-			ECHO y "'${Disk_Mounted_Point}' 挂载点已存在 !"
+			ECHO y "'${Disk_Mounted_Point}' 挂载点已存在!"
 		fi
 	done
 	uci commit samba
 	/etc/init.d/samba restart
-	sleep 3
-}
-
-AutoInstall_UI() {
-while :
-do
-	clear
-	ECHO x "安装依赖包\n"
-	AutoInstall_UI_mod 1 block-mount
-	AutoInstall_UI_mod 2 e2fsprogs
-	AutoInstall_UI_mod 3 smartmontools
-	AutoInstall_UI_mod 4 curl
-	echo "u. 更新软件包列表"
-	echo -e "\nq. 返回\n"
-	read -p "请从上方选择一个操作:" Choose
-	echo ""
-	case $Choose in
-	q)
-		break
-	;;
-	u)
-		opkg update
-		sleep 3
-	;;
-	1)
-		Install_opkg_mod block-mount	
-	;;
-	2)
-		Install_opkg_mod e2fsprogs
-	;;
-	3)
-		Install_opkg_mod smartmontools
-	;;
-	4)
-		Install_opkg_mod curl
-	;;
-	esac
-done
+	sleep 2
 }
 
 AutoUpdate_UI() {
@@ -396,29 +389,32 @@ while :
 do
 	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
 	clear
-	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n"
-	ECHO g "1. 更新固件 [保留配置]"
-	echo "2. 更新固件 (强制刷入固件) [保留配置]"
-	echo "3. 不保留配置更新固件 [全新安装]"
-	echo "4. 列出固件信息"
-	echo "5. 清除固件下载缓存"
-	echo "6. 更改 Github API 地址"
-	echo "7. 指定 x86 设备下载 <UEFI|Legacy> 引导的固件"
-	echo "8. 打印运行日志 (反馈问题)"
-	echo "9. 检查运行环境"
-	ECHO y "\nx. 更新 [AutoUpdate] 脚本"
-	echo -e "q. 返回\n"
+	echo -e "$(cat /etc/banner)"
+	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n
+${Yellow}1. 更新固件 [保留配置]
+${White}2. 更新固件 (强制刷入固件) [保留配置]
+3. 不保留配置更新固件 [全新安装]
+4. 列出固件信息
+5. 清除固件下载缓存
+6. 更改 Github API 地址
+7. 指定 x86 设备下载 <UEFI | Legacy> 引导的固件
+8. 打印运行日志 (反馈问题)
+9. 检查运行环境
+10. 备份系统配置
+
+${Yellow}x. 更新 [AutoUpdate] 脚本
+${White}q. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
 	case ${Choose} in
 	q)
 		break
 	;;
 	x)
-		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${Main_tmp}/AutoUpdate.sh
-		if [[ $? == 0 && -s ${Main_tmp}/AutoUpdate.sh ]];then
+		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${Tools_Cache}/AutoUpdate.sh
+		if [[ $? == 0 && -s ${Tools_Cache}/AutoUpdate.sh ]];then
 			ECHO y "\n[AutoUpdate] 脚本更新成功!"
 			rm -f /bin/AutoUpdate.sh
-			mv -f ${Main_tmp}/AutoUpdate.sh /bin
+			mv -f ${Tools_Cache}/AutoUpdate.sh /bin
 			chmod +x /bin/AutoBuild_Tools.sh
 		else
 			ECHO r "\n[AutoUpdate] 脚本更新失败!"
@@ -437,7 +433,7 @@ do
 		bash /bin/AutoUpdate.sh --list
 	;;
 	5)
-		ECHO y "\n缓存清理完成!"
+		ECHO y "\n下载缓存清理完成!"
 		bash /bin/AutoUpdate.sh --clean
 	;;
 	6)
@@ -460,47 +456,45 @@ do
 	9)
 		bash /bin/AutoUpdate.sh --check
 	;;
-	*)
-		ECHO r "\n选择错误,请重新输入!"
-		sleep 1
+	10)
+		echo ""
+		read -p "请输入配置保存路径(回车即为当前路径):" BAK_PATH
+		bash /bin/AutoUpdate.sh --backup ${BAK_PATH}
 	;;
 	esac
-	Enter
+	ENTER
 done
 }
 
-Smart_Info() {
+SmartInfo_UI() {
 	USB_Info
 	clear
 	smartctl -v | awk 'NR==1'
-	cat ${Phy_Disk_List} | while read Phy_Disk
-	do
-		GET_Smart_Info ${Phy_Disk}
+	cat ${Phy_Disk_List} | while read Phy_Disk;do
+		SmartInfo_Core ${Phy_Disk}
 	done
-	Enter
+	ENTER
 }
 
-getinf() {
-	grep "$1" $2 | sed "s/^[$1]*//g" 2> /dev/null | sed 's/^[ \t]*//g' 2> /dev/null
-}
-
-GET_Smart_Info() {
+SmartInfo_Core() {
+	Smart_Info1="${Tools_Cache}/Smart_Info1"
+	Smart_Info2="${Tools_Cache}/Smart_Info2"
 	smartctl -H -A -i $1 > ${Smart_Info1}
 	smartctl -H -A -i -d scsi $1 > ${Smart_Info2}
 	if [[ ! $(smartctl -H $1) =~ Unknown ]];then
 		[[ $(smartctl -H $1) =~ PASSED ]] && Phy_Health=PASSED || Phy_Health=Failure
 	else
-		Phy_Health=$(getinf "SMART Health Status:" ${Smart_Info2})
+		Phy_Health=$(GET_INFO "SMART Health Status:" ${Smart_Info2})
 	fi
-	Phy_Name=$(getinf "Device Model:" ${Smart_Info1})
-	Phy_ID=$(getinf "Serial number:" ${Smart_Info2})
-	Phy_Capacity=$(getinf "User Capacity:" ${Smart_Info2})
+	Phy_Name=$(GET_INFO "Device Model:" ${Smart_Info1})
+	Phy_ID=$(GET_INFO "Serial number:" ${Smart_Info2})
+	Phy_Capacity=$(GET_INFO "User Capacity:" ${Smart_Info2})
 	Phy_Part_Number=$(grep -c "${Phy_Disk}" ${Disk_Processed_List})
-	Phy_Factor=$(getinf "Form Factor:" ${Smart_Info2})
-	[[ -z ${Phy_Factor} ]] && Phy_Factor=不可用
-	Phy_Sata_Version=$(getinf "SATA Version is:" ${Smart_Info1})
-	[[ -z ${Phy_Sata_Version} ]] && Phy_Sata_Version=不可用
-	TRIM_Command=$(getinf "TRIM Command:" ${Smart_Info1})
+	Phy_Factor=$(GET_INFO "Form Factor:" ${Smart_Info2})
+	[[ -z ${Phy_Factor} ]] && Phy_Factor="不可用"
+	Phy_Sata_Version=$(GET_INFO "SATA Version is:" ${Smart_Info1})
+	[[ -z ${Phy_Sata_Version} ]] && Phy_Sata_Version="不可用"
+	TRIM_Command=$(GET_INFO "TRIM Command:" ${Smart_Info1})
 	[[ -z ${TRIM_Command} ]] && TRIM_Command=不可用
 	Power_On=$(grep "Power_On" ${Smart_Info1} | awk '{print $NF}')
 	Power_Cycle_Count=$(grep "Power_Cycle_Count" ${Smart_Info1} | awk '{print $NF}')
@@ -509,23 +503,23 @@ GET_Smart_Info() {
 	} || {
 		Power_Status="${Power_On} 小时 / ${Power_Cycle_Count} 次"
 	}
-	if [[ $(getinf "Rotation Rate:" ${Smart_Info2}) =~ "Solid State" ]];then
-		Phy_Type=固态硬盘
-		Phy_RPM=不可用
+	if [[ $(GET_INFO "Rotation Rate:" ${Smart_Info2}) =~ "Solid State" ]];then
+		Phy_Type="固态硬盘"
+		Phy_RPM="不可用"
 	else
-		Phy_Type=其他硬盘
-		if [[ $(getinf "Rotation Rate:" ${Smart_Info2}) =~ rpm ]];then
-			Phy_RPM="$(getinf "Rotation Rate:" ${Smart_Info2})"
-			Phy_Type=机械硬盘
+		Phy_Type="其他硬盘"
+		if [[ $(GET_INFO "Rotation Rate:" ${Smart_Info2}) =~ rpm ]];then
+			Phy_RPM=$(GET_INFO "Rotation Rate:" ${Smart_Info2})
+			Phy_Type="机械硬盘"
 		else
-			Phy_RPM=不可用
+			Phy_RPM="不可用"
 		fi
 	fi
 	[[ -z ${Phy_Name} ]] && {
-		Phy_Name="$(getinf Vendor: ${Smart_Info2})$(getinf Product: ${Smart_Info2})"
+		Phy_Name=$(GET_INFO Vendor: ${Smart_Info2})$(GET_INFO Product: ${Smart_Info2})
 	}
-	Phy_LB=$(getinf "Logical block size:" ${Smart_Info2})
-	Phy_PB=$(getinf "Physical block size:" ${Smart_Info2})
+	Phy_LB=$(GET_INFO "Logical block size:" ${Smart_Info2})
+	Phy_PB=$(GET_INFO "Physical block size:" ${Smart_Info2})
 	if [[ -n ${Phy_PB} ]];then
 		Phy_BS="${Phy_LB} / ${Phy_PB}"
 	else
@@ -551,18 +545,8 @@ GET_Smart_Info() {
 EOF
 }
 
-AutoInstall_UI_mod() {
-	[[ $(opkg list | awk '{print $1}') =~ $2 ]] > /dev/null 2>&1 && {
-		echo "$1. 安装 [$2] [已安装]"
-	} ||  echo "$1. 未安装 [$2] [已安装]"
-}
-
-Install_opkg_mod() {
-	opkg install ${*}
-	[[ $(opkg list | awk '{print $1}') =~ $1 ]] > /dev/null 2>&1 && {
-		ECHO y "\n$1 安装成功!"
-	} || ECHO r "\n$1 安装失败!"
-	sleep 2
+GET_INFO() {
+	grep "$1" $2 | sed "s/^[$1]*//g" 2> /dev/null | sed 's/^[ \t]*//g' 2> /dev/null
 }
 
 CHECK_PKG() {
@@ -570,8 +554,10 @@ CHECK_PKG() {
 	[[ $? == 0 ]] && echo "true" || echo "false"
 }
 
-Enter() {
-	echo "" && read -p "按下[回车]键以继续..." Key
+ENTER() {
+	echo -e "${Green}"
+	read -p "按下 [回车] 键以继续操作 ..." Key
+	echo -e "${White}"
 }
 
 White="\e[0m"
@@ -581,13 +567,7 @@ Blue="\e[34m"
 Grey="\e[36m"
 Green="\e[32m"
 
-Main_tmp="/tmp/AutoBuild_Tools"
-Logic_Disk_List="${Main_tmp}/Logic_Disk_List"
-Phy_Disk_List="${Main_tmp}/Phy_Disk_List"
-Block_Info="${Main_tmp}/Block_Info"
-Disk_Processed_List="${Main_tmp}/Disk_Processed_List"
-Smart_Info1="${Main_tmp}/Smart_Info1"
-Smart_Info2="${Main_tmp}/Smart_Info2"
-[[ ! -d ${Main_tmp} ]] && mkdir -p "${Main_tmp}"
+Tools_Cache="/tmp/AutoBuild_Tools"
+[[ ! -d ${Tools_Cache} ]] && mkdir -p "${Tools_Cache}"
 Github_Raw="https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
 AutoBuild_Tools
