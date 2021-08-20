@@ -75,7 +75,7 @@ ${White}q. 退出
 		} || Samba_UI
 	;;
 	3)
-		ECHO y "\nLoading Service&Port Configuration ..."
+		ECHO y "\nLoading Service Configuration ..."
 		Netstat1=${Tools_Cache}/Netstat1
 		Netstat2=${Tools_Cache}/Netstat2
 		ps_Info=${Tools_Cache}/ps_Info
@@ -155,20 +155,21 @@ AutoExpand_UI() {
 	[[ -s ${Block_Info} ]] && {
 		clear
 		ECHO x "USB 扩展内部空间\n"
-		echo "设备         UUID				      格式	      挂载点	      可用空间"
-		local X;while read X;do
-			printf "%-12s %-40s %-15s %-15s %-10s\n" ${X}
+		ECHO y "   设备         UUID					 格式		 挂载点		 可用空间"
+		local X i=1;while read X;do
+			printf "${i}. %-12s %-40s %-15s %-15s %-10s\n" ${X}
+			i=$(($i + 1))
 		done < ${Disk_Processed_List}
 		echo -e "\nq. 返回"
 		echo "r. 重新载入列表"
 	} || {
-		ECHO r "\n未检测到任何外接设备!"
+		ECHO r "未检测到任何外接设备,请检查接口或插入 USB 设备!"
 		sleep 2
 		return 1
 	}
 	Logic_Disk_Count=$(sed -n '$=' ${Logic_Disk_List})
-	echo ""
-	read -p "请输入要操作的硬盘编号[1-${Logic_Disk_Count}]:" Choose
+	echo
+	read -p "请输入要操作的设备编号[1-${Logic_Disk_Count}]:" Choose
 	case ${Choose} in
 	q)
 		return
@@ -188,7 +189,7 @@ AutoExpand_UI() {
 			fi
 		} || {
 			ECHO r "\n输入错误,请输入正确的选项!"
-			sleep 2 && AutoExpand_UI
+			AutoExpand_UI
 		}
 	;;
 	esac
@@ -199,7 +200,7 @@ USB_Info() {
 	Phy_Disk_List="${Tools_Cache}/Phy_Disk_List"
 	Block_Info="${Tools_Cache}/Block_Info"
 	Disk_Processed_List="${Tools_Cache}/Disk_Processed_List"
-	echo -ne "\nLoading USB Configuration ..."
+	echo -ne "\n${Yellow}Loading USB Configuration ...${White}"
 	rm -f ${Block_Info} ${Logic_Disk_List} ${Disk_Processed_List} ${Phy_Disk_List}
 	touch ${Disk_Processed_List}
 	block mount
@@ -226,7 +227,7 @@ USB_Info() {
 
 AutoExpand_Core() {
 	ECHO r "\n警告: 操作开始后请不要中断任务或进行其他操作,否则可能导致设备数据丢失!"
-	ECHO r "同时连接多个 USB 设备可能导致分区错位路由器不能正常启动!"
+	ECHO r "固件更新将改变分区表,从而导致扩容失效,并且当前硬盘数据将会丢失!"
 	ECHO r "\n本操作将把设备 '$1' 格式化为 ext4 格式,请提前做好数据备份工作!"
 	read -p "是否执行格式化操作?[Y/n]:" Choose
 	[[ ${Choose} == [Yesyes] ]] && {
@@ -293,7 +294,6 @@ config mount
 EOF
 	uci commit fstab
 	ECHO y "\n运行结束,外接设备 '$1' 已挂载到系统分区!\n"
-	ECHO r "警告: 固件更新将会导致扩容失效,当前硬盘数据将会丢失,请提前做好备份工作!\n"
 	read -p "操作需要重启生效,是否立即重启?[Y/n]:" Choose
 	[[ ${Choose} == [Yesyes] ]] && {
 		ECHO g "\n正在重启设备,请耐心等待 ..."
@@ -315,7 +315,7 @@ Samba_UI() {
 		echo "1. 自动生成 Samba 挂载点"
 		echo "2. 删除所有 Samba 挂载点"
 		echo "3. $([[ ${autoshare_Mode} == 1 ]] && echo 关闭 || echo 开启) Samba 自动共享"
-		echo "4. 设置 Samba 访问密码 $([ -f /etc/samba/smbpasswd ] && echo -e "${Yellow}[已设置]${White}")"
+		echo "4. 设置 Samba 访问密码 $([ -s /etc/samba/smbpasswd ] && echo -e "${Yellow}[已设置]${White}")"
 		echo -e "\nq. 返回\n"
 		read -p "请从上方选项中选择一个操作:" Choose
 		case ${Choose} in
@@ -375,7 +375,7 @@ EOF
 		;;
 		4)
 			sed -i '/invalid users/d' /etc/samba/smb.conf.template >/dev/null 2>&1
-			ECHO y "\n注意: 请连续输入两次密码,输入的密码不会显示!"
+			ECHO y "\n注意: 请连续输入两次密码,输入的密码不会显示,输入后回车即可!"
 			smbpasswd -a root
 			[[ $? == 0 ]] && {
 				ECHO y "\nSamba 访问密码设置成功!"
@@ -476,12 +476,18 @@ done
 
 SmartInfo_UI() {
 	USB_Info
-	clear
-	smartctl -v | awk 'NR==1'
-	cat ${Phy_Disk_List} | while read Phy_Disk;do
-		SmartInfo_Core ${Phy_Disk}
-	done
-	ENTER
+	[[ -s ${Phy_Disk_List} ]] && {
+		clear
+		smartctl -v | awk 'NR==1'
+		cat ${Phy_Disk_List} | while read Phy_Disk;do
+			SmartInfo_Core ${Phy_Disk}
+		done
+		ENTER
+	} || {
+		ECHO r "未检测到任何外接设备,请检查接口或插入 USB 设备!"
+		sleep 2
+		return 1
+	}
 }
 
 SmartInfo_Core() {
@@ -499,15 +505,15 @@ SmartInfo_Core() {
 	Phy_Capacity=$(GET_INFO "User Capacity:" ${Smart_Info2})
 	Phy_Part_Number=$(grep -c "${Phy_Disk}" ${Disk_Processed_List})
 	Phy_Factor=$(GET_INFO "Form Factor:" ${Smart_Info2})
-	[[ -z ${Phy_Factor} ]] && Phy_Factor="不可用"
+	[[ -z ${Phy_Factor} ]] && Phy_Factor="未知"
 	Phy_Sata_Version=$(GET_INFO "SATA Version is:" ${Smart_Info1})
-	[[ -z ${Phy_Sata_Version} ]] && Phy_Sata_Version="不可用"
+	[[ -z ${Phy_Sata_Version} ]] && Phy_Sata_Version="未知"
 	TRIM_Command=$(GET_INFO "TRIM Command:" ${Smart_Info1})
-	[[ -z ${TRIM_Command} ]] && TRIM_Command=不可用
+	[[ -z ${TRIM_Command} ]] && TRIM_Command="不可用"
 	Power_On=$(grep "Power_On" ${Smart_Info1} | awk '{print $NF}')
 	Power_Cycle_Count=$(grep "Power_Cycle_Count" ${Smart_Info1} | awk '{print $NF}')
 	[[ -z ${Power_On} ]] && {
-		Power_Status=未知
+		Power_Status="未知"
 	} || {
 		Power_Status="${Power_On} 小时 / ${Power_Cycle_Count} 次"
 	}
@@ -515,12 +521,12 @@ SmartInfo_Core() {
 		Phy_Type="固态硬盘"
 		Phy_RPM="不可用"
 	else
-		Phy_Type="其他硬盘"
+		Phy_Type="其他"
 		if [[ $(GET_INFO "Rotation Rate:" ${Smart_Info2}) =~ rpm ]];then
 			Phy_RPM=$(GET_INFO "Rotation Rate:" ${Smart_Info2})
 			Phy_Type="机械硬盘"
 		else
-			Phy_RPM="不可用"
+			Phy_RPM="未知"
 		fi
 	fi
 	[[ -z ${Phy_Name} ]] && {
@@ -564,7 +570,7 @@ CHECK_PKG() {
 
 ENTER() {
 	echo -e "${Green}"
-	read -p "按下 [回车] 键以继续操作 ..." Key
+	read -p "按下[回车]键以继续操作 ..." Key
 	echo -e "${White}"
 }
 
