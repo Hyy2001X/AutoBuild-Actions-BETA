@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.2
+Version=V1.7.3
 
 ECHO() {
 	case $1 in
@@ -95,7 +95,7 @@ ${White}q. 退出
 				Task=$(grep -v "grep" ${ps_Info} | grep "${PID}" | awk '{print $5}')
 			}
 			i=$(($i + 1))
-			echo -e "${Proto}	${Port}		${Service}	${PID}			${Task}" >> ${Netstat2}
+			echo -e "${Proto} ${Port} ${Service} ${PID} ${Task}" | egrep "tcp|udp" >> ${Netstat2}
 		done
 		clear
 		ECHO y "协议	   占用端口       服务名称        PID             进程信息"
@@ -142,6 +142,7 @@ ${White}q. 退出
 		cp -a /rom/etc/banner /etc
 		cp -a /rom/bin/AutoUpdate.sh /bin
 		cp -a /rom/bin/AutoBuild_Tools.sh /bin
+		cp -a /rom/etc/config/autoupdate /etc/config
 		ECHO y "\n固件环境修复完成!"
 		sleep 2
 	;;
@@ -150,18 +151,18 @@ done
 }
 
 AutoExpand_UI() {
-	clear
-	ECHO x "一键使用 USB 扩展内部空间"
 	USB_Info
 	[[ -s ${Block_Info} ]] && {
-		echo "   设备		硬盘格式	挂载点		可用空间"
-		cat ${Disk_Processed_List} | while read Disk_info ;do
-			List_Disk ${Disk_info}
-		done
+		clear
+		ECHO x "USB 扩展内部空间\n"
+		echo "设备         UUID				      格式	      挂载点	      可用空间"
+		local X;while read X;do
+			printf "%-12s %-40s %-15s %-15s %-10s\n" ${X}
+		done < ${Disk_Processed_List}
 		echo -e "\nq. 返回"
 		echo "r. 重新载入列表"
 	} || {
-		ECHO r "未检测到任何外接设备!"
+		ECHO r "\n未检测到任何外接设备!"
 		sleep 2
 		return 1
 	}
@@ -212,16 +213,15 @@ USB_Info() {
 			[[ -z ${Logic_Mount} ]] && Logic_Mount="$(df | grep "${Disk_Name}" | awk '{print $6}' | awk 'NR==1')"
 			Logic_Format="$(grep "${Disk_Name}" ${Block_Info} | egrep -o 'TYPE="[0-9a-zA-Z].+' | awk -F '["]' '/TYPE/{print $2}')"
 			Logic_Available="$(df -h | grep "${Disk_Name}" | awk '{print $4}' | awk 'NR==1')"
+			[[ -z ${Logic_Format} ]] && Logic_Format='-'
+			[[ -z ${Logic_Mount} ]] && Logic_Mount='-'
+			[[ -z ${Logic_Available} ]] && Logic_Available='-'
 			echo "${Disk_Name}	${UUID}	${Logic_Format}	${Logic_Mount}	${Logic_Available}" >> ${Disk_Processed_List}
 		done
 		grep -o "/dev/sd[a-z]" ${Logic_Disk_List} | sort | uniq > ${Phy_Disk_List}
 	}
 	echo -ne "\r                             \r"
 	return
-}
-
-List_Disk() {
-	echo "$(awk '{print $1}' ${Disk_Processed_List} | grep -n "$1" | cut -d ':' -f1). $1	$3		$4			$5"
 }
 
 AutoExpand_Core() {
@@ -236,7 +236,7 @@ AutoExpand_Core() {
 	echo "禁用自动挂载 ..."
 	uci set fstab.@global[0].auto_mount='0'
 	uci commit fstab
-	[[ -n $2 ]] && {
+	[[ ! $2 == '-' ]] && {
 		echo "卸载设备 '$1' 位于 '$2' ..."
 		umount -l $2 > /dev/null 2>&1
 		[[ $? != 0 ]] && {
@@ -306,64 +306,33 @@ EOF
 Samba_UI() {
 	USB_Info
 	Samba_tmp="${Tools_Cache}/AutoSamba"
-	Samba_UCI_List="${Tools_Cache}/UCI_List"
 	[[ ! -d ${Tools_Cache} ]] && mkdir -p "${Tools_Cache}"
 	while :
 	do
+		autoshare_Mode="$(uci get samba.@samba[0].autoshare)"
 		clear
 		ECHO x "Samba 工具箱\n"
-		echo "1. 删除所有 Samba 挂载点"
-		echo "2. 自动生成 Samba 挂载点"
-		echo "3. 关闭/开启 Samba 自动共享"
+		echo "1. 自动生成 Samba 挂载点"
+		echo "2. 删除所有 Samba 挂载点"
+		echo "3. $([[ ${autoshare_Mode} == 1 ]] && echo 关闭 || echo 开启) Samba 自动共享"
+		echo "4. 设置 Samba 访问密码 $([ -f /etc/samba/smbpasswd ] && echo -e "${Yellow}[已设置]${White}")"
 		echo -e "\nq. 返回\n"
 		read -p "请从上方选项中选择一个操作:" Choose
-		case $Choose in
+		case ${Choose} in
 		1)
-			while :
+			Samba_UCI_List="${Tools_Cache}/UCI_List"
+			Logic_Disk_Count=$(sed -n '$=' ${Disk_Processed_List})
+			echo
+			for ((i=1;i<=${Logic_Disk_Count};i++));
 			do
-				Samba_config="$(grep "sambashare" /etc/config/samba | wc -l)"
-				[[ ${Samba_config} -eq 0 ]] && break
-				uci delete samba.@sambashare[0]
-				uci commit samba > /dev/null 2>&1
-			done
-			ECHO y "\n已删除所有 Samba 挂载点!"
-			sleep 2
-		;;
-		2)
-			Samba_AutoMount
-		;;
-		3)
-			autosamba="$(uci get samba.@samba[0].autoshare)"
-			[[ ${autosamba} == 0 ]] && {
-				uci set samba.@samba[0].autoshare='1'
-				autosamba_mode="开启"
-			} || {
-				uci set samba.@samba[0].autoshare='0'
-				autosamba_mode="关闭"
-			}
-			ECHO y "\n已${autosamba_mode} Samba 自动共享!"
-			uci commit samba
-			sleep 2
-		;;
-		q)
-			break
-		;;
-		esac
-	done
-}
-
-Samba_AutoMount() {
-	Logic_Disk_Count=$(sed -n '$=' ${Disk_Processed_List})
-	for ((i=1;i<=${Logic_Disk_Count};i++));
-	do
-		Disk_Name=$(sed -n ${i}p ${Disk_Processed_List} | awk '{print $1}')
-		Disk_Mounted_Point=$(sed -n ${i}p ${Disk_Processed_List} | awk '{print $2}')
-		Samba_Name=${Disk_Mounted_Point#*/mnt/}
-		Samba_Name=$(echo ${Samba_Name} | cut -d "/" -f2-5)
-		uci show 2>&1 | grep "sambashare" > ${Samba_UCI_List}
-		if [[ ! $(cat ${Samba_UCI_List}) =~ ${Disk_Mounted_Point} ]] > /dev/null 2>&1 ;then
-			ECHO g "设置挂载点 '${Samba_Name}' ..."
-			cat >> /etc/config/samba <<EOF
+				Disk_Name=$(sed -n ${i}p ${Disk_Processed_List} | awk '{print $1}')
+				Disk_Mounted_Point=$(sed -n ${i}p ${Disk_Processed_List} | awk '{print $4}')
+				Samba_Name=${Disk_Mounted_Point#*/mnt/}
+				Samba_Name=$(echo ${Samba_Name} | cut -d "/" -f2-5)
+				uci show 2>&1 | grep "sambashare" > ${Samba_UCI_List}
+				if [[ ! $(cat ${Samba_UCI_List}) =~ ${Disk_Mounted_Point} ]] > /dev/null 2>&1 ;then
+					ECHO g "设置挂载点 '${Samba_Name}' ..."
+					cat >> /etc/config/samba <<EOF
 
 config sambashare
 	option auto '1'
@@ -375,13 +344,52 @@ config sambashare
 	option create_mask '0666'
 	option dir_mask '0777'
 EOF
-		else
-			ECHO y "'${Disk_Mounted_Point}' 挂载点已存在!"
-		fi
+				else
+					ECHO y "'${Disk_Mounted_Point}' 挂载点已存在!"
+				fi
+			done
+			uci commit samba
+			/etc/init.d/samba restart
+			sleep 2
+		;;
+		2)
+			while :
+			do
+				Samba_config="$(grep "sambashare" /etc/config/samba | wc -l)"
+				[[ ${Samba_config} -eq 0 ]] && break
+				uci delete samba.@sambashare[0]
+				uci commit samba > /dev/null 2>&1
+			done
+			ECHO y "\n已删除所有 Samba 挂载点!"
+		;;
+		3)
+			[[ ${autoshare_Mode} == 0 ]] && {
+				uci set samba.@samba[0].autoshare='1'
+				autosamba_mode="开启"
+			} || {
+				uci set samba.@samba[0].autoshare='0'
+				autosamba_mode="关闭"
+			}
+			ECHO y "\n已${autosamba_mode} Samba 自动共享!"
+			uci commit samba
+		;;
+		4)
+			sed -i '/invalid users/d' /etc/samba/smb.conf.template >/dev/null 2>&1
+			ECHO y "\n注意: 请连续输入两次密码,输入的密码不会显示!"
+			smbpasswd -a root
+			[[ $? == 0 ]] && {
+				ECHO y "\nSamba 访问密码设置成功!"
+				/etc/init.d/samba restart
+			} || {
+				ECHO r "\nSamba 访问密码设置失败!"
+			}
+		;;
+		q)
+			break
+		;;
+		esac
+		sleep 2
 	done
-	uci commit samba
-	/etc/init.d/samba restart
-	sleep 2
 }
 
 AutoUpdate_UI() {
