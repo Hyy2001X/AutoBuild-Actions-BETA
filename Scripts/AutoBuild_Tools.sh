@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.3
+Version=V1.7.4
 
 ECHO() {
 	case $1 in
@@ -31,6 +31,8 @@ AutoBuild 固件工具箱 ${Version}
 4. 硬盘信息
 5. 网络检查
 6. 修复固件环境
+7. 系统信息监控
+8. 在线设备列表
 
 ${Grey}u. 固件更新
 ${Yellow}x. 更新脚本
@@ -140,11 +142,22 @@ ${White}q. 退出
 		cp -a /rom/etc/AutoBuild/Default_Variable /etc/AutoBuild
 		cp -a /rom/etc/profile /etc
 		cp -a /rom/etc/banner /etc
+		cp -a /rom/etc/openwrt_release /etc
 		cp -a /rom/bin/AutoUpdate.sh /bin
 		cp -a /rom/bin/AutoBuild_Tools.sh /bin
 		cp -a /rom/etc/config/autoupdate /etc/config
 		ECHO y "\n固件环境修复完成!"
 		sleep 2
+	;;
+	7)
+		Sysinfo show
+	;;
+	8)
+		Sysinfo
+		clear
+		ECHO y "IP			MAC"
+		grep "br-lan" /proc/net/arp | grep "0x2" | grep -v "0x0" | grep "$(echo ${IPv4} | egrep -o "[0-9]+\.[0-9]+\.[0-9]+")" | awk '{print $1"\t\t"$4}'
+		ENTER
 	;;
 	esac
 done
@@ -557,6 +570,58 @@ SmartInfo_Core() {
 ========================================================
 
 EOF
+}
+
+Sysinfo() {
+	while :;do
+		CPU_Model=$(awk -F ':[ ]' '/model name/{printf ($2);exit}' /proc/cpuinfo)
+		CPU_Threads=$(grep 'processor' /proc/cpuinfo | sort -u | wc -l)
+		CPU_Usage=$(top -n 1 | grep "CPU:" | awk '{print $2}')
+		if [[ -z ${CPU_Model} ]];then
+			CPU_Model=$(awk -F ':[ ]' '/system type/{printf ($2);exit}' /proc/cpuinfo)
+			Low_Mode=1
+		else
+			CPU_Cores=$(awk -F '[ :]' '/cpu cores/ {print $4;exit}' /proc/cpuinfo)
+			CPU_Freq=$(echo "$(grep 'MHz' /proc/cpuinfo | awk '{Freq_Sum += $4};END {print Freq_Sum}') / ${CPU_Threads}" | bc)
+			CPU_Temp=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / ${CPU_Cores}" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C | %.1f°F\n",a,b)}')
+		fi
+		OS_Info=$(awk -F '[= "]' '/OPENWRT_RELEASE/{print $3,$4,$5}' /etc/os-release)
+		FW_Info=$(awk -F "[=']" '/DISTRIB_REVISION/{print $3,$4,$5}' /etc/openwrt_release)
+		Mem_Total=$(free | grep Mem | awk '{a=$2/1024} {printf("%dMB\n",a)}')
+		Mem_Free=$(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%dMB | %.1f%%\n",b,a)}')
+		Kernel_Version=$(uname -r)
+		Sys_Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
+		IPv4=$(ip -4 a | egrep "br-lan" | grep "inet" | awk '{print $2}')
+		IPv6=$(ip -6 a | grep inet6 | grep "global dynamic" | awk '{print $2}' | awk 'NR==1')
+		Support_Format=$(grep -v "nodev" /proc/filesystems | awk '{print $1}' | sort | uniq)
+		Online_Users=$(grep "br-lan" /proc/net/arp | grep "0x2" | grep -v "0x0" | grep "$(echo ${IPv4} | egrep -o "[0-9]+\.[0-9]+\.[0-9]+")" | wc -l)
+		[[ ! $1 == show ]] && return
+
+		clear
+		ECHO x "系统信息监控\n"	
+		echo -e "${Grey}操作系统${Yellow}		${OS_Info}"
+		echo -e "${Grey}内核版本${Yellow}		${Kernel_Version}"
+		echo -e "${Grey}固件版本${Yellow}		${FW_Info}"
+		echo -e "${Grey}登陆用户名${Yellow}		${USER}"
+		echo -e "${Grey}物理内存${Yellow}		${Mem_Total}"
+		echo -e "${Grey}可用内存${Yellow}		${Mem_Free}"
+		echo -e "${Grey}CPU 型号${Yellow}		${CPU_Model}"
+		[[ ${Low_Mode} == 1 ]] && {
+			echo -e "${Grey}CPU 核心信息${Yellow}		${CPU_Threads} 线程"
+		} || {
+			echo -e "${Grey}CPU 核心信息${Yellow}		${CPU_Cores} 核心 ${CPU_Threads} 线程"
+			echo -e "${Grey}CPU 平均频率${Yellow}		${CPU_Freq}MHz"
+			echo -e "${Grey}CPU 平均温度${Yellow}		${CPU_Temp}"
+		}
+		echo -e "${Grey}CPU 使用率${Yellow}		${CPU_Usage}"
+		echo -e "${Grey}IPv4 地址${Yellow}		$(echo ${IPv4})"
+		[[ -n ${IPv6} ]] && echo -e "${Grey}IPv6 地址${Yellow}		[${IPv6}]"
+		echo -e "${Grey}运行时间${Yellow}		${Sys_Startup}"
+		echo -e "${Grey}文件系统${Yellow}		$(echo ${Support_Format})"
+		echo -e "${Grey}在线用户${Yellow}		${Online_Users}"
+		ECHO g "\n同时按下[Ctrl+C]键以退出系统监控 ..."
+		sleep 1
+	done
 }
 
 GET_INFO() {
