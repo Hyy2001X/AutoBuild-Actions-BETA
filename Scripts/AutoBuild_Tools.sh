@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.4
+Version=V1.7.5
 
 ECHO() {
 	case $1 in
@@ -17,13 +17,13 @@ ECHO() {
 	echo -e "${White}${Color}${*}${White}"
 }
 
-AutoBuild_Tools() {
+AutoBuild_Tools_UI() {
 while :
 do
 	clear
 	echo -e "$(cat /etc/banner)"
 	echo -e "
-AutoBuild 固件工具箱 ${Version}
+AutoBuild 固件工具箱 ${Version} [$$] [${Tools_File}]
 
 1. USB 空间扩展
 2. Samba 设置
@@ -45,7 +45,7 @@ ${White}q. 退出
 		exit 0
 	;;
 	u)
-		[ -s /bin/AutoUpdate.sh ] && {
+		[ -s ${AutoUpdate_File} ] && {
 			AutoUpdate_UI
 		} || {
 			ECHO r "\n未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
@@ -56,13 +56,15 @@ ${White}q. 退出
 		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${Tools_Cache}/AutoBuild_Tools.sh
 		if [[ $? == 0 && -s ${Tools_Cache}/AutoBuild_Tools.sh ]];then
 			ECHO y "\n[AutoBuild_Tools] 脚本更新成功!"
-			rm -f /bin/AutoBuild_Tools.sh.sh
-			mv -f ${Tools_Cache}/AutoBuild_Tools.sh /bin
-			chmod +x /bin/AutoBuild_Tools.sh
+			rm -f ${Tools_File}
+			mv -f ${Tools_Cache}/AutoBuild_Tools.sh ${Tools_File}
+			chmod +x ${Tools_File}
+			sleep 2
+			exec ${Tools_File}
 		else
 			ECHO r "\n[AutoBuild_Tools] 脚本更新失败!"
+			sleep 2
 		fi
-		sleep 2
 	;;
 	1)
 		[[ ! $(CHECK_PKG block) == true ]] && {
@@ -143,8 +145,8 @@ ${White}q. 退出
 		cp -a /rom/etc/profile /etc
 		cp -a /rom/etc/banner /etc
 		cp -a /rom/etc/openwrt_release /etc
-		cp -a /rom/bin/AutoUpdate.sh /bin
-		cp -a /rom/bin/AutoBuild_Tools.sh /bin
+		cp -a /rom/bin/AutoUpdate.sh ${AutoUpdate_File}
+		cp -a /rom/bin/AutoBuild_Tools.sh ${Tools_File}
 		cp -a /rom/etc/config/autoupdate /etc/config
 		ECHO y "\n固件环境修复完成!"
 		sleep 2
@@ -408,7 +410,7 @@ EOF
 AutoUpdate_UI() {
 while :
 do
-	AutoUpdate_Version=$(awk 'NR==6' /bin/AutoUpdate.sh | awk -F '[="]+' '/Version/{print $2}')
+	AutoUpdate_Version=$(awk 'NR==6' ${AutoUpdate_File} | awk -F '[="]+' '/Version/{print $2}')
 	clear
 	echo -e "$(cat /etc/banner)"
 	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n
@@ -434,53 +436,53 @@ ${White}q. 返回\n"
 		wget -q ${Github_Raw}/Scripts/AutoUpdate.sh -O ${Tools_Cache}/AutoUpdate.sh
 		if [[ $? == 0 && -s ${Tools_Cache}/AutoUpdate.sh ]];then
 			ECHO y "\n[AutoUpdate] 脚本更新成功!"
-			rm -f /bin/AutoUpdate.sh
+			rm -f ${AutoUpdate_File}
 			mv -f ${Tools_Cache}/AutoUpdate.sh /bin
-			chmod +x /bin/AutoBuild_Tools.sh
+			chmod +x ${Tools_File}
 		else
 			ECHO r "\n[AutoUpdate] 脚本更新失败!"
 		fi
 	;;
 	1)
-		bash /bin/AutoUpdate.sh
+		bash ${AutoUpdate_File}
 	;;
 	2)
-		bash /bin/AutoUpdate.sh -F
+		bash ${AutoUpdate_File} -F
 	;;
 	3)
-		bash /bin/AutoUpdate.sh -n
+		bash ${AutoUpdate_File} -n
 	;;
 	4)
-		bash /bin/AutoUpdate.sh --list
+		bash ${AutoUpdate_File} --list
 	;;
 	5)
 		ECHO y "\n下载缓存清理完成!"
-		bash /bin/AutoUpdate.sh --clean
+		bash ${AutoUpdate_File} --clean
 	;;
 	6)
 		echo ""
 		read -p "请输入新的 Github 地址:" Github_URL
-		[[ -n ${Github_URL} ]] && bash /bin/AutoUpdate.sh -C ${Github_URL} || {
+		[[ -n ${Github_URL} ]] && bash ${AutoUpdate_File} -C ${Github_URL} || {
 			ECHO r "\nGithub 地址不能为空!"
 		}
 	;;
 	7)
 		echo ""
 		read -p "请输入你想要的启动方式[UEFI/Legacy]:" _BOOT
-		[[ -n ${_BOOT} ]] && bash /bin/AutoUpdate.sh -B ${_BOOT} || {
+		[[ -n ${_BOOT} ]] && bash ${AutoUpdate_File} -B ${_BOOT} || {
 			ECHO r "\n启动方式不能为空!"
 		}
 	;;
 	8)
-		bash /bin/AutoUpdate.sh -L
+		bash ${AutoUpdate_File} -L
 	;;
 	9)
-		bash /bin/AutoUpdate.sh --check
+		bash ${AutoUpdate_File} --check
 	;;
 	10)
 		echo ""
 		read -p "请输入配置保存路径(回车即为当前路径):" BAK_PATH
-		bash /bin/AutoUpdate.sh --backup ${BAK_PATH}
+		bash ${AutoUpdate_File} --backup ${BAK_PATH}
 	;;
 	esac
 	ENTER
@@ -639,6 +641,14 @@ ENTER() {
 	echo -e "${White}"
 }
 
+KILL_OTHER() {
+	local i;for i in $(ps | grep -v grep | grep $1 | grep -v $$ | awk '{print $1}');do
+		kill -9 ${i} 2> /dev/null
+	done
+}
+
+# KILL_OTHER AutoBuild_Tools.sh
+
 White="\e[0m"
 Yellow="\e[33m"
 Red="\e[31m"
@@ -646,7 +656,9 @@ Blue="\e[34m"
 Grey="\e[36m"
 Green="\e[32m"
 
-Tools_Cache="/tmp/AutoBuild_Tools"
-[[ ! -d ${Tools_Cache} ]] && mkdir -p "${Tools_Cache}"
+Tools_Cache=/tmp/AutoBuild_Tools
+Tools_File=$(cd $(dirname $0) && pwd)/AutoBuild_Tools.sh
+AutoUpdate_Path=/bin/AutoUpdate.sh
+[[ ! -d ${Tools_Cache} ]] && mkdir -p ${Tools_Cache}
 Github_Raw="https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
-AutoBuild_Tools
+AutoBuild_Tools_UI
