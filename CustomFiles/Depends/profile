@@ -1,37 +1,39 @@
 Sysinfo() {
-	source /rom/etc/AutoBuild/Default_Variable 2>/dev/null
+	. /rom/etc/AutoBuild/Default_Variable 2>/dev/null
 	[ -z "${CURRENT_Version}" ] && CURRENT_Version=未知
 	[ -z "${TARGET_PROFILE}" ] && local TARGET_PROFILE=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
 	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
 	[ -n "$(sensors 2> /dev/null | grep Core)" ] && local TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
-	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE} ${Div} $(uname -n)"
-	echo -e "            内核版本:		K$(uname -rs | egrep -o "[0-9].+")"
+	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE}${White}"
+	echo -e "            内核版本:		$(uname -rs)"
 	echo -e "            可用内存:		$(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
 	echo -e "            可用存储:		$(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
 	[ -n "${TEMP}" ] && echo -e "            设备温度:		${TEMP}"
 	[ -n "${CoreMark}" ] && echo -e "            性能得分:		${CoreMark} Scores"
 	echo -e "            运行时间: 		${Startup}"
-	echo
+	[ -n "${SSH_CONNECTION}" ] && echo -e "            登录用户:		${LOGNAME} ${Div} ${Grey}$(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')"
+	echo -e "${White}"
 }
 
-export White="\e[0m"
-export Yellow="\e[33m"
-export Red="\e[31m"
-export Blue="\e[34m"
-export Grey="\e[36m"
-export Green="\e[32m"
+White="\e[0m"
+Yellow="\e[33m"
+Red="\e[31m"
+Blue="\e[34m"
+Grey="\e[36m"
+Green="\e[32m"
 Div="${Grey}|${White}"
 
 clear
 
 [ -e /tmp/.failsafe ] && export FAILSAFE=1
-[ -f /etc/banner ] && echo -e "${Grey}$(cat /etc/banner)${White}"
+[ -f /etc/banner ] && echo -e "$(cat /etc/banner)"
 [ -n "$FAILSAFE" ] && cat /etc/banner.failsafe
 
+Sysinfo
+
 fgrep -sq '/ overlay ro,' /proc/mounts && {
-	echo -e "            ${Red}Your JFFS2-partition seems full and overlayfs is mounted read-only."
-	echo -e "            Please try to remove files from /overlay/upper/... and reboot!\n"
+	echo -e "${Red}            警告: 固件空间可能已满,请尝试从 /overlay 中删除一些文件然后重启设备!${White}\n"
 }
 
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
@@ -56,27 +58,23 @@ esac
 if ( grep -qs '^root::' /etc/shadow && \
      [ -z "$FAILSAFE" ] )
 then
-cat << EOF
-
-            === WARNING! =====================================
-            There is no root password defined on this device!
-            Use the "passwd" command to set up a new password
-            in order to prevent unauthorized SSH logins.
-            --------------------------------------------------
-
-EOF
+	echo -e "${Red}            ==================== 警告 ========================
+             当前设备没有为 root 用户设置密码!
+             请使用 "passwd" 指令来设置一个系统密码来提高安全性
+             同时防止未经授权的 SSH 使用 root 非法登录
+            --------------------------------------------------${White}
+"
 fi
 
-Sysinfo
 alias reload='/etc/profile'
 alias autoupdate='bash /bin/AutoUpdate.sh'
 alias tools='bash /bin/AutoBuild_Tools.sh'
 alias coremarkd='bash /etc/coremark.sh'
 alias shutdown='sync && poweroff'
 alias ls='ls --color=auto'
+alias l='ls -CF'
 alias ll='ls -alF'
 alias la='ls -A'
-alias l='ls -CF'
 alias cls='clear'
 alias dh='df -h'
 alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'
