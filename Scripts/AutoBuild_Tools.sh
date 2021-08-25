@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.6
+Version=V1.7.7
 
 ECHO() {
 	case $1 in
@@ -23,16 +23,13 @@ do
 	clear
 	echo -e "$(cat /etc/banner)"
 	echo -e "
-AutoBuild 固件工具箱 ${Version} [$$] [${Tools_File}]
+${Grey}AutoBuild 固件工具箱 ${Version}${White} [$$] [${Tools_File}]
 
-1. USB 空间扩展
-2. Samba 设置
-3. 端口占用列表
+1. USB 空间扩展			6. 环境修复
+2. Samba 设置			7. 系统信息监控
+3. 端口占用列表			8. 在线设备列表
 4. 硬盘信息
 5. 网络检查
-6. 修复固件环境
-7. 系统信息监控
-8. 在线设备列表
 
 ${Grey}u. 固件更新
 ${Yellow}x. 更新脚本
@@ -76,14 +73,21 @@ ${White}q. 退出
 		[[ ! $(CHECK_PKG block) == true ]] && {
 			ECHO r "\n缺少相应依赖包,请先安装 [block-mount] !"
 			sleep 2
-		} || Samba_UI
+			return
+		}
+		[[ ! $(CHECK_PKG smbpasswd) == true ]] && {
+			ECHO r "\n缺少相应依赖包,请先安装 [samba] !"
+			sleep 2
+			return
+		}
+		Samba_UI
 	;;
 	3)
 		ECHO y "\nLoading Service Configuration ..."
 		Netstat1=${Tools_Cache}/Netstat1
 		Netstat2=${Tools_Cache}/Netstat2
 		ps_Info=${Tools_Cache}/ps_Info
-		rm -f ${Netstat2} && touch ${Netstat2}
+		rm -f ${Netstat2} && touch -a ${Netstat2}
 		netstat -ntupa | egrep ":::[0-9].+|0.0.0.0:[0-9]+|127.0.0.1:[0-9]+" | awk '{print $1" "$4" "$6" "$7}' | sed -r 's/0.0.0.0:/\1/;s/:::/\1/;s/127.0.0.1:/\1/;s/LISTEN/\1/' | sort | uniq > ${Netstat1}
 		ps -w > ${ps_Info}
 		local i=1;while :;do
@@ -102,6 +106,7 @@ ${White}q. 退出
 			echo -e "${Proto} ${Port} ${Service} ${PID} ${Task}" | egrep "tcp|udp" >> ${Netstat2}
 		done
 		clear
+		ECHO x "端口占用列表\n"
 		ECHO y "协议	   占用端口       服务名称        PID             进程信息"
 		local X;while read X;do
 			printf "%-10s %-14s %-15s %-15s %-10s\n" ${X}
@@ -137,6 +142,8 @@ ${White}q. 退出
 				ECHO r "Google 连接错误!"
 			;;
 			esac
+		else
+			ECHO r "\n缺少相应依赖包,请先安装 [curl] !"
 		fi
 		sleep 2
 	;;
@@ -157,6 +164,7 @@ ${White}q. 退出
 	8)
 		Sysinfo
 		clear
+		ECHO x "在线设备列表\n"
 		ECHO y "IP 地址			MAC 地址"
 		grep "br-lan" /proc/net/arp | grep "0x2" | grep -v "0x0" | grep "$(echo ${IPv4} | egrep -o "[0-9]+\.[0-9]+\.[0-9]+")" | awk '{print $1"\t\t"$4}'
 		ENTER
@@ -422,18 +430,17 @@ do
 	AutoUpdate_Version=$(awk 'NR==6' ${AutoUpdate_File} | awk -F '[="]+' '/Version/{print $2}')
 	clear
 	echo -e "$(cat /etc/banner)"
-	echo -e "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n
-${Yellow}1. 更新固件 [保留配置]
-${White}2. 更新固件 (强制刷入固件) [保留配置]
+	ECHO x "AutoBuild 固件更新/AutoUpdate ${AutoUpdate_Version}\n
+${Yellow}1. 更新固件 [保留配置]${White}
+2. 更新固件 (强制刷入固件) [保留配置]
 3. 不保留配置更新固件 [全新安装]
 4. 列出固件信息
 5. 清除固件下载缓存
 6. 更改 Github API 地址
-7. 指定 x86 设备下载 <UEFI | Legacy> 引导的固件
-8. 打印运行日志 (反馈问题)
-9. 检查运行环境
-10. 备份系统配置
-
+7. 打印运行日志 (反馈问题)
+8. 检查 AutoUpdate 运行环境
+9. 备份系统配置
+$([ $(${AutoUpdate_File} --var TARGET_BOARD) == x86 ] && echo "10. 指定下载 <UEFI | Legacy> 引导的固件\n")
 ${Yellow}x. 更新 [AutoUpdate] 脚本
 ${White}q. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -476,22 +483,22 @@ ${White}q. 返回\n"
 		}
 	;;
 	7)
+		bash ${AutoUpdate_File} -L
+	;;
+	8)
+		bash ${AutoUpdate_File} --check
+	;;
+	9)
+		echo ""
+		read -p "请输入配置保存路径(回车即为当前路径):" BAK_PATH
+		bash ${AutoUpdate_File} --backup ${BAK_PATH}
+	;;
+	10)
 		echo ""
 		read -p "请输入你想要的启动方式[UEFI/Legacy]:" _BOOT
 		[[ -n ${_BOOT} ]] && bash ${AutoUpdate_File} -B ${_BOOT} || {
 			ECHO r "\n启动方式不能为空!"
 		}
-	;;
-	8)
-		bash ${AutoUpdate_File} -L
-	;;
-	9)
-		bash ${AutoUpdate_File} --check
-	;;
-	10)
-		echo ""
-		read -p "请输入配置保存路径(回车即为当前路径):" BAK_PATH
-		bash ${AutoUpdate_File} --backup ${BAK_PATH}
 	;;
 	esac
 	ENTER
@@ -502,7 +509,7 @@ SmartInfo_UI() {
 	USB_Info
 	[[ -s ${Phy_Disk_List} ]] && {
 		clear
-		smartctl -v | awk 'NR==1'
+		ECHO x "硬盘信息列表"
 		cat ${Phy_Disk_List} | while read Phy_Disk;do
 			SmartInfo_Core ${Phy_Disk}
 		done
@@ -667,7 +674,7 @@ Green="\e[32m"
 
 Tools_Cache=/tmp/AutoBuild_Tools
 Tools_File=$(cd $(dirname $0) && pwd)/AutoBuild_Tools.sh
-AutoUpdate_Path=/bin/AutoUpdate.sh
+AutoUpdate_File=/bin/AutoUpdate.sh
 [[ ! -d ${Tools_Cache} ]] && mkdir -p ${Tools_Cache}
 Github_Raw="https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
 AutoBuild_Tools_UI
