@@ -1,4 +1,7 @@
 #!/bin/bash
+# AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
+# Thanks to 281677160 TobKed/github-forks-sync-action.git
+# Sync
 
 set -e
 
@@ -33,6 +36,7 @@ Sync_List=(
 	CustomFiles/system_d-team_newifi-d2
 	# Scripts/AutoBuild_DiyScript.sh
 	# Scripts/AutoBuild_ExtraPackages.sh
+	# Scripts/Sync.sh
 	Scripts/AutoBuild_Function.sh
 	Scripts/AutoUpdate.sh
 	Scripts/AutoBuild_Tools.sh
