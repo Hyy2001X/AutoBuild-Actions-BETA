@@ -5,7 +5,7 @@
 #   Thanks to: https://github.com/281677160                #
 ############################################################
 
-name: Synchronise
+name: Synchronise Fork
 
 on:
   repository_dispatch:
