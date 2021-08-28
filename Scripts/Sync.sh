@@ -56,6 +56,8 @@ else
 	for i in $(echo ${Sync_List[@]});do
 		if [[ -f $i ]];then
 			echo "Checkout [${UPSTREAM_REPO_DIR}/$i] to [${LOCAL_REPO_DIR}/$i] ..."
+			Path=${i%/*}
+			[[ ! -d ${Path} ]] && mkdir -p ${Path}
 			cp -a ${UPSTREAM_REPO_DIR}/$i ${LOCAL_REPO_DIR}/$i
 		else
 			echo "Unable to access file ${UPSTREAM_REPO_DIR}/$i ..."
