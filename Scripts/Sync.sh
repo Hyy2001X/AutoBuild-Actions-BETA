@@ -41,7 +41,7 @@ Sync_List=(
 	Scripts/AutoUpdate.sh
 	Scripts/AutoBuild_Tools.sh
 	Scripts/Convert_Translation.sh
-	LICENSE
+	# LICENSE
 	README.md
 	)
 
