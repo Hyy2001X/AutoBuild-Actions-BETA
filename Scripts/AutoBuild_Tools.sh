@@ -107,9 +107,9 @@ ${White}q. 退出
 		done
 		clear
 		ECHO x "端口占用列表\n"
-		ECHO y "协议	   占用端口       服务名称        PID             进程信息"
+		printf "${Yellow}%-10s %-16s %-22s %-12s %-40s\n${White}" 协议 占用端口 服务名称 PID 进程信息
 		local X;while read X;do
-			printf "%-10s %-14s %-15s %-15s %-10s\n" ${X}
+			printf "%-8s %-12s %-18s %-12s %-40s\n" ${X}
 		done < ${Netstat2}
 		ENTER
 	;;
@@ -178,9 +178,14 @@ AutoExpand_UI() {
 	[[ -s ${Block_Info} ]] && {
 		clear
 		ECHO x "USB 扩展内部空间\n"
-		ECHO y "   设备         UUID					 格式		 挂载点		 可用空间"
+		printf "${Yellow}   %-14s %-40s %-12s %-15s %-18s %-10s\n${White}" 设备 UUID 格式 挂载点 可用空间 状态
 		local X i=1;while read X;do
-			printf "${i}. %-12s %-40s %-15s %-15s %-10s\n" ${X}
+			[[ $(echo ${X} | awk '{print $4}') =~ (/boot|/rom|/opt) || $(echo ${X} | awk '{print $5}') == '-' ]] && {
+				Status="不推荐"
+			} || {
+				[[ $(echo ${X} | awk '{print $4}') == '/' ]] && Status="已挂载" || Status="可用"
+			}
+			printf "${i}. %-12s %-40s %-10s %-12s %-14s %-10s\n" ${X} ${Status}
 			i=$(($i + 1))
 		done < ${Disk_Processed_List}
 		echo -e "\nq. 返回"
@@ -222,28 +227,30 @@ USB_Info() {
 	Logic_Disk_List="${Tools_Cache}/Logic_Disk_List"
 	Phy_Disk_List="${Tools_Cache}/Phy_Disk_List"
 	Block_Info="${Tools_Cache}/Block_Info"
+	dev_Info="${Tools_Cache}/dev_Info"
 	Disk_Processed_List="${Tools_Cache}/Disk_Processed_List"
 	echo -ne "\n${Yellow}Loading USB Configuration ...${White}"
 	rm -f ${Block_Info} ${Logic_Disk_List} ${Disk_Processed_List} ${Phy_Disk_List}
 	touch ${Disk_Processed_List}
 	block mount
-	block info | grep -v "mtdblock" | egrep "sd[a-z][0-9]|mmcblk" > ${Block_Info}
+	block info | grep -v "mtdblock" | egrep "sd[a-z][0-9]|mmcblk[0-9]+[a-z][0-9]+" > ${Block_Info}
+	ls -1 /dev | egrep "sd[a-z]|mmcblk|nvme" > ${dev_Info}
 	[[ -s ${Block_Info} ]] && {
-		cat ${Block_Info} | awk -F ':' '/sd/{print $1}' > ${Logic_Disk_List}
+		cat ${Block_Info} | awk -F '[:]' '{print $1}' > ${Logic_Disk_List}
 		for Disk_Name in $(cat ${Logic_Disk_List})
 		do
 			UUID=$(grep "${Disk_Name}" ${Block_Info} | egrep -o 'UUID=".+"' | awk -F '["]' '/UUID/{print $2}')
 			Logic_Mount=$(grep "${Disk_Name}" ${Block_Info} | egrep -o 'MOUNT="/[0-9a-zA-Z].+"|MOUNT="/"' | awk -F '["]' '/MOUNT/{print $2}')
-			[[ -z ${Logic_Mount} ]] && Logic_Mount="$(df | grep "${Disk_Name}" | awk '{print $6}' | awk 'NR==1')"
+			[[ -z ${Logic_Mount} ]] && Logic_Mount="$(df ${Disk_Name} | grep "${Disk_Name}" | awk '{print $6}' | awk 'NR==1')"
 			Logic_Format="$(grep "${Disk_Name}" ${Block_Info} | egrep -o 'TYPE="[0-9a-zA-Z].+' | awk -F '["]' '/TYPE/{print $2}')"
-			Logic_Available="$(df -h | grep "${Disk_Name}" | awk '{print $4}' | awk 'NR==1')"
+			Logic_Available="$(df -h ${Disk_Name} | grep "${Disk_Name}" | awk '{print $4}' | awk 'NR==1')"
 			[[ -z ${UUID} ]] && UUID='-'
 			[[ -z ${Logic_Format} ]] && Logic_Format='-'
 			[[ -z ${Logic_Mount} ]] && Logic_Mount='-'
 			[[ -z ${Logic_Available} ]] && Logic_Available='-'
 			echo "${Disk_Name}	${UUID}	${Logic_Format}	${Logic_Mount}	${Logic_Available}" >> ${Disk_Processed_List}
 		done
-		egrep -o "/dev/sd[a-z]|mmcblk" ${Logic_Disk_List} | sort | uniq > ${Phy_Disk_List}
+		egrep -v "sd[a-z][0-9]|mmcblk[0-9][a-z][0-9]|nvme[0-9][a-z].+" ${Logic_Disk_List} | sort | uniq > ${Phy_Disk_List}
 	}
 	echo -ne "\r                             \r"
 	return

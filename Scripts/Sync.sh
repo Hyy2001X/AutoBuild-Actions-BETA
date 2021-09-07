@@ -1,32 +1,13 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
-# Thanks to 281677160 TobKed/github-forks-sync-action.git
+# Thanks 281677160 and TobKed/github-forks-sync-action.git
 # Sync
 
-set -e
-
-[[ $# -lt 2 ]] && exit
-[[ $* =~ '--sync-all' ]] && {
-	echo "Sync mode: All files"
-	SYNC_ALL=true
-} || {
-	echo "Sync mode: <Sync_List> files"
-	SYNC_ALL=false
-}
-
-DUMP_DIR=/tmp/Sync_Fork
-
-INPUT_GITHUB_TOKEN=$1
-INPUT_LOCAL_REPOSITORY=$2
-INPUT_LOCAL_BRANCH=master
+# 上游仓库与分支
 INPUT_UPSTREAM_REPOSITORY=Hyy2001X/AutoBuild-Actions
 INPUT_UPSTREAM_BRANCH=master
 
-UPSTREAM_REPO="https://github.com/${INPUT_UPSTREAM_REPOSITORY}.git"
-UPSTREAM_REPO_DIR=${DUMP_DIR}/${INPUT_UPSTREAM_REPOSITORY##*/}
-LOCAL_REPO="https://${GITHUB_ACTOR}:${INPUT_GITHUB_TOKEN}@github.com/${INPUT_LOCAL_REPOSITORY}.git"
-LOCAL_REPO_DIR=${DUMP_DIR}/${INPUT_LOCAL_REPOSITORY##*/}
-
+# 文件同步列表,按需修改
 Sync_List=(
 	# .github/workflows/*
 	# Configs/*
@@ -44,6 +25,28 @@ Sync_List=(
 	# LICENSE
 	README.md
 	)
+
+set -e
+
+[[ $# -lt 2 ]] && exit
+[[ $* =~ '--sync-all' ]] && {
+	echo "Sync mode: All files"
+	SYNC_ALL=true
+} || {
+	echo "Sync mode: <Sync_List> files"
+	SYNC_ALL=false
+}
+
+DUMP_DIR=/tmp/Sync_Fork
+
+INPUT_GITHUB_TOKEN=$1
+INPUT_LOCAL_REPOSITORY=$2
+INPUT_LOCAL_BRANCH=master
+
+UPSTREAM_REPO="https://github.com/${INPUT_UPSTREAM_REPOSITORY}.git"
+UPSTREAM_REPO_DIR=${DUMP_DIR}/${INPUT_UPSTREAM_REPOSITORY##*/}
+LOCAL_REPO="https://${GITHUB_ACTOR}:${INPUT_GITHUB_TOKEN}@github.com/${INPUT_LOCAL_REPOSITORY}.git"
+LOCAL_REPO_DIR=${DUMP_DIR}/${INPUT_LOCAL_REPOSITORY##*/}
 
 mkdir -p ${DUMP_DIR}
 

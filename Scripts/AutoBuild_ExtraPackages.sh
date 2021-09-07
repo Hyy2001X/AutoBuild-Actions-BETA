@@ -15,13 +15,12 @@
 ## e.g. 当前使用源码为 coolsnowwolf/lede:master 时添加下列软件包
 case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
 coolsnowwolf/lede:master)
-	AddPackage git other luci-app-adguardhome Hyy2001X master
-	AddPackage git other luci-app-iperf3-server Hyy2001X master
-	AddPackage git lean autocore Hyy2001X master
+	rm -rf packages/lean/autocore
+	AddPackage git lean autocore-modify Hyy2001X master
+	AddPackage git other AutoBuild-Packages Hyy2001X master
 	AddPackage svn other luci-app-smartdns kenzok8/openwrt-packages/trunk
 	AddPackage git other luci-app-serverchan tty228 master
 	AddPackage svn other luci-app-socat Lienol/openwrt-package/trunk
-	AddPackage git other luci-app-onliner Hyy2001X master
 	AddPackage svn other luci-app-eqos kenzok8/openwrt-packages/trunk
 	AddPackage git other OpenClash vernesong master
 	AddPackage git other luci-app-adblock-plus small-5 master
@@ -35,7 +34,6 @@ coolsnowwolf/lede:master)
 	;;
 	x86_64)
 		AddPackage git other openwrt-passwall xiaorouji main
-		AddPackage git other luci-app-shutdown Hyy2001X master
 	;;
 	esac
 ;;

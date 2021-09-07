@@ -1,11 +1,16 @@
 Sysinfo() {
-	. /rom/etc/AutoBuild/Default_Variable 2>/dev/null
-	[ -z "${CURRENT_Version}" ] && CURRENT_Version=未知
-	[ -z "${TARGET_PROFILE}" ] && local TARGET_PROFILE=$(jsonfilter -e '@.model.id' < /etc/board.json | tr ',' '_')
-	local CoreMark=$([ -f /etc/bench.log ] && egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
-	local Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
-	[ -n "$(sensors 2> /dev/null | grep Core)" ] && local TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
-	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE}${White}"
+	local TARGET_PROFILE CoreMark Startup TEMP
+	TARGET_PROFILE=$(getinf TARGET_PROFILE /rom/etc/AutoBuild/Default_Variable)
+	TARGET_BOARD=$(getinf TARGET_BOARD /rom/etc/AutoBuild/Default_Variable)
+	[ -z "${TARGET_PROFILE}" ] && return 1
+	if [ "${TARGET_BOARD}" == x86 ]
+	then
+		[ -d /sys/firmware/efi ] && TARGET_BOOTABLE="${Grey}UEFI" || TARGET_BOOTABLE="${Grey}Legacy"
+	fi
+	[ -f /etc/bench.log ] && CoreMark=$(egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
+	[ -f /proc/uptime ] && Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
+	[ -n "$(sensors 2> /dev/null | grep Core)" ] && TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%d°C \e[36m|\e[0m %.1f°F\n",a,b)}')
+	echo -e "            设备信息:		${Yellow}${TARGET_PROFILE} ${TARGET_BOOTABLE}${White}"
 	echo -e "            内核版本:		$(uname -rs)"
 	echo -e "            可用内存:		$(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
 	echo -e "            可用存储:		$(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM \e[36m|\e[0m %.1f%% of %.1fM\n",b,a,c)}')"
@@ -14,6 +19,16 @@ Sysinfo() {
 	echo -e "            运行时间: 		${Startup}"
 	[ -n "${SSH_CONNECTION}" ] && echo -e "            登录用户:		${LOGNAME} ${Div} ${Grey}$(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')"
 	echo -e "${White}"
+}
+
+getinf() {
+	local X
+	[ -z "$*" ] && return 1
+	[ ! -f "$2" ] && return 1
+	local X
+	X=$(grep $1 $2 | awk 'END {print}')
+	[ -z "$X" ] && return 1
+	eval echo $X | sed "s/^[$1=]*//g" 2> /dev/null
 }
 
 White="\e[0m"
@@ -69,7 +84,7 @@ fi
 alias reload='/etc/profile'
 alias autoupdate='bash /bin/AutoUpdate.sh'
 alias tools='bash /bin/AutoBuild_Tools.sh'
-alias coremarkd='bash /etc/coremark.sh'
+alias coremarkd='/etc/coremark.sh'
 alias shutdown='sync && poweroff'
 alias ls='ls --color=auto'
 alias l='ls -CF'
@@ -78,3 +93,5 @@ alias la='ls -A'
 alias cls='clear'
 alias dh='df -h'
 alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'
+
+unset White Red Yellow Green Blue Grey

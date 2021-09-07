@@ -26,13 +26,13 @@ Firmware-Diy() {
 	# 部分可调用变量如下
 	# OP_Maintainer		源码作者
 	# OP_REPO_NAME		仓库名称
-	# OP_BRANCH			源码分支
+	# OP_BRANCH		源码分支
 	# TARGET_PROFILE	设备名称
 	# TARGET_BOARD		设备架构
 
 	# CustomFiles		仓库 /CustomFiles 绝对路径
-	# Scripts			仓库 /Scripts 绝对路径
-	# Home				源码存放绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt
+	# Scripts		仓库 /Scripts 绝对路径
+	# Home			源码存放绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt
 	# feeds_luci		绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
 	# feeds_pkgs		绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
 	# base_files		绝对路径,等同 ${GITHUB_WORKSPACE}/openwrt/package/base-files/files
