@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.7
+Version=V1.7.9
 
 ECHO() {
 	case $1 in
@@ -162,11 +162,15 @@ ${White}q. 退出
 		Sysinfo show
 	;;
 	8)
-		Sysinfo
 		clear
+		Online_List="${Tools_Cache}/Online_List"
+		i=1
 		ECHO x "在线设备列表\n"
-		ECHO y "IP 地址			MAC 地址"
-		grep "br-lan" /proc/net/arp | grep "0x2" | grep -v "0x0" | grep "$(echo ${IPv4} | egrep -o "[0-9]+\.[0-9]+\.[0-9]+")" | awk '{print $1"\t\t"$4}'
+		ECHO y "序号   MAC 地址			IP 地址			设备名称"
+		grep "br-lan" /proc/net/arp | grep "0x2" | grep -v "0x0" | grep "$(echo $(GET_IP 4) | egrep -o "[0-9]+\.[0-9]+\.[0-9]+")" | awk '{print $4"\t"$1}' | while read X;do
+			echo " ${i}     ${X}		$(grep $(echo ${X} | awk '{print $2}') /tmp/dhcp.leases | awk '{print $4}')"
+			i=$(($i + 1))
+		done
 		ENTER
 	;;
 	esac
@@ -616,8 +620,8 @@ Sysinfo() {
 		Mem_Free=$(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%dMB | %.1f%%\n",b,a)}')
 		Kernel_Version=$(uname -r)
 		Sys_Startup=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)
-		IPv4=$(ip -4 a | egrep "br-lan" | grep "inet" | awk '{print $2}')
-		IPv6=$(ip -6 a | grep inet6 | grep "global dynamic" | awk '{print $2}' | awk 'NR==1')
+		IPv4=$(GET_IP 4)
+		IPv6=$(GET_IP 6)
 		Support_Format=$(grep -v "nodev" /proc/filesystems | awk '{print $1}' | sort | uniq)
 		Online_Users=$(grep "br-lan" /proc/net/arp | grep "0x2" | grep -v "0x0" | grep "$(echo ${IPv4} | egrep -o "[0-9]+\.[0-9]+\.[0-9]+")" | wc -l)
 		[[ ! $1 == show ]] && return
@@ -647,6 +651,20 @@ Sysinfo() {
 		ECHO g "\n同时按下[Ctrl+C]键以退出系统监控 ..."
 		sleep 1
 	done
+}
+
+GET_IP() {
+	case $1 in
+	4)
+		ip -4 a | egrep "br-lan" | grep "inet" | awk '{print $2}'
+	;;
+	6)
+		ip -6 a | grep inet6 | grep "global dynamic" | awk '{print $2}' | awk 'NR==1'
+	;;
+	*)
+		return 1
+	;;
+	esac
 }
 
 GET_INFO() {
