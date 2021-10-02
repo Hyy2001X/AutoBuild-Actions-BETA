@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
-Version=V6.5.7
+Version=V6.5.9
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -111,6 +111,11 @@ function CHECK_ENV() {
 }
 
 function EXIT() {
+	case $1 in
+	1 | 2)
+		REMOVE_CACHE
+	;;
+	esac
 	LOGGER "[${COMMAND}] 运行结束 $1"
 	exit
 }
@@ -304,6 +309,7 @@ function UPDATE_SCRIPT() {
 		ECHO "脚本保存路径: [$1]"
 		[[ -n ${Banner_Version} && $1 == /bin ]] && sed -i "s?${Banner_Version}?${Script_Version}?g" /etc/banner
 		ECHO y "[${Banner_Version} > ${Script_Version}] AutoUpdate 脚本更新成功!"
+		REMOVE_CACHE
 		EXIT 0
 	else
 		ECHO r "AutoUpdate 脚本更新失败!"
@@ -383,7 +389,7 @@ function CHECK_TIME() {
 }
 
 function GET_API() {
-	local url name size version
+	local url name date size version
 	local API_Dump=${Running_Path}/API_Dump
 	[[ $(CHECK_TIME ${API_File} 1) == false ]] && {
 		DOWNLOADER --path ${Running_Path} --file-name API_Dump --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 3 --type 固件信息 --quiet
@@ -396,11 +402,15 @@ function GET_API() {
 		local i=1;while :;do
 			url=$(jsonfilter -e '@["assets"]' < ${API_Dump} | jsonfilter -e '@['"""$i"""'].browser_download_url' 2> /dev/null)
 			[[ ! $? == 0 ]] && break
-			size=$(jsonfilter -e '@["assets"]' < ${API_Dump} | jsonfilter -e '@['"""$i"""'].size' 2> /dev/null)
-			name=${url##*/}
-			size=$(echo $size | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
-			version=$(echo $name | egrep -o "R[0-9.]+-[0-9]+")
-			echo "${name}		${version}		${size}MB		${url}" | grep -v "API" >> ${API_File}
+			if [[ ${url} =~ "AutoBuild" || ${url} =~ "${TARGET_PROFILE}" ]]
+			then
+				size=$(jsonfilter -e '@["assets"]' < ${API_Dump} | jsonfilter -e '@['"""$i"""'].size' 2> /dev/null)
+				name=${url##*/}
+				size=$(echo ${size} | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
+				version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
+				date=$(echo ${version} | cut -d '-' -f2)
+				printf "%-75s %-20s %-10s %-15s %s\n" ${name} ${version} ${date} ${size}MB ${url} >> ${API_File}
+			fi
 			i=$(($i + 1))
 		done
 	}
@@ -415,10 +425,10 @@ function GET_CLOUD_INFO() {
 	local Info
 	[[ ! -f ${API_File} ]] && return
 	if [[ $1 =~ (All|all|-a) ]];then
-		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | sort | uniq)
+		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | uniq)
 		shift
 	else
-		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | sort | uniq | awk 'END {print}')
+		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | awk 'BEGIN {MAX = 0} {if ($3+0 > MAX+0) {MAX=$3 ;content=$0} } END {print content}')
 	fi
 	case "$1" in
 	name)
@@ -427,11 +437,14 @@ function GET_CLOUD_INFO() {
 	version)
 		echo "${Info}" | awk '{print $2}'
 	;;
-	size)
+	date)
 		echo "${Info}" | awk '{print $3}'
 	;;
-	url)
+	size)
 		echo "${Info}" | awk '{print $4}'
+	;;
+	url)
+		echo "${Info}" | awk '{print $5}'
 	;;
 	esac
 }
