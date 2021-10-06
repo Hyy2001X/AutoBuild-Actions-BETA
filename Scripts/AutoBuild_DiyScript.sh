@@ -18,7 +18,7 @@ Diy_Core() {
 	INCLUDE_AutoBuild_Features=true
 	INCLUDE_DRM_I915=true
 	INCLUDE_Argon=true
-	INCLUDE_Obsolete_PKG_Compatible=false
+	INCLUDE_Obsolete_PKG_Compatible=true
 }
 
 Firmware-Diy() {
