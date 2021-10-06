@@ -1,14 +1,18 @@
-############################################################
-#   Description: GitHub Action to synchronise forks        #
-#   Based on: danshui-git/github-forks-sync-action.git     #
-#   Modify: Hyy2001X                                       #
-#   Thanks to: https://github.com/281677160                #
-############################################################
+###########################################################
+#   Description: Compile OpenWrt by GitHub Actions        #
+#   Based on: https://github.com/P3TERX/Actions-OpenWrt   #
+#   Author: Hyy2001X                                      #
+###########################################################
 
 name: Refresh_API
 
 on:
-  repository_dispatch
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      refresh_switch:
+        description: '刷新 Release/API'
+        default: 'true'
 
 jobs:
   build:
@@ -19,12 +23,10 @@ jobs:
       uses: actions/checkout@main
 
     - name: Download Github Release API
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
       run: |
         wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
         
     - name: Upload API to Github Release
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
