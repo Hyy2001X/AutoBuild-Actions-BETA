@@ -8,7 +8,7 @@
 name: Refresh_API
 
 on:
-  repository_dispatch:
+  repository_dispatch
 
 jobs:
   build:
