@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: Newifi_Y1
+name: NEWIFI_D2
 
 ### 以下内容请保持不变 (请修改下方: 环境变量设置)
 on:
@@ -29,7 +29,7 @@ on:
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
-  CONFIG_FILE: lenovo_newifi-y1
+  CONFIG_FILE: d-team_newifi-d2
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
