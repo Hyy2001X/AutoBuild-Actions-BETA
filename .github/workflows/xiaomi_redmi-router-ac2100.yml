@@ -110,13 +110,6 @@ jobs:
         source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE && Firmware-Diy
         rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
-    - name: SSH Connection to Actions
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.SSH == 'true' && github.event.inputs.SSH  != 'false') || contains(github.event.action, 'SSH')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-
     - name: Compile
       run: |
         export Compile_Result=false

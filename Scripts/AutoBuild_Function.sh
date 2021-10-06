@@ -119,7 +119,7 @@ Firmware-Diy_Main() {
 		Copy ${CustomFiles}/Depends/Custom_Variable ${base_files}/etc/AutoBuild
 		Copy ${Scripts}/AutoBuild_Tools.sh ${base_files}/bin
 		Copy ${Scripts}/AutoUpdate.sh ${base_files}/bin
-		AddPackage git lean luci-app-autoupdate Hyy2001X main
+		AddPackage svn lean luci-app-autoupdate Hyy2001X/AutoBuild-Packages/trunk
 		Copy ${CustomFiles}/Depends/profile ${base_files}/etc
 		Copy ${CustomFiles}/Depends/base-files-essential ${base_files}/lib/upgrade/keep.d
 		AutoUpdate_Version=$(egrep -o "V[0-9].+" ${base_files}/bin/AutoUpdate.sh | awk 'NR==1')
