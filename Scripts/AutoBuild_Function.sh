@@ -233,9 +233,16 @@ Firmware-Diy_Other() {
 			case "${OP_BRANCH}" in
 			19.07 | 21.02 | main)
 				[[ ${OP_BRANCH} == main ]] && OP_BRANCH=21.02
+				cat >> .config <<EOF
+
+# CONFIG_PACKAGE_dnsmasq is not set
+CONFIG_PACKAGE_dnsmasq-full=y
+# CONFIG_PACKAGE_wpad-wolfssl is not set
+CONFIG_PACKAGE_wpad-openssl=y
+EOF
 				Copy ${CustomFiles}/Patches/0003-upx-ucl-${OP_BRANCH}.patch ${Home}
 				cat 0003-upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
-				# AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
+				AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
 				ECHO "Starting to convert zh-cn translation files to zh_Hans ..."
 				cd package && ${Scripts}/Convert_Translation.sh && cd -
 			;;
