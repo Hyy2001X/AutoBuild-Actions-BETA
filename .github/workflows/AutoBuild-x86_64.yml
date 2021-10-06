@@ -11,7 +11,7 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      ip_addr:
+      IP:
         description: '固件 IP 地址 [可选]'
         default: ''
 ### END
@@ -68,6 +68,11 @@ jobs:
         [ -z $REPO_BRANCH ] && REPO_BRANCH=master
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
+        echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/Openwrt.info
+        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Before_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Openwrt_Repository=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
+        echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
 
     - name: Initialization Environment
       env:
@@ -84,11 +89,6 @@ jobs:
             sudo -E apt-get -y autoremove --purge
             sudo -E apt-get clean
         fi
-        echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/Openwrt.info
-        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Before_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Openwrt_Repository=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
 
     - name: Clone Openwrt Source Code
       run: |
