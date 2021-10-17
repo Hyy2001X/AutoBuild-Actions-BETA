@@ -376,7 +376,7 @@ config sambashare
 	option path '${Disk_Mounted_Point}'
 	option read_only 'no'
 	option guest_ok 'yes'
-	option create_mask '0666'
+	option create_mask '0777'
 	option dir_mask '0777'
 EOF
 				else
