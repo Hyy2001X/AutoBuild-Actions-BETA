@@ -5,7 +5,7 @@
 # 推荐使用的 case 判断参数:
 # OP_Maintainer		Openwrt 源码作者,例如 [coolsnowwolf] [openwrt] [lienol/Lienol] [immortalwrt]
 # OP_REPO_NAME		Openwrt 仓库名称,例如 [lede] [openwrt] [immortalwrt]
-# OP_BRANCH			Openwrt 源码分支,例如 [master] [main] [openwrt-21.02] [v21.02.0-rc3] ...
+# OP_BRANCH		Openwrt 源码分支,例如 [master] [main] [openwrt-21.02] [v21.02.0-rc3] ...
 # TARGET_PROFILE	设备名称,例如 [asus_rt-acrh17] [d-team_newifi-d2] [redmi_ax6] ...
 # TARGET_BOARD		设备架构,例如 [x86] [ramips] [ipq807x] [ath79] ...
 #
@@ -33,6 +33,7 @@ coolsnowwolf/lede:master)
 		AddPackage git other openwrt-passwall xiaorouji main
 		rm -rf packages/lean/autocore
 		AddPackage git lean autocore-modify Hyy2001X master
+		AddPackage svn kernel rtl88x2bu immortalwrt/immortalwrt/trunk/package/kernel
 	;;
 	esac
 ;;
