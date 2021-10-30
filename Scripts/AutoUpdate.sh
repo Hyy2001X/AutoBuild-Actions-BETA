@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
-Version=V6.6.7
+Version=V6.6.8
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -71,8 +71,10 @@ Github API:		${Github_API}
 Github Raw：		${Github_Raw}
 OpenWrt Source:		https://github.com/${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}
 固件格式:		${Firmware_Format}
-运行路径:		${Running_Path}
+API 路径:		${API_File}
+运行路径:		${Tmp_Path}
 日志路径:		${Log_Path}/AutoUpdate.log
+可用下载器:		[${DOWNLOADERS}]
 EOF
 	[[ ${TARGET_BOARD} == x86 ]] && {
 		echo "固件引导模式:		${x86_Boot}"
@@ -358,34 +360,33 @@ function CHECK_TIME() {
 
 function ANALYSIS_API() {
 	local url name date size version count sha256
-	local API_Dump=${Running_Path}/API_Dump
+	local API_Cache=${Tmp_Path}/API_Cache
 	[[ $(CHECK_TIME ${API_File} 1) == false ]] && {
-		DOWNLOADER --path ${Running_Path} --file-name API_Dump --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 3 --type 固件信息 --quiet
-		[[ ! $? == 0 || -z $(cat ${API_Dump} 2> /dev/null) ]] && {
+		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 3 --type 固件信息 --quiet
+		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
 			ECHO r "Github API 请求错误,请检查网络后重试!"
 			EXIT 2
 		}
 		RM ${API_File} && touch -a ${API_File}
 		LOGGER "[ANALYSIS_API] 开始解析 Github API ..."
-		local i=0;while :;do
-			name=$(jsonfilter -i ${API_Dump} -e '@["assets"]' | jsonfilter -e '@['"""$i"""'].name' 2> /dev/null)
+		for i in $(seq 0 500);do
+			name=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].name' 2> /dev/null)
 			[[ ! $? == 0 ]] && break
 			if [[ ${name} =~ "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" || ${name} =~ Update_Logs.json ]]
 			then
-				version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
-				url=$(jsonfilter -i ${API_Dump} -e '@["assets"]' | jsonfilter -e '@['"""$i"""'].browser_download_url' 2> /dev/null)
-				size=$(jsonfilter -i ${API_Dump} -e '@["assets"]' | jsonfilter -e '@['"""$i"""'].size' 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
-				date=$(echo ${version} | cut -d '-' -f2)
-				count=$(jsonfilter -i ${API_Dump} -e '@["assets"]' | jsonfilter -e '@['"""$i"""'].download_count' 2> /dev/null)
+				version=$(echo ${name} | egrep -o "R[0-9].+-[0-9]{8}")
+				url=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].browser_download_url' 2> /dev/null)
+				size=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].size' 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
+				date=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].updated_at' 2> /dev/null | sed 's/[-:TZ]//g')
+				count=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].download_count' 2> /dev/null)
 				sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
 				printf "%-75s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${count} ${sha256} ${version} ${date} ${size}MB ${url} >> ${API_File}
 			fi
-			i=$(($i + 1))
 		done
 		unset i
 	}
 	awk -F ' ' '{print NF}' ${API_File} | while read X;do
-		[[ ${X} != 6 ]] && LOGGER "[ANALYSIS_API] API 解析异常: ${X}"
+		[[ ${X} != 7 ]] && LOGGER "[ANALYSIS_API] API 解析异常: ${X}"
 	done
 	[[ -z $(cat ${API_File} 2> /dev/null) ]] && {
 		ECHO r "Github API 解析失败!"
@@ -411,11 +412,11 @@ function GET_CLOUD_LOG() {
 		Version="$1"
 	;;
 	esac
-	[[ $(CHECK_TIME ${Running_Path}/Update_Logs.json 1) == false ]] && {
-		DOWNLOADER --path ${Running_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 3 --type 固件更新日志 --quiet
+	[[ $(CHECK_TIME ${Tmp_Path}/Update_Logs.json 1) == false ]] && {
+		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 3 --type 固件更新日志 --quiet
 	}
-	[[ -s ${Running_Path}/Update_Logs.json ]] && {
-		Result=$(jsonfilter -i ${Running_Path}/Update_Logs.json -e '@["'"""${TARGET_PROFILE}"""'"]["'"""${Version}"""'"]' 2> /dev/null)
+	[[ -s ${Tmp_Path}/Update_Logs.json ]] && {
+		Result=$(jsonfilter -i ${Tmp_Path}/Update_Logs.json -e '@["'""${TARGET_PROFILE}""'"]["'""${Version}""'"]' 2> /dev/null)
 		[[ -n ${Result} ]] && {
 			echo -e "\n${Grey}${Version} for ${TARGET_PROFILE} 更新日志:"
 			echo -e "\n${Green}${Result}${White}"
@@ -467,7 +468,7 @@ function UPGRADE() {
 		ECHO r "网络连接错误,请稍后再试!"
 		EXIT 1
 	}
-	Firmware_Path="${Running_Path}"
+	Firmware_Path="${Tmp_Path}"
 	Upgrade_Option="sysupgrade -q"
 	MSG="更新固件"
 	while [[ $1 ]];do
@@ -839,10 +840,10 @@ function DOWNLOADER() {
 }
 
 function REMOVE_CACHE() {
-	rm -rf ${Running_Path}/API \
+	rm -rf ${Tmp_Path}/API \
 		/tmp/AutoUpdate.sh \
-		${Running_Path}/Update_Logs.json \
-		${Running_Path}/API_Dump 2> /dev/null
+		${Tmp_Path}/Update_Logs.json \
+		${Tmp_Path}/API_Cache 2> /dev/null
 }
 
 function LOG() {
@@ -935,7 +936,7 @@ function AutoUpdate_Main() {
 		}
 		[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
 		LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
-		[[ ! -d ${Running_Path} ]] && mkdir -p ${Running_Path}
+		[[ ! -d ${Tmp_Path} ]] && mkdir -p ${Tmp_Path}
 	fi
 
 	[[ -z $* ]] && UPGRADE $*
@@ -1153,9 +1154,9 @@ KILL_PROCESS() {
 
 KILL_PROCESS AutoUpdate.sh
 
-Running_Path=/tmp/AutoUpdate
+Tmp_Path=/tmp/AutoUpdate
 Log_Path=/tmp
-API_File=${Running_Path}/API
+API_File=${Tmp_Path}/API
 Default_Variable=/etc/AutoBuild/Default_Variable
 Custom_Variable=/etc/AutoBuild/Custom_Variable
 ENV_DEPENDS="Author Github TARGET_PROFILE TARGET_BOARD TARGET_SUBTARGET Firmware_Format CURRENT_Version OP_Maintainer OP_BRANCH OP_REPO_NAME"

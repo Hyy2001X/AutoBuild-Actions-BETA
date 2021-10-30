@@ -34,6 +34,7 @@ coolsnowwolf/lede:master)
 		rm -rf packages/lean/autocore
 		AddPackage git lean autocore-modify Hyy2001X master
 		AddPackage svn kernel rtl88x2bu immortalwrt/immortalwrt/trunk/package/kernel
+		rm -rf packages/kernel/rtl88x2bu/patches
 	;;
 	esac
 ;;
