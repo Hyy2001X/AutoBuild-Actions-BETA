@@ -14,8 +14,8 @@ on:
         description: '刷新 Release/API'
         default: 'true'
 
-  #schedule:
-  #  - cron: 0 4,16 * * *
+  schedule:
+    - cron: 0 4,16 * * *
 
 jobs:
   build:

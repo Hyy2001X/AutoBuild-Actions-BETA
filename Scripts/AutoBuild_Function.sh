@@ -13,7 +13,7 @@ Firmware-Diy_Before() {
 	[[ -z ${Author} ]] && Author="$(echo "${Author_Repository}" | cut -d "/" -f4)"
 	OP_Maintainer="$(echo "${Openwrt_Repository}" | cut -d "/" -f4)"
 	OP_REPO_NAME="$(echo "${Openwrt_Repository}" | cut -d "/" -f5)"
-	OP_BRANCH="$(Get_Branch)"
+	OP_BRANCH="$(GET_Branch)"
 	if [[ ${OP_BRANCH} == master || ${OP_BRANCH} == main ]];then
 		Openwrt_Version_Head="R$(date +%y.%m)-"
 	else
@@ -126,10 +126,38 @@ Firmware-Diy_Main() {
 		case "${OP_Maintainer}/${OP_REPO_NAME}" in
 		coolsnowwolf/lede)
 			Copy ${CustomFiles}/Depends/coremark.sh ${Home}/$(PKG_Finder d "package feeds" coremark)
-			sed -i "s?iptables?#iptables?g" ${Version_File}
+			sed -i '\/etc\/firewall.user/d;/exit 0/d' ${Version_File}
+			cat >> ${Version_File} <<EOF
+
+sed -i 's#mirrors.cloud.tencent.com/lede#downloads.immortalwrt.cnsztl.eu.org#g' /etc/opkg/distfeeds.conf
+sed -i 's#18.06.9/##g' /etc/opkg/distfeeds.conf
+sed -i 's#releases/#snapshots/#g' /etc/opkg/distfeeds.conf
+
+sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/aliyundrive-webdav.lua
+sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aliyundrive-webdav/aliyundrive-webdav_log.htm
+sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aliyundrive-webdav/aliyundrive-webdav_status.htm
+
+sed -i 's/\"services\"/\"vpn\"/g' /usr/lib/lua/luci/controller/v2ray_server.lua
+sed -i 's/\"services\"/\"vpn\"/g' /usr/lib/lua/luci/model/cbi/v2ray_server/index.lua
+sed -i 's/\"services\"/\"vpn\"/g' /usr/lib/lua/luci/model/cbi/v2ray_server/user.lua
+sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/log.htm
+sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/users_list_status.htm
+sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/users_list_status.htm
+sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/v2ray.htm
+
+if [ -z "$(grep "REDIRECT --to-ports 53" /etc/firewall.user)" ]
+then
+	echo '#iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+	echo '#iptables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+	echo '#[ -n "\$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+	echo '#[ -n "\$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+fi
+exit 0
+EOF
 			sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
-			sed -i "/dns_caching_dns/d" $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
-			echo "	option dns_caching_dns '223.5.5.5,114.114.114.114'" >> $(PKG_Finder d package luci-app-turboacc)/root/etc/config/turboacc
+			ECHO "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
+			AddPackage git other helloworld fw876 master
+			sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		;;
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/openwrt_release_${OP_Maintainer} ${base_files}/etc openwrt_release
@@ -138,7 +166,7 @@ Firmware-Diy_Main() {
 		esac
 		sed -i "s?By?By ${Author}?g" ${CustomFiles}/Depends/banner
 		sed -i "s?Openwrt?Openwrt ${CURRENT_Version} / AutoUpdate ${AutoUpdate_Version}?g" ${CustomFiles}/Depends/banner
-		[[ -n ${Banner_Title} ]] && sed -i "s?MSG?${Banner_Title}?g" ${CustomFiles}/Depends/banner
+		[[ -n ${Banner_Title} ]] && sed -i "s?Powered by AutoBuild-Actions?${Banner_Title}?g" ${CustomFiles}/Depends/banner
 		case "${OP_Maintainer}/${OP_REPO_NAME}" in
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/banner ${Home}/$(PKG_Finder d package default-settings)/files openwrt_banner
@@ -174,11 +202,11 @@ Firmware-Diy_Main() {
 				esac
 			} || {
 				ECHO "[${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}]: Current Source is not supported ..."
-				Argon_Skip=1
+				Argon_Controller=1
 			}
 		;;
 		esac
-		[[ ! ${Argon_Skip} == 1 ]] && AddPackage git other luci-app-argon-config jerrykuku master
+		[[ ${Argon_Controller} == 1 ]] && AddPackage git other luci-app-argon-config jerrykuku master
 	}
 	[[ -n ${Before_IP_Address} ]] && Default_LAN_IP="${Before_IP_Address}"
 	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
@@ -192,22 +220,6 @@ Firmware-Diy_Main() {
 		Copy ${CustomFiles}/Depends/DRM-I915 ${Home}/target/linux/x86
 		for X in $(ls -1 target/linux/x86 | grep "config-"); do echo -e "\n$(cat target/linux/x86/DRM-I915)" >> target/linux/x86/${X}; done
 	}
-	case "${OP_Maintainer}/${OP_REPO_NAME}" in
-	coolsnowwolf/lede)
-		ECHO "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
-		AddPackage git other helloworld fw876 master
-		sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
-	;;
-	immortalwrt/immortalwrt)
-		:
-	;;
-	openwrt/openwrt)
-		:
-	;;
-	[Ll]ienol/openwrt)
-		:
-	;;
-	esac
 	ECHO "[Firmware-Diy_Main] Done."
 }
 
@@ -261,6 +273,11 @@ EOF
 		fi
 		sed -i '/## TEST/d' .config >/dev/null 2>&1
 	fi
+	cat >> .config <<EOF
+
+CONFIG_KERNEL_BUILD_USER="${Author}"
+CONFIG_KERNEL_BUILD_DOMAIN="${Github}"
+EOF
 	ECHO "[Firmware-Diy_Other] Done."
 }
 
@@ -352,7 +369,7 @@ Get_Variable() {
 	grep "$1" ${GITHUB_WORKSPACE}/openwrt/VARIABLE_FILE | cut -c$(echo $1 | wc -c)-200 | cut -d ":" -f2
 }
 
-Get_Branch() {
+GET_Branch() {
     git -C $(pwd) rev-parse --abbrev-ref HEAD | grep -v HEAD || \
     git -C $(pwd) describe --exact-match HEAD || \
     git -C $(pwd) rev-parse HEAD

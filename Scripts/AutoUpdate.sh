@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
-Version=V6.6.8
+Version=V6.6.9
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -85,13 +85,14 @@ EOF
 }
 
 function RM() {
-	rm -f $1 2> /dev/null
-	[[ $? == 0 ]] && LOGGER "已删除文件: [$1]" || LOGGER "[$1] 删除失败!"
+	[[ -z $* ]] && return 1
+	rm -rf "$*" 2> /dev/null
+	LOGGER "已删除文件: [$1]"
 }
 
 function LIST_ENV() {
 	local X
-	cat /etc/AutoBuild/*_Variable | grep -v '#' | while read X;do
+	grep -v '#' /etc/AutoBuild/*_Variable | while read X;do
 	[[ ${X} =~ "=" ]] && {
 		case "$1" in
 		1 | 2)
@@ -107,7 +108,7 @@ function LIST_ENV() {
 
 function CHECK_ENV() {
 	while [[ $1 ]];do
-		[[ $(LIST_ENV 1) =~ $1 ]] && LOGGER "[CHECK_ENV] Checking env $1 ... true" || ECHO r "[CHECK_ENV] Checking env $1 ... false"
+		[[ $(LIST_ENV 1) =~ $1 ]] && LOGGER "[CHECK_ENV] 检查变量 $1 ... true" || ECHO r "[CHECK_ENV] 检查变量 $1 ... false"
 		shift
 	done
 }
@@ -185,7 +186,6 @@ function GET_SHA256SUM() {
 }
 
 function GET_VARIABLE() {
-	[[ $# != 2 ]] && SHELL_HELP
 	[[ ! -f $2 ]] && ECHO "[GET_VARIABLE] 未检测到环境变量文件: [$2] !" && EXIT 1
 	local Result="$(grep "$1=" $2 | grep -v "#" | awk 'NR==1' | sed -r "s/$1=(.*)/\1/")"
 	[[ -n ${Result} ]] && {
@@ -233,10 +233,9 @@ function LOAD_VARIABLE() {
 function EDIT_VARIABLE() {
 	local Mode="$1"
 	shift
-	[[ ! -f $1 ]] && ECHO r "未检测到环境变量文件: [$1] !" && EXIT 1
+	[[ ! -f $1 ]] && ECHO r "未检测到环境变量文件: [$1] !" && return 1
 	case "${Mode}" in
 	edit)
-    	[[ $# != 3 ]] && SHELL_HELP
 		[[ -z $(GET_VARIABLE $2 $1) ]] && {
 			LOGGER "[EDIT_VARIABLE] 新增环境变量 [$2=$3]"
 			echo -e "\n$2=$3" >> $1
@@ -245,7 +244,6 @@ function EDIT_VARIABLE() {
 		}
 	;;
 	rm)
-		[[ $# != 2 ]] && SHELL_HELP
 		LOGGER "[EDIT_VARIABLE] 从 $1 删除环境变量 [$2] ..."
 		sed -i "/$2/d" $1
 	;;
@@ -316,35 +314,23 @@ function UPDATE_SCRIPT() {
 
 function CHECK_DEPENDS() {
 	TITLE
-	local PKG Tab
-	echo -e "\n软件包			检测结果"
+	local PKG
+	printf "\n%-28s %-5s\n" 软件包 检测结果
 	while [[ $1 ]];do
 		if [[ $1 =~ : ]];then
 			[[ $(echo $1 | cut -d ":" -f1) == ${TARGET_BOARD} ]] && {
 				PKG="$(echo "$1" | cut -d ":" -f2)"
 				[[ $(echo "${PKG}" | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
-				echo -e "${PKG}${Tab}$(CHECK_PKG ${PKG})"
+				printf "%-25s %-5s\n" ${PKG} $(CHECK_PKG ${PKG})
 				LOGGER "[CHECK_DEPENDS] 检查软件包: [${PKG}] ... $(CHECK_PKG ${PKG})"
 			}
 		else
-			[[ $(echo "$1" | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
-			echo -e "$1${Tab}$(CHECK_PKG $1)"
+			printf "%-25s %-5s\n" $1 $(CHECK_PKG $1)
 			LOGGER "[CHECK_DEPENDS] 检查软件包: [$1] ... $(CHECK_PKG $1)"
 		fi
 		shift
 	done
 	ECHO y "AutoUpdate 依赖检测结束,请尝试手动安装测结果为 [false] 的项目!"
-}
-
-function CHECK_VERSION() {
-	[[ $# -gt 1 ]] && echo false && return
-	[[ $1 =~ R[1-9.]{2}.+-[0-9]{8} ]] && {
-		echo true
-		LOGGER "[CHECK_VERSION] 检查固件版本号: [$1] ... true"
-	} || {
-		echo false
-		LOGGER "[CHECK_VERSION] 检查固件版本号: [$1] ... false"
-	}
 }
 
 function CHECK_TIME() {
@@ -358,7 +344,7 @@ function CHECK_TIME() {
 	}
 }
 
-function ANALYSIS_API() {
+function ANALYZE_API() {
 	local url name date size version count sha256
 	local API_Cache=${Tmp_Path}/API_Cache
 	[[ $(CHECK_TIME ${API_File} 1) == false ]] && {
@@ -368,29 +354,33 @@ function ANALYSIS_API() {
 			EXIT 2
 		}
 		RM ${API_File} && touch -a ${API_File}
-		LOGGER "[ANALYSIS_API] 开始解析 Github API ..."
+		LOGGER "[ANALYZE_API] 开始解析 Github API ..."
 		for i in $(seq 0 500);do
 			name=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].name' 2> /dev/null)
 			[[ ! $? == 0 ]] && break
 			if [[ ${name} =~ "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" || ${name} =~ Update_Logs.json ]]
 			then
-				version=$(echo ${name} | egrep -o "R[0-9].+-[0-9]{8}")
+				version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
 				url=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].browser_download_url' 2> /dev/null)
 				size=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].size' 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
 				date=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].updated_at' 2> /dev/null | sed 's/[-:TZ]//g')
 				count=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].download_count' 2> /dev/null)
 				sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
+				[[ -z ${name} ]] && name="-"
+				[[ -z ${version} ]] && version="-"
+				[[ -z ${url} ]] && url="-"
+				[[ -z ${size} ]] && size="-"
+				[[ -z ${date} ]] && date="-"
+				[[ -z ${count} ]] && count="-"
+				[[ -z ${sha256} ]] && sha256="-"
 				printf "%-75s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${count} ${sha256} ${version} ${date} ${size}MB ${url} >> ${API_File}
 			fi
 		done
 		unset i
 	}
-	awk -F ' ' '{print NF}' ${API_File} | while read X;do
-		[[ ${X} != 7 ]] && LOGGER "[ANALYSIS_API] API 解析异常: ${X}"
-	done
 	[[ -z $(cat ${API_File} 2> /dev/null) ]] && {
-		ECHO r "Github API 解析失败!"
-		EXIT 2
+		ECHO r "Github API 解析内容为空!"
+		return 1
 	}
 }
 
@@ -398,14 +388,14 @@ function GET_CLOUD_LOG() {
 	local Result Version
 	[[ ! $(cat ${API_File} 2> /dev/null) =~ Update_Logs.json ]] && {
 		LOGGER "[GET_CLOUD_LOG] 未检测到云端日志文件!"
-		return
+		return 1
 	}
 	case "$1" in
 	[Ll]ocal)
 		Version="${CURRENT_Version}"
 	;;
 	[Cc]loud)
-		Version="$(GET_CLOUD_INFO version)"
+		Version="$(GET_FW_INFO 4)"
 	;;
 	-v)
 		shift
@@ -424,41 +414,36 @@ function GET_CLOUD_LOG() {
 	}
 }
 
-function GET_CLOUD_INFO() {
-	local Info
+function GET_FW_INFO() {
+	local Info Type Result
 	[[ ! -s ${API_File} ]] && {
-		LOGGER "[GET_CLOUD_INFO] 未检测到 API 文件!"
-		return
+		LOGGER "[GET_FW_INFO] 未检测到 API 文件!"
+		return 1
 	}
-	if [[ $1 =~ (All|all|-a) ]];then
+	if [[ $1 == "-a" ]];then
 		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | uniq)
 		shift
 	else
 		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | awk 'BEGIN {MAX = 0} {if ($5+0 > MAX+0) {MAX=$5 ;content=$0} } END {print content}')
 	fi
-	case "$1" in
-	name)
-		echo "${Info}" | awk '{print $1}'
-	;;
-	count)
-		echo "${Info}" | awk '{print $2}'
-	;;
-	sha256)
-		echo "${Info}" | awk '{print $3}'
-	;;
-	version)
-		echo "${Info}" | awk '{print $4}'
-	;;
-	date)
-		echo "${Info}" | awk '{print $5}'
-	;;
-	size)
-		echo "${Info}" | awk '{print $6}'
-	;;
-	url)
-		echo "${Info}" | awk '{print $7}'
-	;;
+	Result=$(echo "${Info}" | awk '{print $"'${1}'"}' 2> /dev/null)
+	case $1 in
+	1) Type="固件名称";;
+	2) Type="下载次数";;
+	3) Type=" SHA256 ";;
+	4) Type="固件版本";;
+	5) Type="发布日期";;
+	6) Type="固件体积";;
+	7) Type="固件链接";;
+	*) Type="未定义信息";;
 	esac
+	[[ ! ${Result} == "-" ]] && {
+		LOGGER "[GET_FW_INFO] 获取${Type}: ${Result}"
+		echo -e "${Result}"
+	} || {
+		LOGGER "[GET_FW_INFO] ${Type}获取失败!"
+		return 1
+	}
 }
 
 function UPGRADE() {
@@ -548,13 +533,14 @@ function UPGRADE() {
 		}
 	fi
 	ECHO "正在检查版本更新 ..."
-	ANALYSIS_API
-	CLOUD_FW_Version=$(GET_CLOUD_INFO version)
-	CLOUD_FW_Name=$(GET_CLOUD_INFO name)
-	CLOUD_FW_Count=$(GET_CLOUD_INFO count)
-	CLOUD_FW_Size=$(GET_CLOUD_INFO size)
-	CLOUD_FW_Url=$(GET_CLOUD_INFO url)
-	CLOUD_FW_SHA256=$(GET_CLOUD_INFO sha256)
+	ANALYZE_API
+	CLOUD_FW_Name=$(GET_FW_INFO 1)
+	CLOUD_FW_Count=$(GET_FW_INFO 2)
+	CLOUD_FW_SHA256=$(GET_FW_INFO 3)
+	CLOUD_FW_Version=$(GET_FW_INFO 4)
+	CLOUD_FW_Date=$(GET_FW_INFO 5)
+	CLOUD_FW_Size=$(GET_FW_INFO 6)
+	CLOUD_FW_Url=$(GET_FW_INFO 7)
 	[[ -z ${CLOUD_FW_Name} ]] && {
 		ECHO r "云端固件信息获取失败!"
 		EXIT 2
@@ -1012,16 +998,15 @@ function AutoUpdate_Main() {
 			}
 		;;
 		--clean)
-			shift && [[ -n $* ]] && SHELL_HELP
 			REMOVE_CACHE
 			EXIT
 		;;
 		--check)
-			shift && [[ -n $* ]] && SHELL_HELP
+			shift
 			CHECK_DEPENDS bash uclient-fetch curl wget openssl jsonfilter
 			[[ $(NETWORK_CHECK 223.5.5.5 2) == false ]] && {
-				ECHO r "网络连接错误!"
-			} || ECHO y "网络连接正常!"
+				ECHO r "基础网络连接错误!"
+			} || ECHO y "基础网络连接正常!"
 			CHECK_ENV ${ENV_DEPENDS}
 			EXIT
 		;;
@@ -1044,8 +1029,8 @@ function AutoUpdate_Main() {
 			case "$1" in
 			[Cc]loud)
 				shift
-				ANALYSIS_API > /dev/null 2>&1
-				GET_CLOUD_INFO $* version
+				ANALYZE_API > /dev/null 2>&1
+				GET_FW_INFO $* 4
 			;;
 			*)
 				SHELL_HELP
@@ -1055,20 +1040,15 @@ function AutoUpdate_Main() {
 		;;
 		--fw-log)
 			shift
-			ANALYSIS_API
+			ANALYZE_API
 			[[ -z $* ]] && GET_CLOUD_LOG local
 			case "$1" in
 			[Cc]loud)
 				GET_CLOUD_LOG $1
 			;;
 			*)
-				[[ -z $* ]] && EXIT 0
-				[[ ! $(CHECK_VERSION $1) == true ]] && {
-					ECHO r "固件版本号合法性检查失败!"
-					EXIT 1
-				} || {
-					GET_CLOUD_LOG -v $1
-				}
+				[[ -z $* ]] && EXIT
+				GET_CLOUD_LOG -v $1
 			;;
 			esac
 			EXIT
@@ -1134,8 +1114,8 @@ function AutoUpdate_Main() {
 			EXIT
 		;;
 		-O)
-			ANALYSIS_API
-			GET_CLOUD_INFO -a name
+			ANALYZE_API
+			GET_FW_INFO -a 1
 			EXIT
 		;;
 		*)
