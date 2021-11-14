@@ -1,6 +1,9 @@
 # 此文件为通用 config 文件,将在编译开始前追加到 .config 的文件的最后
 # 用于控制所有设备的默认配置,如果不需要删除此文件即可
 
+# CONFIG_SIGNATURE_CHECK is not set
+# CONFIG_SIGNED_PACKAGES is not set
+
 CONFIG_PACKAGE_luci-theme-argon=y
 CONFIG_PACKAGE_luci-app-argon-config=y
 CONFIG_PACKAGE_luci-app-adbyby-plus=y

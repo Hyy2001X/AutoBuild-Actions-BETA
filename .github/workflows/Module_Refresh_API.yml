@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: Refresh_API
+name: Refresh API
 
 on:
   repository_dispatch:
