@@ -82,7 +82,6 @@ OP_REPO_NAME=${OP_REPO_NAME}
 EOF
 	cat >> ${Home}/VARIABLE_FILE <<EOF
 Home=${Home}
-Load_Common_Config=${Load_Common_Config}
 PKG_Compatible="${INCLUDE_Obsolete_PKG_Compatible}"
 Checkout_Virtual_Images="${Checkout_Virtual_Images}"
 Firmware_Path=${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}
@@ -130,9 +129,9 @@ Firmware-Diy_Main() {
 			cat >> ${Version_File} <<EOF
 
 sed -i '/check_signature/d' /etc/opkg.conf
-sed -i 's#mirrors.cloud.tencent.com/lede#downloads.immortalwrt.cnsztl.eu.org#g' /etc/opkg/distfeeds.conf
-sed -i 's#18.06.9/##g' /etc/opkg/distfeeds.conf
-sed -i 's#releases/#snapshots/#g' /etc/opkg/distfeeds.conf
+# sed -i 's#mirrors.cloud.tencent.com/lede#downloads.immortalwrt.cnsztl.eu.org#g' /etc/opkg/distfeeds.conf
+# sed -i 's#18.06.9/##g' /etc/opkg/distfeeds.conf
+# sed -i 's#releases/#snapshots/#g' /etc/opkg/distfeeds.conf
 
 sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/aliyundrive-webdav.lua
 sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aliyundrive-webdav/aliyundrive-webdav_log.htm
@@ -177,38 +176,6 @@ EOF
 		;;
 		esac
 	fi
-	[[ ${INCLUDE_Argon} == true ]] && {
-		case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
-		coolsnowwolf/lede:master)
-			AddPackage git lean luci-theme-argon jerrykuku 18.06
-		;;
-		[Ll]ienol/openwrt:main)
-			AddPackage git other luci-theme-argon jerrykuku master
-		;;
-		[Ll]ienol/openwrt:19.07)
-			AddPackage git other luci-theme-argon jerrykuku v2.2.5
-		;;
-		*)
-			[[ ! ${OP_Maintainer}/${OP_REPO_NAME} = immortalwrt/immortalwrt ]] && {
-				case "${OP_BRANCH}" in
-				19.07)
-					AddPackage git other luci-theme-argon jerrykuku v2.2.5
-				;;
-				21.02)
-					AddPackage git other luci-theme-argon jerrykuku master
-				;;
-				18.06)
-					AddPackage git other luci-theme-argon jerrykuku 18.06
-				;;
-				esac
-			} || {
-				ECHO "[${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}]: Current Source is not supported ..."
-				Argon_Controller=1
-			}
-		;;
-		esac
-		[[ ${Argon_Controller} == 1 ]] && AddPackage git other luci-app-argon-config jerrykuku master
-	}
 	[[ -n ${Before_IP_Address} ]] && Default_LAN_IP="${Before_IP_Address}"
 	[[ -n ${Default_LAN_IP} && ${Default_LAN_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
 		Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${base_files}/bin/config_generate | awk 'NR==1')
@@ -266,13 +233,6 @@ EOF
 		else
 			ECHO "[${OP_Maintainer}]: Current Source_Maintainer is not supported ..."
 		fi
-	fi
-	if [[ ${Load_Common_Config} == true ]];then
-		if [[ -s $GITHUB_WORKSPACE/Configs/Common || ! "$(cat .config)" =~ "## TEST" ]];then
-			ECHO "Merging [Configs/Common] to .config ..."
-			echo -e "\n$(cat $GITHUB_WORKSPACE/Configs/Common)" >> .config
-		fi
-		sed -i '/## TEST/d' .config >/dev/null 2>&1
 	fi
 	cat >> .config <<EOF
 

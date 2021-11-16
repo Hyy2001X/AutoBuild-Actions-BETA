@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
-Version=V6.7.3
+Version=V6.7.4
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -324,29 +324,30 @@ function CHANGE_BOOT() {
 }
 
 function UPDATE_SCRIPT() {
-	[[ -s $1 ]] && {
-		ECHO r "AutoUpdate 脚本保存路径有误,请重新输入!"
-		EXIT 1
-	}
 	if [[ ! -d $1 ]];then
 		mkdir -p $1 2> /dev/null || {
-			ECHO r "脚本存放路径 [$1] 创建失败!"
+			ECHO r "脚本保存路径 [$1] 创建失败!"
 			EXIT 1
 		}
 	fi
-	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DOWNLOADERS} --url "$2" --path /tmp --timeout 5 --type 脚本
-	if [[ -s /tmp/AutoUpdate.sh ]];then
-		chmod +x /tmp/AutoUpdate.sh
-		Script_Version=$(awk -F '=' '/Version/{print $2}' /tmp/AutoUpdate.sh | awk 'NR==1')
+	ECHO "脚本保存路径: [$1]"
+	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DOWNLOADERS} --url $2 --path ${Tmp_Path} --timeout 5 --type 脚本
+	if [[ -s ${Tmp_Path}/AutoUpdate.sh ]];then
+		chmod +x ${Tmp_Path}/AutoUpdate.sh
+		Script_Version=$(awk -F '=' '/Version/{print $2}' ${Tmp_Path}/AutoUpdate.sh | awk 'NR==1')
 		Banner_Version=$(egrep -o "V[0-9.]+" /etc/banner)
-		mv -f /tmp/AutoUpdate.sh $1
-		ECHO "脚本保存路径: [$1]"
-		[[ -n ${Banner_Version} && $1 == /bin ]] && sed -i "s?${Banner_Version}?${Script_Version}?g" /etc/banner
-		ECHO y "[${Banner_Version} > ${Script_Version}] AutoUpdate 脚本更新成功!"
-		REMOVE_CACHE
-		EXIT 0
+		mv -f ${Tmp_Path}/AutoUpdate.sh $1 2> /dev/null
+		[[ $? == 0 ]] && {
+			[[ -n ${Banner_Version} && $1 == /bin ]] && sed -i "s?${Banner_Version}?${Script_Version}?g" /etc/banner
+			ECHO y "[${Banner_Version} > ${Script_Version}] AutoUpdate 脚本更新成功!"
+			REMOVE_CACHE
+			EXIT 0
+		} || {
+			ECHO r "无法移动 AutoUpdate 脚本到指定的路径!"
+			EXIT 1
+		}
 	else
-		ECHO r "AutoUpdate 脚本更新失败!"
+		ECHO r "AutoUpdate 脚本下载失败!"
 		EXIT 1
 	fi
 }
@@ -359,7 +360,6 @@ function CHECK_DEPENDS() {
 		if [[ $1 =~ : ]];then
 			[[ $(echo $1 | cut -d ":" -f1) == ${TARGET_BOARD} ]] && {
 				PKG="$(echo "$1" | cut -d ":" -f2)"
-				[[ $(echo "${PKG}" | wc -c) -gt 8 ]] && Tab="		" || Tab="			"
 				printf "%-25s %-5s\n" ${PKG} $(CHECK_PKG ${PKG})
 			}
 		else
@@ -374,10 +374,12 @@ function CHECK_TIME() {
 	[[ -s $1 && -n $(find $1 -type f -mmin -$2) ]] && {
 		LOGGER "[CHECK_TIME] 文件: [$1] 距离修改时间小于 $2 分钟!"
 		echo true
+		return 0
 	} || {
 		LOGGER "[CHECK_TIME] 文件: [$1] 验证失败!"
 		RM $1
 		echo false
+		return 1
 	}
 }
 
@@ -426,7 +428,7 @@ function ANALYZE_API() {
 function GET_CLOUD_LOG() {
 	local Result Version
 	[[ ! $(cat ${API_File} 2> /dev/null) =~ Update_Logs.json ]] && {
-		LOGGER "[GET_CLOUD_LOG] 未检测到云端日志文件!"
+		LOGGER "[GET_CLOUD_LOG] 未检测到已部署的云端日志!"
 		return 1
 	}
 	case "$1" in

@@ -8,7 +8,6 @@ Diy_Core() {
 	Banner_Title="Powered by AutoBuild-Actions"
 	Default_LAN_IP=192.168.1.1
 
-	Load_Common_Config=true
 	Load_CustomPackages_List=true
 	Short_Firmware_Date=true
 	Checkout_Virtual_Images=false
@@ -17,7 +16,6 @@ Diy_Core() {
 
 	INCLUDE_AutoBuild_Features=true
 	INCLUDE_DRM_I915=true
-	INCLUDE_Argon=true
 	INCLUDE_Obsolete_PKG_Compatible=false
 }
 
@@ -40,6 +38,8 @@ Firmware-Diy() {
 	case "${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${feeds_pkgs}/ttyd/files/ttyd.config
+		AddPackage git lean luci-theme-argon jerrykuku 18.06
+		AddPackage git lean luci-app-argon-config jerrykuku master
 	;;
 	esac
 
