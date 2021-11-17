@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter
 
-Version=V6.7.4
+Version=V6.7.5
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -33,7 +33,7 @@ function SHELL_HELP() {
 	-x --url <URL>		更新 AutoUpdate.sh 脚本 (使用提供的地址 <URL> 更新脚本) *
 
 其他参数:
-	-B, --boot-mode <TYPE>		指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI Legacy)
+	-B, --boot-mode <TYPE>		指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI BIOS)
 	-C <Github URL>			更改 Github 地址为提供的 <Github URL>
 	--help				打印 AutoUpdate 帮助信息
 	--log < | del>			<打印 | 删除> AutoUpdate 历史运行日志
@@ -62,7 +62,7 @@ function SHOW_VARIABLE() {
 	cat <<EOF
 
 设备名称:		$(uname -n) / ${TARGET_PROFILE}
-固件版本:		${CURRENT_Version}
+固件版本:		${OP_VERSION}
 内核版本:		$(uname -r)
 其他参数:		${TARGET_BOARD} / ${TARGET_SUBTARGET}
 固件作者:		${Author}
@@ -70,7 +70,7 @@ function SHOW_VARIABLE() {
 Github Release:		${Github_Release}
 Github API:		${Github_API}
 Github Raw：		${Github_Raw}
-OpenWrt Source:		https://github.com/${OP_Maintainer}/${OP_REPO_NAME}:${OP_BRANCH}
+OpenWrt Source:		https://github.com/${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}
 预设固件格式:		${Firmware_Format}
 API 路径:		${API_File}
 脚本运行路径:		${Tmp_Path}
@@ -78,7 +78,7 @@ API 路径:		${API_File}
 下载器:			${DOWNLOADERS}
 EOF
 	[[ ${TARGET_BOARD} == x86 ]] && {
-		echo "固件引导模式:		${x86_Boot}"
+		echo "固件引导模式:		${x86_Boot_Method}"
 	}
 	echo
 }
@@ -266,17 +266,17 @@ function LOAD_VARIABLE() {
 	[[ -z ${TARGET_PROFILE} ]] && TARGET_PROFILE="$(jsonfilter -i /etc/board.json -e '@.model.id' | tr ',' '_')"
 	[[ -z ${TARGET_PROFILE} ]] && ECHO r "获取设备名称失败!" && EXIT 1
 	[[ -z ${Github} ]] && ECHO r "Github 地址获取失败!" && EXIT 1
-	[[ -z ${CURRENT_Version} ]] && CURRENT_Version="未知"
+	[[ -z ${OP_VERSION} ]] && OP_VERSION="未知"
 	Firmware_Author="${Github##*com/}"
 	Github_Release="${Github}/releases/download/AutoUpdate"
 	Github_Raw="https://raw.githubusercontent.com/${Firmware_Author}/master"
 	Github_API="https://api.github.com/repos/${Firmware_Author}/releases/latest"
 	case "${TARGET_BOARD}" in
 	x86)
-		[[ -z ${x86_Boot} ]] && {
+		[[ -z ${x86_Boot_Method} ]] && {
 			[ -d /sys/firmware/efi ] && {
-				x86_Boot=UEFI
-			} || x86_Boot=Legacy
+				x86_Boot_Method=UEFI
+			} || x86_Boot_Method=BIOS
 		}
 	;;
 	*)
@@ -310,14 +310,14 @@ function CHANGE_GITHUB() {
 function CHANGE_BOOT() {
 	[[ -z $1 ]] && SHELL_HELP
 	case "$1" in
-	UEFI | Legacy)
-		EDIT_VARIABLE edit ${Custom_Variable} x86_Boot $1
+	UEFI | BIOS)
+		EDIT_VARIABLE edit ${Custom_Variable} x86_Boot_Method $1
 		ECHO r "警告: 更换引导方式后更新固件后可能导致设备无法正常启动!"
 		ECHO y "固件引导格式已指定为: [$1]"
 		EXIT 0
 	;;
 	*)
-		ECHO r "错误的参数: [$1],支持的启动方式: [UEFI/Legacy]"
+		ECHO r "错误的参数: [$1],支持的启动方式: [UEFI/BIOS]"
 		EXIT 1
 	;;
 	esac
@@ -384,9 +384,9 @@ function CHECK_TIME() {
 }
 
 function ANALYZE_API() {
-	local url name date size version count sha256
 	local API_Cache=${Tmp_Path}/API_Cache
-	[[ $(CHECK_TIME ${API_File} 1) == false ]] && {
+	if [[ $(CHECK_TIME ${API_File} 1) == false ]]
+	then
 		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 5 --type "API" --quiet
 		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
 			ECHO r "Github API 请求错误,请检查网络后重试!"
@@ -397,29 +397,29 @@ function ANALYZE_API() {
 		for i in $(seq 0 500);do
 			name=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].name' 2> /dev/null)
 			[[ ! $? == 0 ]] && break
-			if [[ ${name} =~ "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" || ${name} =~ Update_Logs.json ]]
+			if [[ ${name} =~ "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" || ${name} =~ Update_Logs.json ]]
 			then
-				format=$(echo ${name} | egrep -o "\-[0-9a-z]{5}.[a-z].+" | egrep -o "\..+" | cut -c2-10)
-				version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
-				url=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].browser_download_url' 2> /dev/null)
-				size=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].size' 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
-				date=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].updated_at' 2> /dev/null | sed 's/[-:TZ]//g')
-				count=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].download_count' 2> /dev/null)
-				sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
+				local format=$(echo ${name} | egrep -o "\-[0-9a-z]{5}.[a-z].+" | egrep -o "\..+" | cut -c2-10)
+				local version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
+				local url=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].browser_download_url' 2> /dev/null)
+				local size=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].size' 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
+				local date=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].updated_at' 2> /dev/null | sed 's/[-:TZ]//g')
+				local count=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].download_count' 2> /dev/null)
+				local sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
 				[[ -z ${name} ]] && name="-"
 				[[ -z ${format} ]] && format="-"
 				[[ -z ${version} ]] && version="-"
 				[[ -z ${url} ]] && url="-"
-				[[ -z ${size} ]] && size="-"
+				[[ -z ${size} ]] && size="-" || size="${size}MB"
 				[[ -z ${date} ]] && date="-"
 				[[ -z ${count} ]] && count="-"
 				[[ -z ${sha256} ]] && sha256="-"
-				printf "%-75s %-15s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${format} ${count} ${sha256} ${version} ${date} ${size}MB ${url} | egrep -v "${REGEX_Format}" >> ${API_File}
+				printf "%-75s %-15s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${format} ${count} ${sha256} ${version} ${date} ${size} ${url} | egrep -v "${REGEX_Format}" >> ${API_File}
 			fi
 		done
 		unset i
-	}
-	[[ -z $(cat ${API_File} 2> /dev/null) ]] && {
+	fi
+	[[ ! -s ${API_File} ]] && {
 		ECHO r "Github API 解析内容为空!"
 		return 1
 	}
@@ -433,7 +433,7 @@ function GET_CLOUD_LOG() {
 	}
 	case "$1" in
 	[Ll]ocal)
-		Version="${CURRENT_Version}"
+		Version="${OP_VERSION}"
 	;;
 	[Cc]loud)
 		Version="$(GET_FW_INFO 5)"
@@ -462,10 +462,10 @@ function GET_FW_INFO() {
 		return 1
 	}
 	if [[ $1 == "-a" ]];then
-		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | uniq)
+		Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | uniq)
 		shift
 	else
-		Info=$(grep "AutoBuild-${OP_REPO_NAME}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot}" | awk 'BEGIN {MAX = 0} {if ($6+0 > MAX+0) {MAX=$6 ;content=$0} } END {print content}')
+		Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | awk 'BEGIN {MAX = 0} {if ($6+0 > MAX+0) {MAX=$6 ;content=$0} } END {print content}')
 	fi
 	Result="$(echo "${Info}" | awk '{print $"'${1}'"}' 2> /dev/null)"
 	case $1 in
@@ -588,12 +588,12 @@ function UPGRADE() {
 		ECHO r "云端固件信息获取失败!"
 		EXIT 2
 	}
-	[[ ${CLOUD_FW_Version} == ${CURRENT_Version} ]] && {
+	[[ ${CLOUD_FW_Version} == ${OP_VERSION} ]] && {
 		CURRENT_Type="${Yellow} [已是最新]${White}"
 		Upgrade_Stopped=1
 	} || {
-		[[ $(echo ${CLOUD_FW_Version} | cut -d "-" -f2) -gt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && CURRENT_Type="${Green} [可更新]${White}"
-		[[ $(echo ${CLOUD_FW_Version} | cut -d "-" -f2) -lt $(echo ${CURRENT_Version} | cut -d "-" -f2) ]] && {
+		[[ $(echo ${CLOUD_FW_Version} | cut -d "-" -f2) -gt $(echo ${OP_VERSION} | cut -d "-" -f2) ]] && CURRENT_Type="${Green} [可更新]${White}"
+		[[ $(echo ${CLOUD_FW_Version} | cut -d "-" -f2) -lt $(echo ${OP_VERSION} | cut -d "-" -f2) ]] && {
 			CHECKED_Type="${Red} [旧版本]${White}"
 			Upgrade_Stopped=2
 		}
@@ -602,16 +602,16 @@ function UPGRADE() {
 
 设备名称: ${TARGET_PROFILE}
 内核版本: $(uname -sr)
-$([[ ${TARGET_BOARD} == x86 ]] && echo "固件格式: ${CLOUD_FW_Format} / ${x86_Boot}" || echo "固件格式: ${CLOUD_FW_Format}")
+$([[ ${TARGET_BOARD} == x86 ]] && echo "固件格式: ${CLOUD_FW_Format} / ${x86_Boot_Method}" || echo "固件格式: ${CLOUD_FW_Format}")
 
-$(echo -e "当前固件版本: ${CURRENT_Version}${CURRENT_Type}")
+$(echo -e "当前固件版本: ${OP_VERSION}${CURRENT_Type}")
 $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 
 云端固件名称: ${CLOUD_FW_Name}
 云端固件体积: ${CLOUD_FW_Size}
 固件下载次数: ${CLOUD_FW_Count}
 EOF
-	LOGGER "当前版本: ${CURRENT_Version}"
+	LOGGER "当前版本: ${OP_VERSION}"
 	LOGGER "云端版本: ${CLOUD_FW_Version}"
 	LOGGER "云端固件名称: ${CLOUD_FW_Name}"
 	LOGGER "云端固件体积: ${CLOUD_FW_Size}"
@@ -1090,7 +1090,7 @@ function AutoUpdate_Main() {
 		;;
 		-V)
 			shift
-			[[ -z $* ]] && echo "${CURRENT_Version}" && EXIT 0
+			[[ -z $* ]] && echo "${OP_VERSION}" && EXIT 0
 			case "$1" in
 			[Cc]loud)
 				shift
@@ -1206,11 +1206,10 @@ ENV_DEPENDS=(
 	TARGET_PROFILE
 	TARGET_BOARD
 	TARGET_SUBTARGET
-	Firmware_Format
-	CURRENT_Version
-	OP_Maintainer
+	OP_VERSION
+	OP_AUTHOR
 	OP_BRANCH
-	OP_REPO_NAME
+	OP_REPO
 )
 DOWNLOADERS="wget-ssl curl wget uclient-fetch"
 REGEX_Format=".vdi|.vhdx|.vmdk|kernel|rootfs|factory"
