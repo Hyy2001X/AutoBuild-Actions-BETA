@@ -55,7 +55,7 @@ Firmware_Diy_Before() {
 			Firmware_Format=bin
 		;;
 		rockchip | x86)
-			[[ $(cat ${Home}/${CONFIG}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
+			[[ $(cat ${CONFIG}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
 				Firmware_Format=img.gz
 			} || Firmware_Format=img
 		;;
@@ -69,6 +69,7 @@ Firmware_Diy_Before() {
 		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
 	;;
 	esac
+	touch ${GITHUB_WORKSPACE}/VARIABLE_inSystem
 	cat >> ${GITHUB_WORKSPACE}/VARIABLE_inSystem <<EOF
 Author=${Author}
 Github=${Github}
