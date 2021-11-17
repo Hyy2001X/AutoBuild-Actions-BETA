@@ -111,12 +111,6 @@ Firmware_Diy_Main() {
 	CD ${Home}
 	chmod +x -R ${Scripts}
 	chmod 777 -R ${CustomFiles}
-	[[ ${Install_CustomPackages} == true ]] && {
-		bash -n ${Scripts}/AutoBuild_ExtraPackages.sh
-		[[ ! $? == 0 ]] && ECHO "[AutoBuild_ExtraPackages.sh] syntax error,skip ..." || {
-			. ${Scripts}/AutoBuild_ExtraPackages.sh
-		}
-	}
 	if [[ ${INCLUDE_AutoBuild_Features} == true ]];then
 		MKDIR ${BASE_FILES}/etc/AutoBuild
 		cp ${GITHUB_WORKSPACE}/VARIABLE_inSystem ${BASE_FILES}/etc/AutoBuild/Default_Variable
