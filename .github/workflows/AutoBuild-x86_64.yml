@@ -59,8 +59,8 @@ jobs:
             echo "Target Config [/Config/${{ env.CONFIG_FILE }}] is not detected !"
             exit 1
         fi
-        REPO_URL="https://github.com/$(echo $${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
-        REPO_BRANCH=$(echo $${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
+        REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
+        REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
         [ -z "$REPO_BRANCH" ] && REPO_BRANCH="master"
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
