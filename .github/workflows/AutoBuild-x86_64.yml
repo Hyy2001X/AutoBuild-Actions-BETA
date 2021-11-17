@@ -11,7 +11,7 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      IP_addr:
+      Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
 ### 结束
@@ -68,7 +68,7 @@ jobs:
         touch $GITHUB_WORKSPACE/VARIABLE_FILE
         echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/VARIABLE_FILE
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/VARIABLE_FILE
-        [ -n "${{ github.event.inputs.IP_addr }}" ] && echo "IP_addr=${{ github.event.inputs.IP_addr }}" >> $GITHUB_WORKSPACE/VARIABLE_FILE
+        [ -n "${{ github.event.inputs.Tempoary_IP }}" ] && echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_WORKSPACE/VARIABLE_FILE
         echo "REPO_URL=$REPO_URL" >> $GITHUB_WORKSPACE/VARIABLE_FILE
 
     - name: Initialization Environment

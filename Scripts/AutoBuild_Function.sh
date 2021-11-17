@@ -28,7 +28,7 @@ Firmware_Diy_Before() {
 		OP_VERSION="${zzz_Default_Version}-${Compile_Date}"
 	;;
 	immortalwrt/immortalwrt)
-		Version_File=${base_files}/etc/openwrt_release
+		Version_File=${BASE_FILES}/etc/openwrt_release
 		OP_VERSION="${OP_VERSION_HEAD}${Compile_Date}"
 	;;
 	*)
@@ -118,15 +118,15 @@ Firmware_Diy_Main() {
 		}
 	}
 	if [[ ${INCLUDE_AutoBuild_Features} == true ]];then
-		MKDIR ${base_files}/etc/AutoBuild
-		cp ${GITHUB_WORKSPACE}/VARIABLE_inSystem ${base_files}/etc/AutoBuild/Default_Variable
-		Copy ${CustomFiles}/Depends/Custom_Variable ${base_files}/etc/AutoBuild
-		Copy ${Scripts}/AutoBuild_Tools.sh ${base_files}/bin
-		Copy ${Scripts}/AutoUpdate.sh ${base_files}/bin
+		MKDIR ${BASE_FILES}/etc/AutoBuild
+		cp ${GITHUB_WORKSPACE}/VARIABLE_inSystem ${BASE_FILES}/etc/AutoBuild/Default_Variable
+		Copy ${CustomFiles}/Depends/Custom_Variable ${BASE_FILES}/etc/AutoBuild
+		Copy ${Scripts}/AutoBuild_Tools.sh ${BASE_FILES}/bin
+		Copy ${Scripts}/AutoUpdate.sh ${BASE_FILES}/bin
 		AddPackage svn lean luci-app-autoupdate Hyy2001X/AutoBuild-Packages/trunk
-		Copy ${CustomFiles}/Depends/profile ${base_files}/etc
-		Copy ${CustomFiles}/Depends/base-files-essential ${base_files}/lib/upgrade/keep.d
-		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' ${base_files}/bin/AutoUpdate.sh | awk 'NR==1')
+		Copy ${CustomFiles}/Depends/profile ${BASE_FILES}/etc
+		Copy ${CustomFiles}/Depends/base-files-essential ${BASE_FILES}/lib/upgrade/keep.d
+		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' ${BASE_FILES}/bin/AutoUpdate.sh | awk 'NR==1')
 		case "${OP_AUTHOR}/${OP_REPO}" in
 		coolsnowwolf/lede)
 			Copy ${CustomFiles}/Depends/coremark.sh ${Home}/$(PKG_Finder d "package feeds" coremark)
@@ -165,7 +165,7 @@ EOF
 			sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		;;
 		immortalwrt/immortalwrt)
-			Copy ${CustomFiles}/Depends/openwrt_release_${OP_AUTHOR} ${base_files}/etc openwrt_release
+			Copy ${CustomFiles}/Depends/openwrt_release_${OP_AUTHOR} ${BASE_FILES}/etc openwrt_release
 			sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
 		;;
 		esac
@@ -177,16 +177,19 @@ EOF
 			Copy ${CustomFiles}/Depends/banner ${Home}/$(PKG_Finder d package default-settings)/files openwrt_banner
 		;;
 		*)
-			Copy ${CustomFiles}/Depends/banner ${base_files}/etc
+			Copy ${CustomFiles}/Depends/banner ${BASE_FILES}/etc
 		;;
 		esac
 	fi
-	[[ -n ${IP_addr} ]] && Default_IP="${IP_addr}"
+	[[ -n ${Tempoary_IP} ]] && {
+		ECHO "Using Tempoary IP Address: ${Tempoary_IP} ..."
+		Default_IP="${Tempoary_IP}"
+	}
 	[[ -n ${Default_IP} && ${Default_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
-		Old_IP=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${base_files}/bin/config_generate | awk 'NR==1')
+		Old_IP=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${BASE_FILES}/bin/config_generate | awk 'NR==1')
 		if [[ ! ${Default_IP} == ${Old_IP} ]];then
 			ECHO "Setting default IP Address to ${Default_IP} ..."
-			sed -i "s/${Old_IP}/${Default_IP}/g" ${base_files}/bin/config_generate
+			sed -i "s/${Old_IP}/${Default_IP}/g" ${BASE_FILES}/bin/config_generate
 		fi
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_BOARD} == x86 ]] && {
