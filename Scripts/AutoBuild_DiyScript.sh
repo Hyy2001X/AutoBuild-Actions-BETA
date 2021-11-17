@@ -6,7 +6,7 @@ Firmware_Diy_Core() {
 
 	Author="Hyy2001"
 	Default_IP="192.168.1.1"
-	Banner_Message="Powered by AutoBuild-Actions"
+	Banner_Message="Powered by AutoBuild-Actions | Enjoy"
 
 	Install_CustomPackages=true
 	Short_Firmware_Date=true

@@ -183,10 +183,10 @@ EOF
 	fi
 	[[ -n ${IP_addr} ]] && Default_IP="${IP_addr}"
 	[[ -n ${Default_IP} && ${Default_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
-		Old_IP_Address=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${base_files}/bin/config_generate | awk 'NR==1')
-		if [[ ! ${Default_IP} == ${Old_IP_Address} ]];then
+		Old_IP=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${base_files}/bin/config_generate | awk 'NR==1')
+		if [[ ! ${Default_IP} == ${Old_IP} ]];then
 			ECHO "Setting default IP Address to ${Default_IP} ..."
-			sed -i "s/${Old_IP_Address}/${Default_IP}/g" ${base_files}/bin/config_generate
+			sed -i "s/${Old_IP}/${Default_IP}/g" ${base_files}/bin/config_generate
 		fi
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_BOARD} == x86 ]] && {
