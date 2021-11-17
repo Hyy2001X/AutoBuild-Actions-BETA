@@ -98,6 +98,7 @@ BASE_FILES=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
 Banner_Message="${Banner_Message}"
 REGEX_Skip_Checkout="${REGEX_Skip_Checkout}"
 Version_File=${Version_File}
+Firmware_Format=${Firmware_Format}
 
 EOF
 	cat ${GITHUB_WORKSPACE}/VARIABLE_inSystem >> ${GITHUB_WORKSPACE}/VARIABLE_FILE
