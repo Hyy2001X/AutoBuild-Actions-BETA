@@ -64,10 +64,10 @@ Firmware_Diy_Before() {
 	}
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-${FW_Boot_Method}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
+		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-SHA256.FORMAT'
 	;;
 	*)
-		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-$(Get_SHA256 $1).${Firmware_Format_Defined}'
+		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-SHA256.FORMAT'
 	;;
 	esac
 	touch ${GITHUB_WORKSPACE}/VARIABLE_inSystem
@@ -235,7 +235,7 @@ EOF
 				cat 0003-upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
 				AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
 				ECHO "Starting to convert zh-cn translation files to zh_Hans ..."
-				cd package && ${Scripts}/Convert_Translation.sh && cd -
+				cd package && bash ${Scripts}/Convert_Translation.sh && cd -
 			;;
 			*)
 				ECHO "[${OP_BRANCH}]: Current OP_BRANCH is not supported !"
@@ -262,7 +262,7 @@ Firmware_Diy_End() {
 	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	cd ${Home}
 	MKDIR bin/Firmware
-	Firmware_Path="${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
+	Firmware_Path="bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
 	SHA256_File="${Firmware_Path}/sha256sums"
 	cd ${Firmware_Path}
 	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1 | egrep -v "packages|buildinfo|sha256sums|manifest")\n"
@@ -287,6 +287,7 @@ Firmware_Diy_End() {
 }
 
 Process_Firmware() {
+	ECHO "[Process_Firmware] $*"
 	while [[ $1 ]];do
 		Process_Firmware_Core $1 $(List_Firmware $1)
 		shift
@@ -294,19 +295,21 @@ Process_Firmware() {
 }
 
 Process_Firmware_Core() {
+	ECHO "[Process_Firmware_Core] $*"
 	Firmware_Format_Defined=$1
 	shift
 	while [[ $1 ]];do
+		AutoBuild_Firmware=$(Get_Variable AutoBuild_Firmware)
 		case "${TARGET_BOARD}" in
 		x86)
 			[[ $1 =~ efi ]] && {
 				FW_Boot_Method=UEFI
-			} || {
-				FW_Boot_Method=BIOS
-			}
+			} || FW_Boot_Method=BIOS
+			AutoBuild_Firmware=${AutoBuild_Firmware/BOOT/${FW_Boot_Method}}
 		;;
 		esac
-		eval AutoBuild_Firmware=$(Get_Variable AutoBuild_Firmware)
+		AutoBuild_Firmware=${AutoBuild_Firmware/SHA256/$(Get_SHA256 $1)}
+		AutoBuild_Firmware=${AutoBuild_Firmware/FORMAT/${Firmware_Format_Defined}}
 		[[ -f $1 ]] && {
 			ECHO "Copying [$1] to [${AutoBuild_Firmware}] ..."
 			cp -a $1 ${AutoBuild_Firmware}

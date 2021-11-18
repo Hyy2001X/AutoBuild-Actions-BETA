@@ -4,10 +4,10 @@
 
 Firmware_Diy_Core() {
 
-	Author="Hyy2001"
+	Author=AUTO
 	Author_URL=AUTO
 	Default_IP="192.168.1.1"
-	Banner_Message="Powered by AutoBuild-Actions-BETA | Enjoy"
+	Banner_Message="Powered by AutoBuild-Actions"
 
 	Short_Firmware_Date=true
 	Checkout_Virtual_Images=false
@@ -21,7 +21,9 @@ Firmware_Diy_Core() {
 
 Firmware_Diy() {
 
-	# 部分可调用变量如下
+	# 请在该函数内定制固件, 建议使用专业文本编辑器进行修改
+
+	# 可用预设变量, 其他可用变量请参考运行日志
 	# ${OP_AUTHOR}			OpenWrt 源码作者
 	# ${OP_REPO}			OpenWrt 仓库名称
 	# ${OP_BRANCH}			OpenWrt 源码分支
@@ -35,7 +37,7 @@ Firmware_Diy() {
 	# ${Scripts}			仓库中的 /Scripts 绝对路径
 	# ${FEEDS_LUCI}			OpenWrt 源码目录下的 package/feeds/luci
 	# ${FEEDS_PKG}			OpenWrt 源码目录下的 package/feeds/packages
-	# ${BASE_FILES}			base_files 替换大法, package/base-files/files
+	# ${BASE_FILES}			俗称替换大法的路径, 位于 package/base-files/files
 
 	case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)

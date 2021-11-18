@@ -7,7 +7,7 @@
 INPUT_UPSTREAM_REPOSITORY=Hyy2001X/AutoBuild-Actions
 INPUT_UPSTREAM_BRANCH=master
 
-# 文件同步列表,按需修改
+# 需要文件的同步列表, 按需修改
 Sync_List=(
 	# .github/workflows/*
 	# Configs/*
