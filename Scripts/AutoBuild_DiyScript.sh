@@ -53,8 +53,8 @@ Firmware_Diy() {
 
 		case "${TARGET_PROFILE}" in
 		d-team_newifi-d2)
-			patch -i ${CustomFiles}/mac80211_d-team_newifi-d2.patch package/kernel/mac80211/files/lib/wifi/mac80211.sh
-			Copy ${CustomFiles}/system_d-team_newifi-d2 ${BASE_FILES}/etc/config system
+			patch -i ${CustomFiles}/${TARGET_PROFILE}_mac80211.patch package/kernel/mac80211/files/lib/wifi/mac80211.sh
+			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 			AddPackage git other luci-app-usb3disable rufengsuixing master
 		;;
