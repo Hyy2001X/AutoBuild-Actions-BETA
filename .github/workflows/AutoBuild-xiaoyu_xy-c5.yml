@@ -11,10 +11,10 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      IP:
+      Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
-### END
+### 结束
 
   #push:
   #  branches: 
@@ -42,7 +42,7 @@ env:
   DELETE_USELESS_FILES: true
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: true
-### END
+### 结束
 
 jobs:
   Compile:
@@ -52,27 +52,24 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
-    - name: Initialization Define Info
+    - name: Initialization Variables
       run: |
-        CONFIG_FILE=${{ env.CONFIG_FILE }}
-        DEFAULT_SOURCE=${{ env.DEFAULT_SOURCE }}
-        DELETE_USELESS_FILES=${{ env.DELETE_USELESS_FILES }}
-        echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
-        echo "DELETE_USELESS_FILES=$DELETE_USELESS_FILES" >> $GITHUB_ENV
-        [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG_FILE" ] && {
-            echo "Config_File: [/Config/$CONFIG_FILE] is not detected!"
+        if [ ! -f "$GITHUB_WORKSPACE/Configs/${{ env.CONFIG_FILE }}" ]
+        then
+            echo "Target Config [/Config/${{ env.CONFIG_FILE }}] is not detected !"
             exit 1
-        }
-        export REPO_URL="https://github.com/$(echo $DEFAULT_SOURCE | cut -d \: -f 1)"
-        export REPO_BRANCH=$(echo $DEFAULT_SOURCE | cut -d \: -f 2)
-        [ -z $REPO_BRANCH ] && REPO_BRANCH=master
+        fi
+        REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
+        REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
+        [ -z "$REPO_BRANCH" ] && REPO_BRANCH="master"
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-        echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/Openwrt.info
-        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Before_IP_Address=${{ github.event.inputs.IP }}" >> $GITHUB_WORKSPACE/Openwrt.info
-        echo "Openwrt_Repository=$REPO_URL" >> $GITHUB_WORKSPACE/Openwrt.info
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
+        touch $GITHUB_WORKSPACE/VARIABLE_FILE
+        echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/VARIABLE_FILE
+        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/VARIABLE_FILE
+        [ -n "${{ github.event.inputs.Tempoary_IP }}" ] && echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_WORKSPACE/VARIABLE_FILE
+        echo "REPO_URL=$REPO_URL" >> $GITHUB_WORKSPACE/VARIABLE_FILE
 
     - name: Initialization Environment
       env:
@@ -83,7 +80,7 @@ jobs:
         sudo timedatectl set-timezone "Asia/Shanghai"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-        if [ "$DELETE_USELESS_FILES" == true ];then
+        if [ "${{ env.DELETE_USELESS_FILES }}" == true ];then
             docker rmi $(docker images -q)
             sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php
             sudo -E apt-get -y autoremove --purge
@@ -101,20 +98,20 @@ jobs:
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/${{ env.CONFIG_FILE }} openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware-Diy_Main
-        source $GITHUB_WORKSPACE/openwrt/VARIABLE_FILE && Firmware-Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
+        Firmware_Diy_Main
+        source $GITHUB_WORKSPACE/VARIABLE_FILE && Firmware_Diy
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/${{ env.CONFIG_FILE }} .config
 
     - name: Compile
       run: |
         export Compile_Result=false
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware-Diy_Other
+        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware_Diy_Other
         rm -rf ./tmp && ./scripts/feeds install -a > /dev/null 2>&1
         make defconfig
         make download -j$(nproc)
@@ -125,7 +122,7 @@ jobs:
       if: env.Compile_Result == 'true' && !cancelled()
       run: |
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware-Diy_End
+        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware_Diy_End
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main

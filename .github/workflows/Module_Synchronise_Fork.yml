@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       sync_mode:
-        description: '同步上游所有内容'
+        description: '确认同步上游所有内容'
         default: 'false'
 
 env:
