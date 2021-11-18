@@ -3,7 +3,7 @@
 # AutoBuild Functions
 
 Firmware_Diy_Before() {
-	ECHO "[Firmware_Diy_Before] Start ..."
+	ECHO "[Firmware_Diy_Before] Starting ..."
 	Home="${GITHUB_WORKSPACE}/openwrt"
 	CONFIG="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${Home}
@@ -11,11 +11,12 @@ Firmware_Diy_Before() {
 	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	[[ ${Short_Firmware_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
 	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
-	[[ -z ${Author} ]] && Author="$(echo "${Github}" | cut -d "/" -f4)"
+	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(echo "${Github}" | cut -d "/" -f4)"
 	OP_AUTHOR="$(echo "${REPO_URL}" | cut -d "/" -f4)"
 	OP_REPO="$(echo "${REPO_URL}" | cut -d "/" -f5)"
 	OP_BRANCH="$(GET_Branch)"
-	if [[ ${OP_BRANCH} == master || ${OP_BRANCH} == main ]];then
+	if [[ ${OP_BRANCH} =~ (master|main) ]]
+	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
 	else
 		OP_BRANCH="$(echo ${OP_BRANCH} | egrep -o "[0-9]+.[0-9]+")"
@@ -46,10 +47,10 @@ Firmware_Diy_Before() {
 	} || {
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG} | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
-	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to obtain [TARGET_PROFILE] !"
+	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to get [TARGET_PROFILE] !"
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${CONFIG})"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG})"
-	[[ -z ${Firmware_Format} || ${Firmware_Format} == false || ${Firmware_Format} == AUTO ]] && {
+	[[ -z ${Firmware_Format} || ${Firmware_Format} =~ (false|AUTO) ]] && {
 		case "${TARGET_BOARD}" in
 		ramips | reltek | ipq40xx | ath79 | ipq807x)
 			Firmware_Format=bin
@@ -99,6 +100,8 @@ Banner_Message="${Banner_Message}"
 REGEX_Skip_Checkout="${REGEX_Skip_Checkout}"
 Version_File=${Version_File}
 Firmware_Format=${Firmware_Format}
+FEEDS_CONF=${Home}/feeds.conf.default
+Author_URL=${Author_URL}
 
 EOF
 	cat ${GITHUB_WORKSPACE}/VARIABLE_inSystem >> ${GITHUB_WORKSPACE}/VARIABLE_FILE
@@ -108,12 +111,13 @@ EOF
 
 Firmware_Diy_Main() {
 	Firmware_Diy_Before
-	ECHO "[Firmware_Diy_Main] Start ..."
+	ECHO "[Firmware_Diy_Main] Starting ..."
 	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	CD ${Home}
 	chmod +x -R ${Scripts}
 	chmod 777 -R ${CustomFiles}
-	if [[ ${INCLUDE_AutoBuild_Features} == true ]];then
+	if [[ ${INCLUDE_AutoBuild_Features} == true ]]
+	then
 		MKDIR ${BASE_FILES}/etc/AutoBuild
 		cp ${GITHUB_WORKSPACE}/VARIABLE_inSystem ${BASE_FILES}/etc/AutoBuild/Default_Variable
 		Copy ${CustomFiles}/Depends/Custom_Variable ${BASE_FILES}/etc/AutoBuild
@@ -183,7 +187,8 @@ EOF
 	}
 	[[ -n ${Default_IP} && ${Default_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] && {
 		Old_IP=$(awk -F '[="]+' '/ipaddr:-/{print $3}' ${BASE_FILES}/bin/config_generate | awk 'NR==1')
-		if [[ ! ${Default_IP} == ${Old_IP} ]];then
+		if [[ ! ${Default_IP} == ${Old_IP} ]]
+		then
 			ECHO "Setting default IP Address to ${Default_IP} ..."
 			sed -i "s/${Old_IP}/${Default_IP}/g" ${BASE_FILES}/bin/config_generate
 		fi
@@ -196,7 +201,7 @@ EOF
 }
 
 Firmware_Diy_Other() {
-	ECHO "[Firmware_Diy_Other] Start ..."
+	ECHO "[Firmware_Diy_Other] Starting ..."
 	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	CD ${Home}
 	case "${INCLUDE_Original_OpenWrt_Compatible}" in
@@ -211,9 +216,11 @@ Firmware_Diy_Other() {
 		INCLUDE_Original_OpenWrt_Compatible=true
 	;;
 	esac
-	if [[ ${INCLUDE_Original_OpenWrt_Compatible} == true ]];then
-		if [[ ${OP_AUTHOR} == openwrt || ${OP_AUTHOR} == [Ll]ienol || ${Force_mode} == 1 ]];then
-			ECHO "Start running Obsolete_Package_Compatible Script ..."
+	if [[ ${INCLUDE_Original_OpenWrt_Compatible} == true ]]
+	then
+		if [[ ${OP_AUTHOR} =~ (openwrt|[Ll]ienol) || ${Force_mode} == 1 ]]
+		then
+			ECHO "Starting to run [Obsolete_Package_Compatible] Script ..."
 			case "${OP_BRANCH}" in
 			19.07 | 21.02 | main)
 				[[ ${OP_BRANCH} == main ]] && OP_BRANCH=21.02
@@ -231,23 +238,27 @@ EOF
 				cd package && ${Scripts}/Convert_Translation.sh && cd -
 			;;
 			*)
-				ECHO "[${OP_BRANCH}]: Current Branch is not supported ..."
+				ECHO "[${OP_BRANCH}]: Current OP_BRANCH is not supported !"
 			;;
 			esac
 		else
-			ECHO "[${OP_AUTHOR}]: Current Source_Maintainer is not supported ..."
+			ECHO "[${OP_AUTHOR}]: Current OP_AUTHOR is not supported !"
 		fi
 	fi
-	cat >> ${CONFIG} <<EOF
+	if [[ ${Author_URL} != false ]]
+	then
+		[[ ${Author_URL} == AUTO ]] && Author_URL=${Github}
+			cat >> ${CONFIG} <<EOF
 
 CONFIG_KERNEL_BUILD_USER="${Author}"
-CONFIG_KERNEL_BUILD_DOMAIN="${Github}"
+CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
+	fi
 	ECHO "[Firmware_Diy_Other] Done"
 }
 
 Firmware_Diy_End() {
-	ECHO "[Firmware_Diy_End] Start ..."
+	ECHO "[Firmware_Diy_End] Starting ..."
 	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	cd ${Home}
 	MKDIR bin/Firmware
@@ -366,12 +377,13 @@ PKG_Finder() {
 
 CD() {
 	cd $1
-	[[ ! $? == 0 ]] && ECHO "Unable to enter target directory $1 ..." || ECHO "Current runnning directory: $(pwd)"
+	[[ ! $? == 0 ]] && ECHO "Unable to enter target directory $1 ..." || ECHO "Current directory: $(pwd)"
 }
 
 MKDIR() {
 	while [[ $1 ]];do
-		if [[ ! -d $1 ]];then
+		if [[ ! -d $1 ]]
+		then
 			mkdir -p $1 || ECHO "Failed to create target directory: [$1] ..."
 		fi
 		shift
@@ -435,11 +447,12 @@ Copy() {
 		return 0
 	}
 	MKDIR $2
-	if [[ -z $3 ]];then
+	if [[ -z $3 ]]
+	then
 		ECHO "Copying $1 to $2 ..."
 		cp -a $1 $2
 	else
-		ECHO "Copy and renaming $1 to $2/$3 ..."
+		ECHO "Copying and renaming $1 to $2/$3 ..."
 		cp -a $1 $2/$3
 	fi
 	[[ $? == 0 ]] && ECHO "Done" || ECHO "Failed"

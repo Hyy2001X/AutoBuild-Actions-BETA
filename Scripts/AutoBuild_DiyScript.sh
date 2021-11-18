@@ -5,6 +5,7 @@
 Firmware_Diy_Core() {
 
 	Author="Hyy2001"
+	Author_URL=AUTO
 	Default_IP="192.168.1.1"
 	Banner_Message="Powered by AutoBuild-Actions-BETA | Enjoy"
 
@@ -27,8 +28,9 @@ Firmware_Diy() {
 	# ${TARGET_PROFILE}		设备名称, 例如: d-team_newifi-d2
 	# ${TARGET_BOARD}		设备架构, 例如: ramips
 
-	# ${Home}			OpenWrt 源码位置
-	# ${CONFIG}			[.config] 配置文件位置
+	# ${Home}				OpenWrt 源码位置
+	# ${CONFIG}				[.config] 配置文件
+	# ${FEEDS_CONF}			[feeds.conf.default] 文件
 	# ${CustomFiles}		仓库中的 /CustomFiles 绝对路径
 	# ${Scripts}			仓库中的 /Scripts 绝对路径
 	# ${FEEDS_LUCI}			OpenWrt 源码目录下的 package/feeds/luci
