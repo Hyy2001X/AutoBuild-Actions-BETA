@@ -262,7 +262,7 @@ Firmware_Diy_End() {
 	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	cd ${Home}
 	MKDIR bin/Firmware
-	Firmware_Path="bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
+	Firmware_Path="${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
 	SHA256_File="${Firmware_Path}/sha256sums"
 	cd ${Firmware_Path}
 	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1 | egrep -v "packages|buildinfo|sha256sums|manifest")\n"
