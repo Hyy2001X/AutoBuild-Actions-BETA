@@ -69,19 +69,7 @@ Firmware_Diy_Before() {
 		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-SHA256.FORMAT'
 	;;
 	esac
-	touch ${GITHUB_WORKSPACE}/VARIABLE_inSystem
-	cat >> ${GITHUB_WORKSPACE}/VARIABLE_inSystem <<EOF
-Author=${Author}
-Github=${Github}
-TARGET_PROFILE=${TARGET_PROFILE}
-TARGET_BOARD=${TARGET_BOARD}
-TARGET_SUBTARGET=${TARGET_SUBTARGET}
-OP_VERSION=${OP_VERSION}
-OP_AUTHOR=${OP_AUTHOR}
-OP_REPO=${OP_REPO}
-OP_BRANCH=${OP_BRANCH}
 
-EOF
 	cat >> $GITHUB_ENV <<EOF
 Home=${Home}
 CONFIG=${CONFIG}
@@ -117,14 +105,36 @@ Firmware_Diy_Main() {
 	if [[ ${INCLUDE_AutoBuild_Features} == true ]]
 	then
 		MKDIR ${BASE_FILES}/etc/AutoBuild
-		cp ${GITHUB_WORKSPACE}/VARIABLE_inSystem ${BASE_FILES}/etc/AutoBuild/Default_Variable
-		Copy ${CustomFiles}/Depends/Custom_Variable ${BASE_FILES}/etc/AutoBuild
+		touch ${BASE_FILES}/etc/AutoBuild/Default_Variable ${BASE_FILES}/etc/AutoBuild/Custom_Variable
+		cat >> ${BASE_FILES}/etc/AutoBuild/Default_Variable <<EOF
+## 请不要修改此文件中的内容, 自定义变量请在 Custom_Variable 中添加或修改
+## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级低于 Custom_Variable
+Author=${Author}
+Github=${Github}
+TARGET_PROFILE=${TARGET_PROFILE}
+TARGET_BOARD=${TARGET_BOARD}
+TARGET_SUBTARGET=${TARGET_SUBTARGET}
+OP_VERSION=${OP_VERSION}
+OP_AUTHOR=${OP_AUTHOR}
+OP_REPO=${OP_REPO}
+OP_BRANCH=${OP_BRANCH}
+
+EOF
+		cat >> ${BASE_FILES}/etc/AutoBuild/Custom_Variable <<EOF
+## 请在下方输入你的自定义变量,一行只能填写一个变量
+## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级高于 Default_Variable
+## 示例:
+# Author=Hyy2001
+# TARGET_PROFILE=x86_64
+# Github=https://github.com/Hyy2001X/AutoBuild-Actions
+
+EOF
 		Copy ${Scripts}/AutoBuild_Tools.sh ${BASE_FILES}/bin
 		Copy ${Scripts}/AutoUpdate.sh ${BASE_FILES}/bin
+		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' ${BASE_FILES}/bin/AutoUpdate.sh | awk 'NR==1')
 		AddPackage svn lean luci-app-autoupdate Hyy2001X/AutoBuild-Packages/trunk
 		Copy ${CustomFiles}/Depends/profile ${BASE_FILES}/etc
 		Copy ${CustomFiles}/Depends/base-files-essential ${BASE_FILES}/lib/upgrade/keep.d
-		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' ${BASE_FILES}/bin/AutoUpdate.sh | awk 'NR==1')
 		case "${OP_AUTHOR}/${OP_REPO}" in
 		coolsnowwolf/lede)
 			Copy ${CustomFiles}/Depends/coremark.sh ${Home}/$(PKG_Finder d "package feeds" coremark)
@@ -193,7 +203,18 @@ EOF
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_BOARD} == x86 ]] && {
 		Copy ${CustomFiles}/Depends/DRM-I915 ${Home}/target/linux/x86
-		for X in $(ls -1 target/linux/x86 | grep "config-"); do echo -e "\n$(cat target/linux/x86/DRM-I915)" >> target/linux/x86/${X}; done
+		for X in $(ls -1 target/linux/x86 | grep "config-")
+		do
+			cat >> ${Home}/target/linux/x86/${X} <<EOF
+
+CONFIG_64BIT=y
+CONFIG_DRM=y
+CONFIG_DRM_I915=y
+CONFIG_DRM_I915_GVT=y
+CONFIG_DUMMY_CONSOLE=y
+EOF
+		done
+		unset X
 	}
 	ECHO "[Firmware_Diy_Main] Done"
 }
@@ -315,12 +336,12 @@ Process_Firmware_Core() {
 List_Firmware() {
 	[[ -z $* ]] && {
 		List_REGEX | while read X;do
-			echo $X | cut -d "*" -f2
+			echo ${X} | cut -d "*" -f2
 		done
 	} || {
 		while [[ $1 ]];do
 			for X in $(echo $(List_REGEX));do
-				[[ $X == *$1 ]] && echo "$X" | cut -d "*" -f2
+				[[ ${X} == *$1 ]] && echo "${X}" | cut -d "*" -f2
 			done
 			shift
 		done
