@@ -6,13 +6,16 @@
 
 name: P&W R619AC 128M
 
-### 以下内容请保持不变 (请修改下方: 环境变量设置)
+### 以下内容请保持不变 (请修改下方的 环境变量设置)
 on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
       Tempoary_IP:
         description: '临时修改 IP 地址 [可选]'
+        default: ''
+      Tempoary_CONFIG:
+        description: '配置文件 [可选]'
         default: ''
 ### 结束
 
@@ -39,7 +42,7 @@ env:
 # 上传 bin 文件夹到 Github Artifacts
   UPLOAD_BIN_ARTIFACTS: false
 # 删除无用文件以增加编译空间
-  DELETE_USELESS_FILES: true
+  DELETE_USELESS_FILES: false
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: true
 ### 结束
@@ -54,22 +57,36 @@ jobs:
 
     - name: Initialization Variables
       run: |
-        if [ ! -f "$GITHUB_WORKSPACE/Configs/${{ env.CONFIG_FILE }}" ]
+        if [ -n "${{ github.event.inputs.Tempoary_CONFIG }}" ]
         then
-            echo "Target Config [/Config/${{ env.CONFIG_FILE }}] is not detected !"
+            if [ -f "$GITHUB_WORKSPACE/Configs/${{ github.event.inputs.Tempoary_CONFIG }}" ]
+            then
+                CONFIG_FILE=${{ github.event.inputs.Tempoary_CONFIG }}
+            else
+                CONFIG_FILE=${{ env.CONFIG_FILE }}
+            fi
+        else
+            CONFIG_FILE=${{ env.CONFIG_FILE }}
+        fi
+        if [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG_FILE" ]
+        then
+            echo "CONFIG_FILE: [/Config/$CONFIG_FILE] is not detected !"
             exit 1
+        else
+            echo "CONFIG_FILE: [/Config/$CONFIG_FILE]"
+            echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
+        fi
+        if [ -n "${{ github.event.inputs.Tempoary_IP }}" ]
+        then
+            echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_ENV
         fi
         REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
         REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
-        [ -z "$REPO_BRANCH" ] && REPO_BRANCH="master"
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
-        touch $GITHUB_WORKSPACE/VARIABLE_FILE
-        echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/VARIABLE_FILE
-        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/VARIABLE_FILE
-        [ -n "${{ github.event.inputs.Tempoary_IP }}" ] && echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_WORKSPACE/VARIABLE_FILE
-        echo "REPO_URL=$REPO_URL" >> $GITHUB_WORKSPACE/VARIABLE_FILE
+        echo "Compile_Date=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_ENV
 
     - name: Initialization Environment
       env:
@@ -80,7 +97,8 @@ jobs:
         sudo timedatectl set-timezone "Asia/Shanghai"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-        if [ "${{ env.DELETE_USELESS_FILES }}" == true ];then
+        if [ "${{ env.DELETE_USELESS_FILES }}" == true ]
+        then
             docker rmi $(docker images -q)
             sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php
             sudo -E apt-get -y autoremove --purge
@@ -93,54 +111,53 @@ jobs:
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         cd openwrt
         ./scripts/feeds update -a
-        ./scripts/feeds install -a > /dev/null 2>&1
+        ./scripts/feeds install -a
 
     - name: Run AutoBuild_DiyScript.sh
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/${{ env.CONFIG_FILE }} openwrt/.config
+        cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware_Diy_Main
-        source $GITHUB_WORKSPACE/VARIABLE_FILE && Firmware_Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/${{ env.CONFIG_FILE }} .config
+        Firmware_Diy_Main && Firmware_Diy
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
     - name: Compile
       run: |
-        export Compile_Result=false
+        Result=false
         cd openwrt
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware_Diy_Other
         rm -rf ./tmp && ./scripts/feeds install -a > /dev/null 2>&1
         make defconfig
         make download -j$(nproc)
         make -j$(nproc) || make -j1 V=s
-        [ $? == 0 ] && echo "Compile_Result=true" >> $GITHUB_ENV
+        [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV
 
     - name: Process Firmware
-      if: env.Compile_Result == 'true' && !cancelled()
+      if: env.Result == 'true' && !cancelled()
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware_Diy_End
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_ARTIFACTS == 'true' && env.Result == 'true' && !cancelled()
       with:
-        name: ${{ env.REPO_BRANCH }}_firmware_${{ env.Artifacts_Date }}
+        name: ${{ env.CONFIG_FILE }}_firmware_${{ env.Artifacts_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Result == 'true' && !cancelled()
       with:
-        name: ${{ env.REPO_BRANCH }}_bin_${{ env.Artifacts_Date }}
+        name: ${{ env.CONFIG_FILE }}_bin_${{ env.Artifacts_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Github Release
       uses: svenstaro/upload-release-action@v2
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: openwrt/bin/Firmware/*
@@ -149,12 +166,12 @@ jobs:
         overwrite: true
         
     - name: Download Github Release API
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
       run: |
         wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
         
     - name: Upload API to Github Release
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
