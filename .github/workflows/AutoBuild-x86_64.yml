@@ -76,15 +76,12 @@ jobs:
         fi
         REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
         REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
-        [ -z "$REPO_BRANCH" ] && REPO_BRANCH="master"
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
-        touch $GITHUB_WORKSPACE/VARIABLE_FILE
-        echo "Compile_Date=$(date +%Y%m%d%H%M)" > $GITHUB_WORKSPACE/VARIABLE_FILE
-        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_WORKSPACE/VARIABLE_FILE
-        [ -n "${{ github.event.inputs.Tempoary_IP }}" ] && echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_WORKSPACE/VARIABLE_FILE
-        echo "REPO_URL=$REPO_URL" >> $GITHUB_WORKSPACE/VARIABLE_FILE
+        echo "Compile_Date=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+        echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_ENV
+        [ -n "${{ github.event.inputs.Tempoary_IP }}" ] && echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_ENV
 
     - name: Initialization Environment
       env:
