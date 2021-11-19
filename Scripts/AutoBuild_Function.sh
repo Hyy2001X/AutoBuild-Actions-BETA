@@ -82,8 +82,6 @@ OP_REPO=${OP_REPO}
 OP_BRANCH=${OP_BRANCH}
 
 EOF
-#	touch ${GITHUB_WORKSPACE}/VARIABLE_FILE
-	echo "$GITHUB_ENV"
 	cat >> $GITHUB_ENV <<EOF
 Home=${Home}
 CONFIG=${CONFIG}
@@ -105,8 +103,8 @@ FEEDS_CONF=${Home}/feeds.conf.default
 Author_URL=${Author_URL}
 
 EOF
-	cat ${GITHUB_WORKSPACE}/VARIABLE_inSystem >> ${GITHUB_WORKSPACE}/VARIABLE_FILE
-	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_WORKSPACE}/VARIABLE_FILE)\n"
+	source $GITHUB_ENV
+	echo -e "### VARIABLE LIST ###\n$(cat $GITHUB_ENV)\n"
 	ECHO "[Firmware_Diy_Before] Done"
 }
 
