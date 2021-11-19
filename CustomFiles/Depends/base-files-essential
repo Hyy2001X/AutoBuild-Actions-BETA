@@ -10,3 +10,4 @@
 /etc/rc.local
 /etc/AutoBuild/Custom_Variable
 /etc/docker/daemon.json
+/.uuplugin_uuid
