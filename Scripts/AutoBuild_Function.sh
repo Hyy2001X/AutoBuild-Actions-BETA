@@ -287,7 +287,6 @@ Firmware_Diy_End() {
 }
 
 Process_Firmware() {
-	ECHO "[Process_Firmware] $*"
 	while [[ $1 ]];do
 		Process_Firmware_Core $1 $(List_Firmware $1)
 		shift
@@ -295,7 +294,6 @@ Process_Firmware() {
 }
 
 Process_Firmware_Core() {
-	ECHO "[Process_Firmware_Core] $*"
 	Firmware_Format_Defined=$1
 	shift
 	while [[ $1 ]];do

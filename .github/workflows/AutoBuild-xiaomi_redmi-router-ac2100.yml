@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       Tempoary_IP:
-        description: '固件 IP 地址 [可选]'
+        description: '临时修改 IP 地址 [可选]'
         default: ''
 ### 结束
 
