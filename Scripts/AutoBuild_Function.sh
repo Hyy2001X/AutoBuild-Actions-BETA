@@ -113,7 +113,6 @@ EOF
 Firmware_Diy_Main() {
 	Firmware_Diy_Before
 	ECHO "[Firmware_Diy_Main] Starting ..."
-	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	CD ${Home}
 	chmod +x -R ${Scripts}
 	chmod 777 -R ${CustomFiles}
@@ -203,7 +202,6 @@ EOF
 
 Firmware_Diy_Other() {
 	ECHO "[Firmware_Diy_Other] Starting ..."
-	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	CD ${Home}
 	case "${INCLUDE_Original_OpenWrt_Compatible}" in
 	19.07)
@@ -260,7 +258,6 @@ EOF
 
 Firmware_Diy_End() {
 	ECHO "[Firmware_Diy_End] Starting ..."
-	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	cd ${Home}
 	MKDIR ${Home}/bin/Firmware
 	Firmware_Path="${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
