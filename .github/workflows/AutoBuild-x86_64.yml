@@ -121,8 +121,7 @@ jobs:
         make defconfig > /dev/null 2>&1
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware_Diy_Main
-        source $GITHUB_WORKSPACE/VARIABLE_FILE && Firmware_Diy
+        Firmware_Diy_Main && Firmware_Diy
         rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
     - name: Compile

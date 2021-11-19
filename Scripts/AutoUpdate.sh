@@ -175,6 +175,7 @@ function ECHO() {
 }
 
 function LOGGER() {
+	[[ -z ${Log_Path} ]] && return 0
 	if [[ ! $* =~ (--help|--log) ]]
 	then
 		[[ ! -d ${Log_Path} ]] && mkdir -p ${Log_Path}

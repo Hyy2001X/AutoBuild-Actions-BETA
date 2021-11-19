@@ -89,6 +89,7 @@ Version_File=${Version_File}
 Firmware_Format=${Firmware_Format}
 FEEDS_CONF=${Home}/feeds.conf.default
 Author_URL=${Author_URL}
+ENV_FILE=$GITHUB_ENV
 
 EOF
 	source $GITHUB_ENV
@@ -127,6 +128,8 @@ EOF
 # Author=Hyy2001
 # TARGET_PROFILE=x86_64
 # Github=https://github.com/Hyy2001X/AutoBuild-Actions
+# Tmp_Path=/tmp/AutoUpdate
+# Log_Path=/tmp
 
 EOF
 		Copy ${Scripts}/AutoBuild_Tools.sh ${BASE_FILES}/bin
@@ -202,7 +205,6 @@ EOF
 		fi
 	}
 	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_BOARD} == x86 ]] && {
-		Copy ${CustomFiles}/Depends/DRM-I915 ${Home}/target/linux/x86
 		for X in $(ls -1 target/linux/x86 | grep "config-")
 		do
 			cat >> ${Home}/target/linux/x86/${X} <<EOF
@@ -363,7 +365,7 @@ Get_SHA256() {
 }
 
 Get_Variable() {
-	local Result="$(grep "$1" ${GITHUB_WORKSPACE}/VARIABLE_FILE | grep -v "#" | awk -F '=' '{print $2}')"
+	local Result="$(grep "$1" ${ENV_FILE} | grep -v "#" | awk -F '=' '{print $2}')"
 	if [[ -n ${Result} ]]
 	then
 		eval echo "${Result}"
