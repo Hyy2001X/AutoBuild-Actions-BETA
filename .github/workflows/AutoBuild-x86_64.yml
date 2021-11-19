@@ -65,7 +65,8 @@ jobs:
             else
                 CONFIG_FILE=${{ env.CONFIG_FILE }}
             fi
-            echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV 
+        else
+            CONFIG_FILE=${{ env.CONFIG_FILE }}
         fi
         if [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG_FILE" ]
         then
@@ -73,6 +74,11 @@ jobs:
             exit 1
         else
             echo "CONFIG_FILE: [/Config/$CONFIG_FILE]"
+            echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
+        fi
+        if [ -n "${{ github.event.inputs.Tempoary_IP }}" ]
+        then
+            echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_ENV
         fi
         REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
         REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
@@ -81,7 +87,6 @@ jobs:
         echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
         echo "Compile_Date=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_ENV
-        [ -n "${{ github.event.inputs.Tempoary_IP }}" ] && echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_ENV
 
     - name: Initialization Environment
       env:
