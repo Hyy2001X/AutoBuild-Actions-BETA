@@ -42,7 +42,7 @@ env:
 # 上传 bin 文件夹到 Github Artifacts
   UPLOAD_BIN_ARTIFACTS: false
 # 删除无用文件以增加编译空间
-  DELETE_USELESS_FILES: true
+  DELETE_USELESS_FILES: false
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: true
 ### 结束

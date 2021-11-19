@@ -8,7 +8,6 @@ Firmware_Diy_Before() {
 	CONFIG="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${Home}
 	Firmware_Diy_Core
-	source ${GITHUB_WORKSPACE}/VARIABLE_FILE
 	[[ ${Short_Firmware_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
 	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(echo "${Github}" | cut -d "/" -f4)"
@@ -83,8 +82,9 @@ OP_REPO=${OP_REPO}
 OP_BRANCH=${OP_BRANCH}
 
 EOF
-	touch ${GITHUB_WORKSPACE}/VARIABLE_FILE
-	cat >> ${GITHUB_WORKSPACE}/VARIABLE_FILE <<EOF
+#	touch ${GITHUB_WORKSPACE}/VARIABLE_FILE
+	echo "$GITHUB_ENV"
+	cat >> $GITHUB_ENV <<EOF
 Home=${Home}
 CONFIG=${CONFIG}
 INCLUDE_AutoBuild_Features=${INCLUDE_AutoBuild_Features}
@@ -379,7 +379,7 @@ PKG_Finder() {
 
 CD() {
 	cd $1
-	[[ ! $? == 0 ]] && ECHO "Unable to enter target directory $1 ..." || ECHO "Current directory: $(pwd)"
+	[[ ! $? == 0 ]] && ECHO "Unable to enter target directory $1 ..." || ECHO "Entering directory: $(pwd) ..."
 }
 
 MKDIR() {
