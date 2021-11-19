@@ -71,7 +71,6 @@ Github Release:		${Github_Release}
 Github API:		${Github_API}
 Github Raw：		${Github_Raw}
 OpenWrt Source:		https://github.com/${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}
-预设固件格式:		${Firmware_Format}
 API 路径:		${API_File}
 脚本运行路径:		${Tmp_Path}
 脚本日志路径:		${Log_Path}/AutoUpdate.log
@@ -280,8 +279,6 @@ function LOAD_VARIABLE() {
 			} || x86_Boot_Method=BIOS
 		}
 	;;
-	*)
-		[[ -z ${Firmware_Format} ]] && Firmware_Format=bin
 	esac
 }
 
@@ -653,10 +650,10 @@ EOF
 	else
 		LOGGER "跳过 SHA256 校验 ..."
 	fi
-	case "${Firmware_Format}" in
+	case "${CLOUD_FW_Format}" in
 	img.gz)
 		if [[ ${Decompress_Mode} == 1 ]];then
-			ECHO "正在解压 [${Firmware_Format}] 固件 ..."
+			ECHO "正在解压 [${CLOUD_FW_Format}] 固件 ..."
 			gzip -d -q -f -c ${Firmware_Path}/${CLOUD_FW_Name} > ${Firmware_Path}/$(echo ${CLOUD_FW_Name} | sed -r 's/(.*).gz/\1/')
 			[[ ! $? == 0 ]] && {
 				ECHO r "固件解压失败!"
