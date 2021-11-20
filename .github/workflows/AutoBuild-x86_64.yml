@@ -118,28 +118,29 @@ jobs:
         chmod +x Scripts/AutoBuild_*.sh
         cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
-        make defconfig > /dev/null 2>&1
+        make defconfig
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
         Firmware_Diy_Main && Firmware_Diy
-        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
 
     - name: Compile
       run: |
-        Result=false
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware_Diy_Other
-        rm -rf ./tmp && ./scripts/feeds install -a > /dev/null 2>&1
+        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
+        Firmware_Diy_Other
+        rm -rf ./tmp
+        ./scripts/feeds install -a > /dev/null 2>&1
         make defconfig
         make download -j$(nproc)
         make -j$(nproc) || make -j1 V=s
-        [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV
+        [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV || echo "Result=false" >> $GITHUB_ENV
 
     - name: Process Firmware
       if: env.Result == 'true' && !cancelled()
       run: |
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh && Firmware_Diy_End
+        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
+        Firmware_Diy_End
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
