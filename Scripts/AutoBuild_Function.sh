@@ -5,7 +5,7 @@
 Firmware_Diy_Before() {
 	ECHO "[Firmware_Diy_Before] Starting ..."
 	Home="${GITHUB_WORKSPACE}/openwrt"
-	CONFIG="${GITHUB_WORKSPACE}/openwrt/.config"
+	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${Home}
 	Firmware_Diy_Core
 	[[ ${Short_Firmware_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
@@ -36,26 +36,26 @@ Firmware_Diy_Before() {
 	;;
 	esac
 	while [[ -z ${x86_Test} ]];do
-		x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG} | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
+		x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG_TEMP} | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
 		[[ -n ${x86_Test} ]] && break
-		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" ${CONFIG} | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
+		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" ${CONFIG_TEMP} | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
 		[[ -z ${x86_Test} ]] && break
 	done
 	[[ ${x86_Test} == x86_64 ]] && {
 		TARGET_PROFILE=x86_64
 	} || {
-		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG} | sed -r 's/.*DEVICE_(.*)=y/\1/')"
+		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG_TEMP} | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	}
 	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to get [TARGET_PROFILE] !"
-	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${CONFIG})"
-	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG})"
+	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${CONFIG_TEMP})"
+	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG_TEMP})"
 	[[ -z ${Firmware_Format} || ${Firmware_Format} =~ (false|AUTO) ]] && {
 		case "${TARGET_BOARD}" in
 		ramips | reltek | ipq40xx | ath79 | ipq807x)
 			Firmware_Format=bin
 		;;
 		rockchip | x86)
-			[[ $(cat ${CONFIG}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
+			[[ $(cat ${CONFIG_TEMP}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
 				Firmware_Format=img.gz
 			} || Firmware_Format=img
 		;;
@@ -72,7 +72,7 @@ Firmware_Diy_Before() {
 
 	cat >> $GITHUB_ENV <<EOF
 Home=${Home}
-CONFIG=${CONFIG}
+CONFIG_TEMP=${CONFIG_TEMP}
 INCLUDE_AutoBuild_Features=${INCLUDE_AutoBuild_Features}
 INCLUDE_Original_OpenWrt_Compatible=${INCLUDE_Original_OpenWrt_Compatible}
 INCLUDE_DRM_I915=${INCLUDE_DRM_I915}
@@ -244,7 +244,7 @@ Firmware_Diy_Other() {
 			case "${OP_BRANCH}" in
 			19.07 | 21.02 | main)
 				[[ ${OP_BRANCH} == main ]] && OP_BRANCH=21.02
-				cat >> ${CONFIG} <<EOF
+				cat >> ${CONFIG_TEMP} <<EOF
 
 # CONFIG_PACKAGE_dnsmasq is not set
 CONFIG_PACKAGE_dnsmasq-full=y
@@ -268,7 +268,7 @@ EOF
 	if [[ ${Author_URL} != false ]]
 	then
 		[[ ${Author_URL} == AUTO ]] && Author_URL=${Github}
-			cat >> ${CONFIG} <<EOF
+			cat >> ${CONFIG_TEMP} <<EOF
 
 CONFIG_KERNEL_BUILD_USER="${Author}"
 CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
