@@ -63,14 +63,14 @@ Firmware_Diy_Before() {
 	}
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-SHA256.FORMAT'
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-SHA256.FORMAT"
 	;;
 	*)
-		AutoBuild_Firmware='AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-SHA256.FORMAT'
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-SHA256.FORMAT"
 	;;
 	esac
 
-	cat >> $GITHUB_ENV <<EOF
+	cat >> ${GITHUB_ENV} <<EOF
 Home=${Home}
 CONFIG_TEMP=${CONFIG_TEMP}
 INCLUDE_AutoBuild_Features=${INCLUDE_AutoBuild_Features}
@@ -89,11 +89,11 @@ Version_File=${Version_File}
 Firmware_Format=${Firmware_Format}
 FEEDS_CONF=${Home}/feeds.conf.default
 Author_URL=${Author_URL}
-ENV_FILE=$GITHUB_ENV
+ENV_FILE=${GITHUB_ENV}
 
 EOF
-	source $GITHUB_ENV
-	echo -e "### VARIABLE LIST ###\n$(cat $GITHUB_ENV)\n"
+	source ${GITHUB_ENV}
+	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
 	ECHO "[Firmware_Diy_Before] Done"
 }
 
@@ -107,7 +107,8 @@ Firmware_Diy_Main() {
 	then
 		MKDIR ${BASE_FILES}/etc/AutoBuild
 		touch ${BASE_FILES}/etc/AutoBuild/Default_Variable ${BASE_FILES}/etc/AutoBuild/Custom_Variable
-		cat >> ${BASE_FILES}/etc/AutoBuild/Default_Variable <<EOF
+		for i in "${BASE_FILES}/etc/AutoBuild/Default_Variable ${GITHUB_ENV}";do
+			cat >> ${i} <<EOF
 ## 请不要修改此文件中的内容, 自定义变量请在 Custom_Variable 中添加或修改
 ## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级低于 Custom_Variable
 Author=${Author}
@@ -121,6 +122,8 @@ OP_REPO=${OP_REPO}
 OP_BRANCH=${OP_BRANCH}
 
 EOF
+		done
+		unset i
 		cat >> ${BASE_FILES}/etc/AutoBuild/Custom_Variable <<EOF
 ## 请在下方输入你的自定义变量,一行只能填写一个变量
 ## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级高于 Default_Variable
