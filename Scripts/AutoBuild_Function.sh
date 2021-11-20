@@ -107,7 +107,8 @@ Firmware_Diy_Main() {
 	then
 		MKDIR ${BASE_FILES}/etc/AutoBuild
 		touch ${BASE_FILES}/etc/AutoBuild/Default_Variable ${BASE_FILES}/etc/AutoBuild/Custom_Variable
-		for i in "${BASE_FILES}/etc/AutoBuild/Default_Variable ${GITHUB_ENV}";do
+		for i in ${BASE_FILES}/etc/AutoBuild/Default_Variable ${GITHUB_ENV}
+		do
 			cat >> ${i} <<EOF
 ## 请不要修改此文件中的内容, 自定义变量请在 Custom_Variable 中添加或修改
 ## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级低于 Custom_Variable
