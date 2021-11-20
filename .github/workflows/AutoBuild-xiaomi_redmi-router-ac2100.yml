@@ -84,7 +84,6 @@ jobs:
         REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-        echo "Artifacts_Date=$(date +%m%d%H%M)" >> $GITHUB_ENV
         echo "Compile_Date=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_ENV
 
@@ -145,14 +144,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: env.UPLOAD_ARTIFACTS == 'true' && env.Result == 'true' && !cancelled()
       with:
-        name: ${{ env.CONFIG_FILE }}_firmware_${{ env.Artifacts_Date }}
+        name: ${{ env.CONFIG_FILE }}_firmware_${{ env.Compile_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
       if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Result == 'true' && !cancelled()
       with:
-        name: ${{ env.CONFIG_FILE }}_bin_${{ env.Artifacts_Date }}
+        name: ${{ env.CONFIG_FILE }}_bin_${{ env.Compile_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Github Release
