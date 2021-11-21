@@ -1,6 +1,5 @@
 ###########################################################
-#   Description: Compile OpenWrt by GitHub Actions        #
-#   Based on: https://github.com/P3TERX/Actions-OpenWrt   #
+#   Description: Refresh Release API                      #
 #   Author: Hyy2001X                                      #
 ###########################################################
 
@@ -11,14 +10,14 @@ on:
   workflow_dispatch:
     inputs:
       refresh_switch:
-        description: '刷新 Release/API'
+        description: '手动刷新 API'
         default: 'true'
 
 #  schedule:
 #    - cron: 0 4,16 * * *
 
 jobs:
-  build:
+  Job:
     runs-on: ubuntu-latest
     
     steps:
