@@ -129,6 +129,7 @@ jobs:
         Firmware_Diy_Other
         rm -rf ./tmp
         ./scripts/feeds install -a > /dev/null 2>&1
+        cat $GITHUB_WORKSPACE/Configs/$CONFIG_FILE >> .config
         make download -j$(nproc)
         make -j$(nproc) || make -j1 V=s
         [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV || echo "Result=false" >> $GITHUB_ENV
