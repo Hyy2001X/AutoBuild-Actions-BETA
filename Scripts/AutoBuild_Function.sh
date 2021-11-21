@@ -98,7 +98,6 @@ EOF
 }
 
 Firmware_Diy_Main() {
-	Firmware_Diy_Before
 	ECHO "[Firmware_Diy_Main] Starting ..."
 	CD ${Home}
 	chmod +x -R ${Scripts}
