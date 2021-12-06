@@ -1,9 +1,9 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoUpdate for Openwrt
-# Dependences: bash wget-ssl/wget/uclient-fetch curl openssl jsonfilter expr
+# Dependences: bash wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.7.7
+Version=V6.7.9
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -13,14 +13,14 @@ function SHELL_HELP() {
 	TITLE
 	cat <<EOF
 
-使用方法:	bash $0 [-n] [-f] [-u] [-F] [-P] [-D <Downloader>] [--path <PATH>] 
-		bash $0 [-x] [--path <PATH>] [--url <URL>]
+使用方法:	bash $0 [-n] [-f] [-u] [-F] [-P] [-D <Downloader>] [--path <PATH>] ...
+		bash $0 [-x] [--path <PATH>] [--url <URL>] ...
 
 更新固件:
 	-n			不保留配置更新固件 *
 	-u			适用于定时更新 LUCI 的参数 *
 	-f			跳过版本号校验,并强制刷写固件 (不推荐) *
-	-F, --force-write	强制刷写固件 *
+	-F, --force-flash	强制刷写固件 *
 	-P, --proxy		优先开启镜像加速下载固件 *
 	-D <Downloader>		使用指定的下载器 <wget-ssl | wget | curl | uclient-fetch> *
 	--decompress		解压 img.gz 固件后再更新固件 *
@@ -35,15 +35,16 @@ function SHELL_HELP() {
 其他参数:
 	-B, --boot-mode <TYPE>		指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI BIOS)
 	-C <Github URL>			更改 Github 地址为提供的 <Github URL>
+	--api				打印 Github API 内容
 	--help				打印 AutoUpdate 帮助信息
 	--log < | del>			<打印 | 删除> AutoUpdate 历史运行日志
 	--log --path <PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
 	-P <F | G>			使用 <FastGit | Ghproxy> 镜像加速 *
-	--backup --path <PATH>		备份当前系统配置文件并移动到提供的绝对路径 <PATH> (可选)
+	--backup --path <PATH>		备份当前系统配置文件到提供的绝对路径 <PATH> (可选)
 	--env-list < | 1 | 2>		打印 <完整 | 第一列 | 第二列> 环境变量列表
-	--check				检查 AutoUpdate 运行环境
+	--chk				检查 AutoUpdate 运行环境
 	--clean				清理 AutoUpdate 缓存
-	--fw-log < | *>	打印 <当前 | 指定> 版本的固件更新日志
+	--fw-log < | *>			打印 <当前 | 指定> 版本的固件更新日志
 	--fw-list			打印所有云端固件名称
 	--list				打印当前系统信息
 	--var <VARIABLE>		打印用户指定的环境变量 <VARIABLE>
@@ -51,7 +52,7 @@ function SHELL_HELP() {
 	-v < | [Cc]loud>		打印 <当前 | 云端> AutoUpdate.sh 版本
 	-V < | [Cc]loud>		打印 <当前 | 云端> 固件版本
 
-脚本、固件更新问题反馈请前往 ${Github}, 并附上 AutoUpdate 运行日志与系统信息 (见上方)
+脚本、固件更新问题反馈请到 ${Github} 反馈, 并上脚本运行日志与系统信息
 
 EOF
 	EXIT
@@ -64,7 +65,7 @@ function SHOW_VARIABLE() {
 设备名称:		$(uname -n) / ${TARGET_PROFILE}
 固件版本:		${OP_VERSION}
 内核版本:		$(uname -r)
-运行内存:		Mem: $(MEMINFO 1)M | Swap: $(MEMINFO 2)M | Total: $(MEMINFO 3)M
+运行内存:		Mem: $(MEMINFO Mem)M | Swap: $(MEMINFO Swap)M | Total: $(MEMINFO All)M
 其他参数:		${TARGET_BOARD} / ${TARGET_SUBTARGET}
 固件作者:		${Author}
 作者仓库:		${Github}
@@ -84,52 +85,59 @@ EOF
 }
 
 function MEMINFO() {
+	[[ ! $1 || ! $* =~ (All|Mem|Swap) ]] && return 1
 	local Mem Swap All Result
 	Mem=$(free | grep Mem: | awk '{Mem=$7/1024} {printf("%.0f\n",Mem)}' 2> /dev/null)
 	Swap=$(free | grep Swap: | awk '{Swap=$4/1024} {printf("%.0f\n",Swap)}' 2> /dev/null)
 	All=$(expr ${Mem} + ${Swap} 2> /dev/null)
-	case $1 in
-	1)
-		Result=${Mem}
-	;;
-	2)
-		Result=${Swap}
-	;;
-	3)
-		Result=${All}
-	;;
-	esac
-	if [[ -n ${Result} ]]
+	Result=$(eval echo '$'$1)
+	if [[ ${Result} ]]
 	then
-		LOGGER "[MEMINFO] [$1] 运行内存: ${Result}M"
+		LOGGER "可用 $1 运行内存: ${Result}M"
 		echo ${Result}
 		return 0
 	else
-		LOGGER "[MEMINFO] [$1] 可用运行内存获取失败!"
+		LOGGER "[$1] 可用 $1 运行内存获取失败!"
 		return 1
 	fi
 }
 
-SPACEINFO() {
+function SPACEINFO() {
+	[[ ! $1 ]] && return 1
 	local Result Path
-	Path=$(echo $1 | awk -F '/' '{print $2}')
-	Result=$(df -m /${Path} 2> /dev/null | grep -v Filesystem | awk '{print $4}')
-	if [[ -n ${Result} ]]
+	Path="$(echo $1 | awk -F '/' '{print $2}')"
+	Result="$(df -m /${Path} 2> /dev/null | grep -v Filesystem | awk '{print $4}')"
+	if [[ ${Result} ]]
 	then
-		LOGGER "[SPACEINFO] /${Path} 可用空间: ${Result}M"
+		LOGGER "/${Path} 可用存储空间: ${Result}M"
 		echo "${Result}"
 		return 0
 	else
-		LOGGER "[SPACEINFO] /${Path} 可用空间获取失败!"
+		LOGGER "/${Path} 可用存储空间获取失败!"
 		return 1
 	fi
 }
 
 function RM() {
-	[[ -z $* ]] && return 1
+	[[ ! $* ]] && return 1
 	rm -rf "$*" 2> /dev/null
-	LOGGER "已删除文件: [$1]"
+	LOGGER "删除文件: [$1]"
 	return 0
+}
+
+function STRING() {
+	[[ $# -gt 3 ]] && return
+	case $1 in
+	-f)
+		shift
+		[[ ! -r $1 ]] && return
+		cat "$1" 2> /dev/null | egrep -q "$2" 2> /dev/null && echo -n $2
+	;;
+	*)
+		echo -n $1 | egrep -q $2 2> /dev/null && echo -n $2
+	;;
+	esac
+	return
 }
 
 function LIST_ENV() {
@@ -137,10 +145,10 @@ function LIST_ENV() {
 	cat ${Default_Variable} ${Custom_Variable} | grep -v '#' | while read X;do
 		case $1 in
 		1 | 2)
-			[[ -n ${X} ]] && eval echo ${X} | awk -F '=' '{print $"'$1'"}'
+			[[ ${X} ]] && eval echo ${X} | awk -F '=' '{print $"'$1'"}'
 		;;
 		*)
-			[[ -n ${X} ]] && eval echo ${X}
+			[[ ${X} ]] && eval echo ${X}
 		;;
 		esac
 		
@@ -149,11 +157,11 @@ function LIST_ENV() {
 
 function CHECK_ENV() {
 	while [[ $1 ]];do
-		if [[ -n $(GET_VARIABLE $1 ${Default_Variable} 2> /dev/null) ]]
+		if [[ $(GET_VARIABLE $1 ${Default_Variable} 2> /dev/null) ]]
 		then
-			LOGGER "[CHECK_ENV] 检查环境变量 [$1] ... 正常"
+			LOGGER "检查环境变量 [$1] ... 正常"
 		else
-			ECHO r "[CHECK_ENV] 检查环境变量 [$1] ... 错误"
+			ECHO r "检查环境变量 [$1] ... 错误"
 		fi
 		shift
 	done
@@ -161,13 +169,13 @@ function CHECK_ENV() {
 
 function CHECK_PKG() {
 	local Result="$(command -v $1 2> /dev/null)"
-	if [[ -n ${Result} && $? == 0 ]]
+	if [[ ${Result} && $? == 0 ]]
 	then
-		LOGGER "[CHECK_PKG] 检查软件包: [$1] ... 正常"
+		LOGGER "检查软件包: [$1] ... 正常"
 		echo true
 		return 0
 	else
-		LOGGER "[CHECK_PKG] 检查软件包: [$1] ... 错误"
+		LOGGER "检查软件包: [$1] ... 错误"
 		echo false
 		return 1
 	fi
@@ -183,8 +191,8 @@ function EXIT() {
 }
 
 function ECHO() {
-	local Color Quiet_Mode
-	[[ -z $1 ]] && {
+	local Color
+	[[ ! $1 ]] && {
 		echo -ne "\n${Grey}[$(date "+%H:%M:%S")]${White} "
 	} || {
 		while [[ $1 ]];do
@@ -199,25 +207,19 @@ function ECHO() {
 				esac
 				shift
 			;;
-			quiet)
-				Quiet_Mode=1
-				shift
-			;;
 			*)
 				Message="$1"
 				break
 			;;
 			esac
 		done
-		[[ ! ${Quiet_Mode} == 1 ]] && {
-			echo -e "\n${Grey}[$(date "+%H:%M:%S")]${White}${Color} ${Message}${White}"
-			LOGGER "${Message}"
-		} || LOGGER "[Quiet Mode] ${Message}"
+		echo -e "\n${Grey}[$(date "+%H:%M:%S")]${White}${Color} ${Message}${White}"
+		LOGGER "${Message}"
 	}
 }
 
 function LOGGER() {
-	[[ -z ${Log_Path} ]] && return 0
+	[[ ! ${Log_Path} ]] && return
 	if [[ ! $* =~ (--help|--log) ]]
 	then
 		[[ ! -d ${Log_Path} ]] && mkdir -p ${Log_Path}
@@ -227,22 +229,13 @@ function LOGGER() {
 }
 
 function RANDOM() {
-	local Result="$(openssl rand -base64 $1 | md5sum | cut -c 1-$1)"
-	if [[ -n ${Result} ]]
-	then
-		LOGGER "[RANDOM] $1 Bit 计算结果: [${Result}]"
-		echo "${Result}"
-		return 0
-	else
-		return 1
-	fi
+	head -n 5 /dev/urandom | md5sum | cut -c 1-$1
 }
 
 function GET_SHA256SUM() {
-	local Result="$(sha256sum $1 | cut -c1-$2)"
-	if [[ -n ${Result} ]]
+	local Result="$(sha256sum $1 2> /dev/null | cut -c1-$2)"
+	if [[ ${Result} && $? == 0 ]]
 	then
-		LOGGER "[GET_SHA256SUM] 计算结果: [${Result}]"
 		echo "${Result}"
 		return 0
 	else
@@ -251,8 +244,8 @@ function GET_SHA256SUM() {
 }
 
 function GET_VARIABLE() {
-	local Result="$(grep "$1=" "$2" | grep -v "#" | awk -F '=' '{print $2}')"
-	if [[ -n ${Result} ]]
+	local Result="$(grep "$1=" "$2" 2> /dev/null | grep -v "#" | awk -F '=' '{print $2}')"
+	if [[ ${Result} && $? == 0 ]]
 	then
 		eval echo "${Result}"
 		return 0
@@ -267,7 +260,7 @@ function EDIT_VARIABLE() {
 	[[ ! -s $1 ]] && ECHO r "未检测到环境变量文件: [$1] !" && return 1
 	case "${Mode}" in
 	edit)
-		if [[ -z $(GET_VARIABLE $2 $1) ]]
+		if [[ ! $(GET_VARIABLE $2 $1) ]]
 		then
 			LOGGER "[EDIT_VARIABLE] 新增环境变量 [$2 = $3]"
 			echo -e "\n$2=$3" >> $1
@@ -285,7 +278,7 @@ function EDIT_VARIABLE() {
 		fi
 	;;
 	rm)
-		sed -i "/$2/d" $1
+		sed -i "/$2=/d" $1
 		if [[ $? == 0 ]]
 		then
 			LOGGER "[EDIT_VARIABLE] 从 $1 删除环境变量 [$2] ... 成功"
@@ -299,43 +292,58 @@ function EDIT_VARIABLE() {
 }
 
 function LOAD_VARIABLE() {
-	while [[ $1 ]];do
-		[[ -s $1 ]] && {
-			chmod 777 $1
-			source $1
-		} || LOGGER "[LOAD_VARIABLE] 未检测到环境变量列表: [$1]"
-		shift
+	for i in ${ENV_DEPENDS[@]};do
+		local if_ENV="$(GET_VARIABLE ${i} $1)"
+		if [[ ! ${if_ENV} ]]
+		then
+			ECHO r "无法获取环境变量: ${i}"
+		fi
+		eval ${i}="${if_ENV}" 2> /dev/null
 	done
-	[[ -z ${TARGET_PROFILE} ]] && TARGET_PROFILE="$(jsonfilter -i /etc/board.json -e '@.model.id' | tr ',' '_')"
-	[[ -z ${TARGET_PROFILE} ]] && ECHO r "获取设备名称失败!" && EXIT 1
-	[[ -z ${Github} ]] && ECHO r "Github 地址获取失败!" && EXIT 1
-	[[ -z ${OP_VERSION} ]] && OP_VERSION="未知"
+	shift && unset i if_ENV
+	if [[ -s $1 ]]
+	then
+		chmod 777 $1
+		source $1
+	else
+		LOGGER "警告: 未检测到环境变量列表: $1"
+	fi
+	
+	[[ ! ${TARGET_PROFILE} ]] && eval TARGET_PROFILE="$(jq .model.id /etc/board.json 2> /dev/null)"
+	[[ ! ${TARGET_PROFILE} || ${TARGET_PROFILE} == null ]] && ECHO r "当前设备名称获取失败!" && EXIT 1
+	[[ ! ${OP_VERSION} ]] && OP_VERSION="未知"
+	DISTRIB_TARGET="$(GET_VARIABLE DISTRIB_TARGET /etc/openwrt_release)"
+	TARGET_BOARD="$(echo ${DISTRIB_TARGET} | cut -d '/' -f1)"
+	TARGET_SUBTARGET="$(echo ${DISTRIB_TARGET} | cut -d '/' -f2)"
 	Firmware_Author="${Github##*com/}"
 	Github_Release="${Github}/releases/download/AutoUpdate"
 	Github_Raw="https://raw.githubusercontent.com/${Firmware_Author}/master"
 	Github_API="https://api.github.com/repos/${Firmware_Author}/releases/latest"
 	case "${TARGET_BOARD}" in
 	x86)
-		[[ -z ${x86_Boot_Method} ]] && {
+		[[ ! ${x86_Boot_Method} ]] && {
 			[ -d /sys/firmware/efi ] && {
-				x86_Boot_Method=UEFI
-			} || x86_Boot_Method=BIOS
+				x86_Boot_Method="UEFI"
+			} || x86_Boot_Method="BIOS"
 		}
 	;;
 	esac
+	[[ ! -d ${Tmp_Path} ]] && mkdir -p ${Tmp_Path}
 }
 
 function CHANGE_GITHUB() {
-	[[ ! $1 =~ https://github.com/ ]] && {
-		ECHO r "Github 地址输入有误,正确示例: https://github.com/Hyy2001X/AutoBuild-Actions"
+	if [[ ! $1 =~ https://github.com/ ]]
+	then
+		ECHO r "Github 地址格式错误,正确地址示例: https://github.com/Hyy2001X/AutoBuild-Actions"
 		EXIT 1
+	fi
+	UCI_Github="$(uci get autoupdate.@common[0].github 2> /dev/null)"
+	[[ ${UCI_Github} && ! ${UCI_Github} == $1 ]] && {
+		uci set autoupdate.@common[0].github="$1" 2> /dev/null
+		LOGGER "UCI 地址已修改为 [$1]"
 	}
-	UCI_Github=$(uci get autoupdate.@common[0].github 2> /dev/null)
-	[[ -n ${UCI_Github} && ! ${UCI_Github} == $1 ]] && {
-		uci set autoupdate.@common[0].github=$1 2> /dev/null
-		LOGGER "[CHANGE_GITHUB] UCI 配置已设定为 [$1]"
-	}
-	[[ ! ${Github} == $1 ]] && {
+	if [[ ! ${Github} == $1 ]]
+	then
 		EDIT_VARIABLE edit ${Custom_Variable} Github $1
 		if [[ $? == 0 ]]
 		then
@@ -344,21 +352,22 @@ function CHANGE_GITHUB() {
 			ECHO y "Github 地址修改失败!"
 		fi
 		REMOVE_CACHE
-	}
-	EXIT 0
+	else
+		ECHO g "Github 地址未修改!"
+	fi
+	EXIT
 }
 
 function CHANGE_BOOT() {
-	[[ -z $1 ]] && SHELL_HELP
 	case "$1" in
 	UEFI | BIOS)
 		EDIT_VARIABLE edit ${Custom_Variable} x86_Boot_Method $1
-		ECHO r "警告: 更换引导方式后更新固件后可能导致设备无法正常启动!"
+		ECHO r "警告: 修改此设置后更新固件后可能导致设备无法启动!"
 		ECHO y "固件引导格式已指定为: [$1]"
 		EXIT 0
 	;;
 	*)
-		ECHO r "错误的参数: [$1],支持的启动方式: [UEFI/BIOS]"
+		ECHO r "错误的参数: [$1],当前支持的选项: [UEFI/BIOS]"
 		EXIT 1
 	;;
 	esac
@@ -373,22 +382,22 @@ function UPDATE_SCRIPT() {
 	fi
 	ECHO "脚本保存路径: [$1]"
 	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DOWNLOADERS} --url $2 --path ${Tmp_Path} --timeout 5 --type 脚本
-	if [[ -s ${Tmp_Path}/AutoUpdate.sh ]];then
+	if [[ $? == 0 && -s ${Tmp_Path}/AutoUpdate.sh ]];then
 		chmod +x ${Tmp_Path}/AutoUpdate.sh
-		Script_Version=$(awk -F '=' '/Version/{print $2}' ${Tmp_Path}/AutoUpdate.sh | awk 'NR==1')
-		Banner_Version=$(egrep -o "V[0-9.]+" /etc/banner)
+		Script_Version="$(awk -F '=' '/Version/{print $2}' ${Tmp_Path}/AutoUpdate.sh | awk 'NR==1')"
+		Banner_Version="$(egrep -o "V[0-9.]+" /etc/banner)"
 		mv -f ${Tmp_Path}/AutoUpdate.sh $1 2> /dev/null
 		[[ $? == 0 ]] && {
-			[[ -n ${Banner_Version} && $1 == /bin ]] && sed -i "s?${Banner_Version}?${Script_Version}?g" /etc/banner
-			ECHO y "[${Banner_Version} > ${Script_Version}] AutoUpdate 脚本更新成功!"
+			[[ ${Banner_Version} && $1 == /bin ]] && sed -i "s?${Banner_Version}?${Script_Version}?g" /etc/banner
+			ECHO y "[${Banner_Version} > ${Script_Version}] AutoUpdate.sh 更新成功!"
 			REMOVE_CACHE
 			EXIT 0
 		} || {
-			ECHO r "无法移动 AutoUpdate 脚本到指定的路径!"
+			ECHO r "移动 AutoUpdate.sh 到指定路径时发生错误 ..."
 			EXIT 1
 		}
 	else
-		ECHO r "AutoUpdate 脚本下载失败!"
+		ECHO r "AutoUpdate.sh 下载失败!"
 		EXIT 1
 	fi
 }
@@ -399,16 +408,17 @@ function CHECK_DEPENDS() {
 	printf "\n%-28s %-5s\n" 软件包 检测结果
 	while [[ $1 ]];do
 		if [[ $1 =~ : ]];then
-			[[ $(echo $1 | cut -d ":" -f1) == ${TARGET_BOARD} ]] && {
-				PKG="$(echo "$1" | cut -d ":" -f2)"
+			if [[ $(echo $1 | cut -d : -f1) == ${TARGET_BOARD} ]]
+			then
+				PKG="$(echo $1 | cut -d : -f2)"
 				printf "%-25s %-5s\n" ${PKG} $(CHECK_PKG ${PKG})
-			}
+			fi
 		else
 			printf "%-25s %-5s\n" $1 $(CHECK_PKG $1)
 		fi
 		shift
 	done
-	ECHO y "AutoUpdate 依赖检测结束,请尝试手动安装测结果为 [false] 的项目!"
+	ECHO y "AutoUpdate 运行环境检测结束,请尝试手动安装测结果为 [false] 的软件包!"
 }
 
 function CHECK_TIME() {
@@ -423,51 +433,59 @@ function CHECK_TIME() {
 }
 
 function ANALYZE_API() {
+	[[ ! ${Github_Release} ]] && {
+		ECHO r "Github API 地址为空!"
+		EXIT 1
+	}
 	local API_Cache=${Tmp_Path}/API_Cache
 	if [[ $(CHECK_TIME ${API_File} 1) == false ]]
 	then
-		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 5 --type "API" --quiet
+		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 5
 		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
-			ECHO r "Github API 请求错误,请检查网络后重试!"
+			ECHO r "Github API 请求错误,请检查网络后再试!"
 			EXIT 2
 		}
-		RM ${API_File} && touch -a ${API_File}
-		LOGGER "开始解析 Github API ..."
-		for i in $(seq 0 500);do
-			name=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].name' 2> /dev/null)
-			[[ ! $? == 0 ]] && break
-			if [[ ${name} =~ "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" || ${name} =~ Update_Logs.json ]]
-			then
-				local format=$(echo ${name} | egrep -o "\-[0-9a-z]{5}.[a-z].+" | egrep -o "\..+" | cut -c2-10)
-				local version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
-				local url=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].browser_download_url' 2> /dev/null)
-				local size=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].size' 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
-				local date=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].updated_at' 2> /dev/null | sed 's/[-:TZ]//g')
-				local count=$(jsonfilter -i ${API_Cache} -e '@["assets"]' | jsonfilter -e '@['""$i""'].download_count' 2> /dev/null)
-				local sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
-				[[ -z ${name} ]] && name="-"
-				[[ -z ${format} ]] && format="-"
-				[[ -z ${version} ]] && version="-"
-				[[ -z ${url} ]] && url="-"
-				[[ -z ${size} ]] && size="-" || size="${size}MB"
-				[[ -z ${date} ]] && date="-"
-				[[ -z ${count} ]] && count="-"
-				[[ -z ${sha256} ]] && sha256="-"
-				printf "%-75s %-15s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${format} ${count} ${sha256} ${version} ${date} ${size} ${url} | egrep -v "${REGEX_Format}" >> ${API_File}
-			fi
-		done
-		unset i
 	fi
-	[[ ! -s ${API_File} ]] && {
-		ECHO r "Github API 解析内容为空,请稍候再试!"
+	RM ${API_File} && touch -a ${API_File}
+	LOGGER "开始解析 Github API ..."
+	for i in $(seq 0 $(jq ".assets | length" ${API_Cache} 2> /dev/null));do
+		eval name=$(jq ".assets[${i}].name" ${API_Cache} 2> /dev/null)
+		[[ ${name} == null ]] && continue
+		case ${name} in
+		AutoBuild-${OP_REPO}-${TARGET_PROFILE}-* | Update_Logs.json)
+			LOGGER "可用固件/日志: ${name}"
+			eval format=$(echo ${name} | egrep -o "\-[0-9a-z]{5}.[a-z].+" | egrep -o "\..+" | cut -c2-10)
+			eval version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
+			eval sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
+			eval browser_download_url=$(jq ".assets[${i}].browser_download_url" ${API_Cache} 2> /dev/null)
+			eval size=$(jq ".assets[${i}].size" ${API_Cache} 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
+			eval updated_at=$(jq ".assets[${i}].updated_at" ${API_Cache} 2> /dev/null | sed 's/[-:TZ]//g')
+			eval download_count=$(jq ".assets[${i}].download_count" ${API_Cache} 2> /dev/null)
+			[[ ! ${version} || ${version} == null ]] && version="-"
+			[[ ! ${browser_download_url} || ${browser_download_url} == null ]] && continue
+			[[ ! ${size} || ${size} == null || ${size} == 0 ]] && size="-" || size="${size}MB"
+			[[ ! ${updated_at} || ${updated_at} == null ]] && updated_at="-"
+			[[ ! ${download_count} || ${download_count} == null ]] && download_count="-"
+			[[ ! ${sha256} || ${sha256} == null ]] && sha256="-"
+			printf "%-75s %-15s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${format} ${download_count} ${sha256} ${version} ${updated_at} ${size} ${browser_download_url} | egrep -v "${REGEX_Skip_Format}" >> ${API_File}
+		;;
+		esac
+	done
+	unset i
+	if [[ ! $(cat ${API_File} 2> /dev/null) ]]
+	then
+		ECHO r "Github API 解析内容为空!"
 		return 1
-	} || return 0
+	else
+		LOGGER "Github API 解析结束!"
+		return 0
+	fi
 }
 
 function GET_CLOUD_LOG() {
-	local Result Version
+	local Version log_Test
 	[[ ! $(cat ${API_File} 2> /dev/null) =~ Update_Logs.json ]] && {
-		LOGGER "未检测到已部署的云端日志!"
+		LOGGER "未检测到已部署的云端日志,跳过下载 ..."
 		return 1
 	}
 	case "$1" in
@@ -477,21 +495,23 @@ function GET_CLOUD_LOG() {
 	[Cc]loud)
 		Version="$(GET_FW_INFO 5)"
 	;;
-	-v)
-		shift
+	*)
 		Version="$1"
 	;;
 	esac
 	[[ $(CHECK_TIME ${Tmp_Path}/Update_Logs.json 1) == false ]] && {
-		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 5 --type 固件更新日志 --quiet
+		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 5
 	}
-	[[ -s ${Tmp_Path}/Update_Logs.json ]] && {
-		Result="$(jsonfilter -i ${Tmp_Path}/Update_Logs.json -e '@["'""${TARGET_PROFILE}""'"]["'""${Version}""'"]' 2> /dev/null)"
-		[[ -n ${Result} ]] && {
-			echo -e "\n${Grey}${Version} 固件更新日志:"
-			echo -e "\n${Green}${Result}${White}"
-		} || LOGGER "未获取到当前固件的日志信息!"
-	}
+	[[ ! -s ${Tmp_Path}/Update_Logs.json ]] && return 1
+	log_Test="$(jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null)"
+	if [[ ${log_Test} && ${log_Test} != null ]]
+	then
+		echo -e "\n${Grey}${Version} 固件更新日志:${Green}\n"
+		jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null | egrep -v "\[|\]"
+		echo -e "${White}"
+	else
+		LOGGER "未获取到 [${Version}] 固件的日志信息!"
+	fi
 }
 
 function GET_FW_INFO() {
@@ -535,12 +555,11 @@ function UPGRADE() {
 		EXIT 1
 	}
 	Firmware_Path="${Tmp_Path}"
-	Upgrade_Option="sysupgrade -q"
+	Upgrade_Option="$(command -v sysupgrade) -q"
 	MSG="更新固件"
 	while [[ $1 ]];do
 		case "$1" in
-		-T | --test)
-			Test_Mode=1
+		-T)
 			Special_Commands="${Special_Commands} [测试模式]"
 		;;
 		-P | --proxy)
@@ -557,24 +576,21 @@ function UPGRADE() {
 		;;
 		-D)
 			DOWNLOADERS="$2"
-			Special_Commands="${Special_Commands} [${DOWNLOADERS}]"
+			Special_Commands="${Special_Commands} [$1 ${DOWNLOADERS}]"
 			shift
 		;;
-		-F | --force-write)
-			[[ -n ${Force_Mode} ]] && SHELL_HELP
-			Only_Force_Write=1
+		-F | --force-flash)
+			Force_Flash=1
 			Special_Commands="${Special_Commands} [强制刷写]"
-			Upgrade_Option="${Upgrade_Option} -F"
 		;;
 		--decompress)
-			Special_Commands="${Special_Commands} [解压固件]"
+			Special_Commands="${Special_Commands} [优先解压固件]"
 			Decompress_Mode=1
 		;;
 		-f)
-			[[ -n ${Only_Force_Write} ]] && SHELL_HELP
 			Force_Mode=1
+			Force_Flash=1
 			Special_Commands="${Special_Commands} [强制模式]"
-			Upgrade_Option="${Upgrade_Option} -F"
 		;;
 		-n)
 			Upgrade_Option="${Upgrade_Option} -n"
@@ -586,11 +602,11 @@ function UPGRADE() {
 			shift
 		;;
 		--skip-verify)
-			Skip_Verify=1
+			Skip_Verify_Mode=1
 			Special_Commands="${Special_Commands} [跳过 SHA256 验证]"
 		;;
 		-u)
-			AutoUpdate_Mode=1
+			Nobody_Mode=1
 			Special_Commands="${Special_Commands} [定时更新]"
 		;;
 		--verbose)
@@ -602,16 +618,15 @@ function UPGRADE() {
 		esac
 	shift
 	done
-	LOGGER "固件更新指令: [${Upgrade_Option}]"
-	[[ -n "${Special_Commands}" ]] && ECHO g "特殊指令:${Special_Commands} / ${Upgrade_Option}"
+	[[ ${Force_Flash} == 1 ]] && Upgrade_Option="${Upgrade_Option} -F"
+	[[ ${Special_Commands} ]] && ECHO g "特殊指令:${Special_Commands} | ${Upgrade_Option}"
 	ECHO g "执行: ${MSG}${Special_MSG}"
-	if [[ -z ${Proxy_Type} ]];then
+	if [[ ! ${Proxy_Type} ]]
+	then
 		[[ $(GOOGLE_CHECK) != true ]] && {
-			ECHO r "Google 连接测试失败,优先使用镜像加速下载!"
+			ECHO r "Google 连接错误,优先使用镜像加速下载!"
 			Proxy_Type="All"
 		}
-	else
-		LOGGER "跳过 Google 连接测试 ..."
 	fi
 	ECHO "正在检查固件版本更新 ..."
 	ANALYZE_API
@@ -623,21 +638,22 @@ function UPGRADE() {
 	CLOUD_FW_Date=$(GET_FW_INFO 6)
 	CLOUD_FW_Size=$(GET_FW_INFO 7)
 	CLOUD_FW_Url=$(GET_FW_INFO 8)
-	[[ -z ${CLOUD_FW_Name} || -z ${CLOUD_FW_Url} ]] && {
-		ECHO r "云端固件信息获取失败!"
+	[[ ! ${CLOUD_FW_Name} || -z ${CLOUD_FW_Url} ]] && {
+		ECHO r "检查更新失败,请检查网络后再试!"
 		EXIT 2
 	}
 	[[ ${CLOUD_FW_Version} == ${OP_VERSION} ]] && {
 		CURRENT_Type="${Yellow} [已是最新]${White}"
-		Upgrade_Stopped=1
+		Stop_Code=1
 	} || {
-		[[ $(echo ${CLOUD_FW_Version} | cut -d "-" -f2) -gt $(echo ${OP_VERSION} | cut -d "-" -f2) ]] && CURRENT_Type="${Green} [可更新]${White}"
-		[[ $(echo ${CLOUD_FW_Version} | cut -d "-" -f2) -lt $(echo ${OP_VERSION} | cut -d "-" -f2) ]] && {
+		[[ $(echo ${CLOUD_FW_Version} | cut -d - -f2) -gt $(echo ${OP_VERSION} | cut -d - -f2) ]] && CHECKED_Type="${Green} [可更新]${White}"
+		[[ $(echo ${CLOUD_FW_Version} | cut -d - -f2) -lt $(echo ${OP_VERSION} | cut -d - -f2) ]] && {
 			CHECKED_Type="${Red} [旧版本]${White}"
-			Upgrade_Stopped=2
+			Stop_Code=2
 		}
 	}
-	cat <<EOF
+	echo -e "
+${Grey}### 系统 & 云端固件详情 ###${White}
 
 设备名称: ${TARGET_PROFILE}
 内核版本: $(uname -sr)
@@ -648,11 +664,11 @@ $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 
 云端固件名称: ${CLOUD_FW_Name}
 云端固件体积: ${CLOUD_FW_Size}
-固件下载次数: ${CLOUD_FW_Count}
-EOF
+固件下载次数: ${CLOUD_FW_Count}"
 	if [[ ${Force_Mode} != 1 ]]
 	then
-		if [[ $(MEMINFO 3) -lt $(echo ${CLOUD_FW_Size} | awk -F '.' '{print $1}') ]]
+		(sync && echo 3 > /proc/sys/vm/drop_caches) 2> /dev/null
+		if [[ $(MEMINFO All) -lt $(echo ${CLOUD_FW_Size} | awk -F '.' '{print $1}') ]]
 		then
 			ECHO r "内存空间不足 [${CLOUD_FW_Size}],请尝试设置 Swap 交换分区或重启设备后再试!"
 			EXIT
@@ -662,18 +678,18 @@ EOF
 			ECHO r "设备空间不足 [${CLOUD_FW_Size}],请尝试更换固件保存路径后再试!"
 			EXIT
 		fi
-	else
-		LOGGER "[Force Mode] 跳过可用资源测试"
 	fi
-	GET_CLOUD_LOG -v ${CLOUD_FW_Version}
-	case "${Upgrade_Stopped}" in
+	GET_CLOUD_LOG ${CLOUD_FW_Version}
+	case "${Stop_Code}" in
 	1 | 2)
-		[[ ${AutoUpdate_Mode} == 1 ]] && ECHO y "当前固件 [${OP_VERSION}] 已是最新版本,无需更新!" && EXIT 0
-		[[ ${Upgrade_Stopped} == 1 ]] && err_MSG="当前固件 [${OP_VERSION}] 已是最新版本" || err_MSG="云端固件版本为旧版"
+		[[ ${Nobody_Mode} == 1 ]] && ECHO y "当前固件 [${OP_VERSION}] 已是最新版本,无需更新!" && EXIT 0
+		[[ ${Stop_Code} == 1 ]] && err_MSG="当前固件 [${OP_VERSION}] 已是最新版本" || err_MSG="云端固件版本为旧版"
 		[[ ! ${Force_Mode} == 1 ]] && {
 			ECHO && read -p "${err_MSG},是否继续更新固件?[Y/n]:" Choose
 		} || Choose=Y
 		[[ ! ${Choose} =~ [Yy] ]] && {
+			ECHO x "已取消固件更新操作,即将退出更新程序 ..."
+			sleep 1
 			EXIT 0
 		}
 	;;
@@ -691,27 +707,29 @@ EOF
 	;;
 	esac
 	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DOWNLOADERS} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
-	[[ ! -s ${Firmware_Path}/${CLOUD_FW_Name} ]] && EXIT 1
-	if [[ ! ${Skip_Verify} == 1 ]];then
+	[[ ! -s ${Firmware_Path}/${CLOUD_FW_Name} || $? != 0 ]] && {
+		ECHO r "固件下载失败,请检查网络后再试!"
+		EXIT 1
+	}
+	if [[ ! ${Skip_Verify_Mode} == 1 ]];then
 		[[ $(GET_SHA256SUM ${Firmware_Path}/${CLOUD_FW_Name} 5) != ${CLOUD_FW_SHA256} ]] && {
-			ECHO r "SHA256 校验失败,请检查网络后重试!"
+			ECHO r "SHA256 校验失败!"
 			EXIT 2
 		}
-		LOGGER "固件 SHA256 比对通过!"
-	else
-		LOGGER "跳过 SHA256 校验 ..."
+		ECHO y "固件完整性校验通过,即将开始更新固件 ..."
 	fi
 	case "${CLOUD_FW_Format}" in
 	img.gz)
-		if [[ ${Decompress_Mode} == 1 ]];then
-			ECHO "正在解压 [${CLOUD_FW_Format}] 固件 ..."
+		if [[ ${Decompress_Mode} == 1 ]]
+		then
+			ECHO "正在解压 gizp 格式固件  ..."
 			gzip -d -q -f -c ${Firmware_Path}/${CLOUD_FW_Name} > ${Firmware_Path}/$(echo ${CLOUD_FW_Name} | sed -r 's/(.*).gz/\1/')
 			[[ ! $? == 0 ]] && {
 				ECHO r "固件解压失败!"
 				EXIT 2
 			} || {
 				CLOUD_FW_Name="$(echo ${CLOUD_FW_Name} | sed -r 's/(.*).gz/\1/')"
-				LOGGER "固件解压成功,固件已解压到: [${Firmware_Path}/${CLOUD_FW_Name}]"
+				LOGGER "固件已解压到: [${Firmware_Path}/${CLOUD_FW_Name}]"
 			}
 		else
 			[[ $(CHECK_PKG gzip) == true ]] && {
@@ -747,7 +765,7 @@ function DO_UPGRADE() {
 }
 
 function DOWNLOADER() {
-	local u E DL_Downloader DL_Name DL_URL DL_Path DL_Retries DL_Timeout DL_Type DL_Final Quiet_Mode No_URL_Name Print_Mode DL_Retires_All DL_URL_Final
+	local u E DL_Downloader DL_Name DL_URL DL_Path DL_Retries DL_Timeout DL_Type DL_Final No_URL_Name Print_Mode DL_Retires_All DL_URL_Final
 	while [[ $1 ]];do
 		case "$1" in
 		--dl)
@@ -771,9 +789,9 @@ function DOWNLOADER() {
 				[[ $1 =~ '--' ]] && break
 				[[ ! $1 =~ '--' ]] && shift
 			done
-			[[ -z ${DL_Downloader} ]] && {
+			[[ ! ${DL_Downloader} ]] && {
 				ECHO r "没有可用的下载器!"
-				EXIT 1
+				return 1
 			}
 		;;
 		--file-name)
@@ -787,7 +805,7 @@ function DOWNLOADER() {
 		--url)
 			shift
 			DL_URL=($(echo $@ | egrep -o "https://.*@@[0-9]+|https://.*@@[0-9]+|ftp://.*@@[0-9]+"))
-			[[ -z ${DL_URL[*]} ]] && {
+			[[ ! ${DL_URL[*]} ]] && {
 				DL_URL=($1)
 				DL_URL_Count="${#DL_URL[@]}"
 				DL_Retires_All="${DL_URL_Count}"
@@ -802,7 +820,6 @@ function DOWNLOADER() {
 		;;
 		--no-url-name)
 			shift
-			LOGGER "[DOWNLOADER] Enabled No-Url-Filename Mode"
 			No_URL_Name=1
 		;;
 		--path)
@@ -840,14 +857,9 @@ function DOWNLOADER() {
 				[[ ! $1 =~ '--' ]] && shift
 			done
 		;;
-		--quiet)
-			shift
-			Quiet_Mode=quiet
-		;;
 		--print)
 			shift
 			Print_Mode=1
-			Quiet_Mode=quiet
 		;;
 		*)
 			shift
@@ -869,21 +881,21 @@ function DOWNLOADER() {
 		DL_Template="${DL_Template/ --quiet / }"
 		DL_Template="${DL_Template/ --silent / }"
 	}
-	[[ -n ${DL_Timeout} ]] && DL_Template="${DL_Template/-timeout 10/-timeout ${DL_Timeout}}"
+	[[ ${DL_Timeout} ]] && DL_Template="${DL_Template/-timeout 10/-timeout ${DL_Timeout}}"
 	local E=0 u;while [[ ${E} != ${DL_URL_Count} ]];do
 		DL_URL_Cache="${DL_URL[$E]}"
 		DL_Retries="${DL_URL_Cache##*@@}"
-		[[ -z ${DL_Retries} || ! ${DL_Retries} == [0-9] ]] && DL_Retries=1
+		[[ ! ${DL_Retries} || ! ${DL_Retries} == [0-9] ]] && DL_Retries=1
 		DL_URL_Final="${DL_URL_Cache%*@@*}"
 		LOGGER "当前 URL: [${DL_URL_Final}] URL 重试次数: [${DL_Retries}]"
 		for u in $(seq ${DL_Retries});do
 			sleep 1
-			[[ -z ${Failed} ]] && {
-				ECHO ${Quiet_Mode} "正在下载${DL_Type},请耐心等待 ..."
+			[[ ! ${Failed} ]] && {
+				[[ ${DL_Type} ]] && ECHO "正在下载${DL_Type},请耐心等待 ..."
 			} || {
-				ECHO ${Quiet_Mode} "尝试重新下载${DL_Type},剩余重试次数: [${DL_Retires_All}]"
+				[[ ${DL_Type} ]] && ECHO "尝试重新下载,剩余重试次数: [${DL_Retires_All}]"
 			}
-			if [[ -z ${DL_Name} ]];then
+			if [[ ! ${DL_Name} ]];then
 				DL_Name="${DL_URL_Final##*/}"
 				DL_Final="${DL_Template} ${DL_Path}/${DL_Name} ${DL_URL_Final}"
 			else
@@ -894,23 +906,23 @@ function DOWNLOADER() {
 			[[ -s ${DL_Path}/${DL_Name} ]] && {
 				RM ${DL_Path}/${DL_Name}
 			}
-			LOGGER "执行下载: [${DL_Final}]"
+			LOGGER "执行下载指令: [${DL_Final}]"
 			${DL_Final}
 			if [[ $? == 0 && -s ${DL_Path}/${DL_Name} ]];then
-				ECHO y ${Quiet_Mode} "${DL_Type}下载成功!"
+				touch -a ${DL_Path}/${DL_Name}
 				[[ ${Print_Mode} == 1 ]] && {
 					cat ${DL_Path}/${DL_Name} 2> /dev/null
 					RM ${DL_Path}/${DL_Name}
-				}
-				touch -a ${DL_Path}/${DL_Name} 2> /dev/null
+					return 0
+				} || [[ ${DL_Type} ]] && ECHO y "${DL_Type}下载成功!"
 				return 0
 			else
-				[[ -z ${Failed} ]] && local Failed=1
+				[[ ! ${Failed} ]] && local Failed=1
 				DL_Retires_All=$((${DL_Retires_All} - 1))
 				if [[ ${u} == ${DL_Retries} ]];then
 					break 1
 				else
-					ECHO r ${Quiet_Mode} "下载失败!"
+					[[ ${DL_Type} ]] && ECHO r "${DL_Type}下载失败!"
 					u=$((${u} + 1))
 				fi
 			fi
@@ -918,7 +930,7 @@ function DOWNLOADER() {
 		E=$((${E} + 1))
 	done
 	RM ${DL_Path}/${DL_Name}
-	ECHO r ${Quiet_Mode} "${DL_Type}下载失败,请检查网络后重试!"
+	[[ ${DL_Type} ]] && ECHO r "${DL_Type}下载失败!"
 	return 1
 }
 
@@ -930,7 +942,7 @@ function REMOVE_CACHE() {
 }
 
 function LOG() {
-	[[ -z $1 ]] && {
+	[[ ! $1 ]] && {
 		[[ -s ${Log_Path}/AutoUpdate.log ]] && {
 			TITLE && echo
 			cat ${Log_Path}/AutoUpdate.log
@@ -967,6 +979,7 @@ function LOG() {
 URL_X() {
 	# URL_X https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master/Scripts/AutoUpdate.sh F@@1 G@@1 X@@1
 	local URL=$1 Type URL_Final
+
 	[[ ${URL} =~ raw.githubusercontent.com ]] && Type=raw
 	[[ ${URL} =~ releases/download ]] && Type=release
 	[[ ${URL} =~ codeload.github.com ]] && Type=codeload
@@ -998,7 +1011,7 @@ URL_X() {
 			URL_Final="${URL_Cache/X/${URL}}"
 		;;
 		esac
-		[[ -n ${URL_Final} ]] && {
+		[[ ${URL_Final} ]] && {
 			echo "${URL_Final}"
 		}
 		unset URL_Final
@@ -1030,17 +1043,11 @@ function GOOGLE_CHECK() {
 }
 
 function AutoUpdate_Main() {
-	if [[ ! $1 =~ (-H|--help) ]];then
-		[[ ! -f ${Default_Variable} ]] && {
-			ECHO r "脚本运行环境检测失败,无法正常运行脚本!"
-			EXIT 1
-		}
-		[[ ! -f ${Custom_Variable} ]] && touch ${Custom_Variable}
+	if [[ ! $1 =~ (-H|--help|--chk|--log) ]];then
 		LOAD_VARIABLE ${Default_Variable} ${Custom_Variable}
-		[[ ! -d ${Tmp_Path} ]] && mkdir -p ${Tmp_Path}
 	fi
 
-	[[ -z $* ]] && UPGRADE $*
+	[[ ! $* ]] && UPGRADE $*
 
 	local Input=($@) E=0 F Custom_Path Custom_URL
 	while :;do
@@ -1054,13 +1061,13 @@ function AutoUpdate_Main() {
 		;;
 		--path)
 			Custom_Path="${Input[$((${E} + 1))]}"
-			[[ -z ${Custom_Path} ]] && {
+			[[ ! ${Custom_Path} ]] && {
 				ECHO r "请输入正确的路径!"
 			}
 		;;
 		--url)
 			Custom_URL="${Input[$((${E} + 1))]}"
-			[[ -z ${Custom_URL} || ! ${Custom_URL} =~ (https://*|http://*|ftp://*) ]] && {
+			[[ ! ${Custom_URL} || ! ${Custom_URL} =~ (https://*|http://*|ftp://*) ]] && {
 				ECHO r "链接格式错误,请输入正确的链接!"
 				EXIT 1
 			}
@@ -1083,16 +1090,22 @@ function AutoUpdate_Main() {
 
 	while [[ $1 ]];do
 		case "$1" in
-		-n | -f | -u | -T | -P | --proxy | -F | --force-write | --verbose | --decompress | --skip-verify | -D | --path)
+		-n | -f | -u | -T | -P | --proxy | -F | --force-flash | --verbose | --decompress | --skip-verify | -D | --path)
 			UPGRADE $*
+			EXIT
+		;;
+		--api)
+			REMOVE_CACHE
+			ANALYZE_API > /dev/null 2>&1
+			[[ $? == 0 ]] && cat ${API_File}
 			EXIT
 		;;
 		--backup)
 			local FILE="backup-$(uname -n)-$(date +%Y-%m-%d)-$(RANDOM 5).tar.gz"
 			shift
 			[[ $# -gt 1 ]] && SHELL_HELP
-			[[ -z $1 ]] && {
-				FILE=$(pwd)/${FILE}
+			[[ ! $1 ]] && {
+				FILE="$(pwd)/${FILE}"
 			} || {
 				if [[ ! -d $1 ]];then
 					mkdir -p $1 || {
@@ -1100,10 +1113,10 @@ function AutoUpdate_Main() {
 						EXIT 1
 					}
 				fi
-				FILE=$1/${FILE}
+				FILE="$1/${FILE}"
 			}
 			ECHO "正在备份系统文件到 [${FILE}] ..."
-			sysupgrade -b "${FILE}" > /dev/null 2>&1
+			$(command -v sysupgrade) -b "${FILE}" > /dev/null 2>&1
 			[[ $? == 0 ]] && {
 				ECHO y "备份文件创建成功!"
 				EXIT 0
@@ -1116,21 +1129,21 @@ function AutoUpdate_Main() {
 			REMOVE_CACHE
 			EXIT
 		;;
-		--check)
+		--chk)
 			shift
-			CHECK_DEPENDS bash uclient-fetch curl wget openssl jsonfilter expr
+			CHECK_DEPENDS bash uclient-fetch curl wget wget-ssl jq expr sysupgrade
 			[[ $(NETWORK_CHECK www.baidu.com 2) == false ]] && {
-				ECHO r "基础网络连接错误!"
-			} || ECHO y "基础网络连接正常!"
+				ECHO r "网络连接错误!"
+			}
 			[[ $(GOOGLE_CHECK) == false ]] && {
 				ECHO r "Google 连接错误!"
-			} || ECHO y "Google 连接正常!"
+			}
 			CHECK_ENV ${ENV_DEPENDS[@]}
 			EXIT
 		;;
 		--env-list)
 			shift
-			[[ -z $* ]] && LIST_ENV 0 && EXIT 0
+			[[ ! $* ]] && LIST_ENV 0 && EXIT 0
 			case "$1" in
 			1 | 2)
 				LIST_ENV $1
@@ -1143,7 +1156,7 @@ function AutoUpdate_Main() {
 		;;
 		-V)
 			shift
-			[[ -z $* ]] && echo "${OP_VERSION}" && EXIT 0
+			[[ ! $* ]] && echo "${OP_VERSION}" && EXIT 0
 			case "$1" in
 			[Cc]loud)
 				shift
@@ -1159,11 +1172,11 @@ function AutoUpdate_Main() {
 		--fw-log)
 			shift
 			ANALYZE_API
-			if [[ -z $* ]]
+			if [[ ! $* ]]
 			then
 				GET_CLOUD_LOG local
 			else
-				GET_CLOUD_LOG -v $*
+				GET_CLOUD_LOG $*
 			fi
 			EXIT
 		;;
@@ -1177,17 +1190,17 @@ function AutoUpdate_Main() {
 			shift
 			[[ $# != 1 ]] && SHELL_HELP
 			Result="$(GET_VARIABLE $1 ${Custom_Variable})"
-			[[ -z ${Result} ]] && Result="$(GET_VARIABLE $1 ${Default_Variable})"
-			[[ -n ${Result} ]] && echo "${Result}"
+			[[ ! ${Result} ]] && Result="$(GET_VARIABLE $1 ${Default_Variable})"
+			[[ ${Result} ]] && echo "${Result}"
 			EXIT
 		;;
 		-v)
 			shift
-			[[ -z $* ]] && echo ${Version} && EXIT 0
+			[[ ! $* ]] && echo ${Version} && EXIT 0
 			case "$1" in
 			[Cc]loud)
 				Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh G@@1)"
-				DOWNLOADER --dl ${DOWNLOADERS} --url ${Script_URL} --path /tmp --print | egrep -o "V[0-9].+"
+				DOWNLOADER --dl ${DOWNLOADERS} --url ${Script_URL} --path /tmp --print --type 脚本 | egrep -o "V[0-9].+"
 			;;
 			*)
 				SHELL_HELP
@@ -1202,8 +1215,8 @@ function AutoUpdate_Main() {
 				EXIT 1
 			}
 			Script_Path=/bin
-			[[ -n ${Custom_Path} ]] && Script_Path=${Custom_Path}
-			[[ -n ${Custom_URL} ]] && Script_URL=${Custom_URL}
+			[[ ${Custom_Path} ]] && Script_Path="${Custom_Path}"
+			[[ ${Custom_URL} ]] && Script_URL="${Custom_URL}"
 			UPDATE_SCRIPT ${Script_Path} ${Script_URL}
 			EXIT
 		;;
@@ -1248,24 +1261,22 @@ KILL_PROCESS() {
 
 KILL_PROCESS AutoUpdate.sh
 
-Tmp_Path=/tmp/AutoUpdate
-Log_Path=/tmp
-API_File=${Tmp_Path}/API
-Default_Variable=/etc/AutoBuild/Default_Variable
-Custom_Variable=/etc/AutoBuild/Custom_Variable
+Tmp_Path="/tmp/AutoUpdate"
+Log_Path="/tmp"
+API_File="${Tmp_Path}/API"
+Default_Variable="/etc/AutoBuild/Default_Variable"
+Custom_Variable="/etc/AutoBuild/Custom_Variable"
 ENV_DEPENDS=(	
 	Author
 	Github
 	TARGET_PROFILE
-	TARGET_BOARD
-	TARGET_SUBTARGET
 	OP_VERSION
 	OP_AUTHOR
 	OP_BRANCH
 	OP_REPO
 )
 DOWNLOADERS="$(command -v wget-ssl) $(command -v curl) $(command -v wget) $(command -v uclient-fetch)"
-REGEX_Format=".vdi|.vhdx|.vmdk|kernel|rootfs|factory"
+REGEX_Skip_Format=".vdi|.vhdx|.vmdk|kernel|rootfs|factory"
 
 White="\e[0m"
 Yellow="\e[33m"
@@ -1274,5 +1285,5 @@ Blue="\e[34m"
 Grey="\e[36m"
 Green="\e[32m"
 
-[[ -n $* ]] && COMMAND="$0 $*" || COMMAND="$0"
+[[ $* ]] && COMMAND="$0 $*" || COMMAND="$0"
 AutoUpdate_Main $*

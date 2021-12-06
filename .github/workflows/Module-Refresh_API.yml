@@ -13,8 +13,8 @@ on:
         description: '手动刷新 API'
         default: 'true'
 
-#  schedule:
-#    - cron: 0 4,16 * * *
+  schedule:
+    - cron: 0 4,16 * * *
 
 jobs:
   Job:
