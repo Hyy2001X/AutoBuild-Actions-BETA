@@ -50,13 +50,22 @@ env:
 jobs:
   Compile:
     runs-on: ubuntu-latest
-
     steps:
+    - name: Maximize Build Space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 5120
+        swap-size-mb: 512
+        remove-dotnet: 'true'
+        remove-android: 'true'
+
     - name: Checkout
       uses: actions/checkout@main
 
     - name: Initialization Variables
       run: |
+        echo "Free space:"
+        df -h
         if [ -n "${{ github.event.inputs.Tempoary_CONFIG }}" ]
         then
             if [ -f "$GITHUB_WORKSPACE/Configs/${{ github.event.inputs.Tempoary_CONFIG }}" ]
