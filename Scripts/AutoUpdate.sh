@@ -1,9 +1,9 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoUpdate for Openwrt
-# Dependences: bash wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
+# Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.7.9
+Version=V6.8.1
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -76,7 +76,7 @@ OpenWrt Source:		https://github.com/${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}
 API 路径:		${API_File}
 脚本运行路径:		${Tmp_Path}
 脚本日志路径:		${Log_Path}/AutoUpdate.log
-下载器:			${DOWNLOADERS}
+可用下载器:		${DL_DEPENDS[@]}
 EOF
 	[[ ${TARGET_BOARD} == x86 ]] && {
 		echo "固件引导模式:		${x86_Boot_Method}"
@@ -159,9 +159,10 @@ function CHECK_ENV() {
 	while [[ $1 ]];do
 		if [[ $(GET_VARIABLE $1 ${Default_Variable} 2> /dev/null) ]]
 		then
-			LOGGER "检查环境变量 [$1] ... 正常"
+			return 0
 		else
 			ECHO r "检查环境变量 [$1] ... 错误"
+			return 1
 		fi
 		shift
 	done
@@ -171,7 +172,6 @@ function CHECK_PKG() {
 	local Result="$(command -v $1 2> /dev/null)"
 	if [[ ${Result} && $? == 0 ]]
 	then
-		LOGGER "检查软件包: [$1] ... 正常"
 		echo true
 		return 0
 	else
@@ -292,11 +292,12 @@ function EDIT_VARIABLE() {
 }
 
 function LOAD_VARIABLE() {
+	CHECK_DEPENDS -f ${PKG_DEPENDS[@]}
 	for i in ${ENV_DEPENDS[@]};do
 		local if_ENV="$(GET_VARIABLE ${i} $1)"
 		if [[ ! ${if_ENV} ]]
 		then
-			ECHO r "无法获取环境变量: ${i}"
+			ECHO r "未检测到环境变量: ${i}"
 		fi
 		eval ${i}="${if_ENV}" 2> /dev/null
 	done
@@ -381,7 +382,7 @@ function UPDATE_SCRIPT() {
 		}
 	fi
 	ECHO "脚本保存路径: [$1]"
-	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DOWNLOADERS} --url $2 --path ${Tmp_Path} --timeout 5 --type 脚本
+	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DL_DEPENDS[@]} --url $2 --path ${Tmp_Path} --timeout 5 --type 脚本
 	if [[ $? == 0 && -s ${Tmp_Path}/AutoUpdate.sh ]];then
 		chmod +x ${Tmp_Path}/AutoUpdate.sh
 		Script_Version="$(awk -F '=' '/Version/{print $2}' ${Tmp_Path}/AutoUpdate.sh | awk 'NR==1')"
@@ -403,22 +404,30 @@ function UPDATE_SCRIPT() {
 }
 
 function CHECK_DEPENDS() {
-	TITLE
-	local PKG
-	printf "\n%-28s %-5s\n" 软件包 检测结果
-	while [[ $1 ]];do
-		if [[ $1 =~ : ]];then
-			if [[ $(echo $1 | cut -d : -f1) == ${TARGET_BOARD} ]]
-			then
-				PKG="$(echo $1 | cut -d : -f2)"
-				printf "%-25s %-5s\n" ${PKG} $(CHECK_PKG ${PKG})
-			fi
-		else
-			printf "%-25s %-5s\n" $1 $(CHECK_PKG $1)
-		fi
+	case $1 in
+	-e)
 		shift
-	done
-	ECHO y "AutoUpdate 运行环境检测结束,请尝试手动安装测结果为 [false] 的软件包!"
+		TITLE
+		printf "\n%-28s %-5s\n" 软件包 检测结果
+		while [[ $1 ]];do
+			printf "%-25s %-5s\n" $1 $(CHECK_PKG $1)
+			shift
+		done
+		ECHO y "AutoUpdate 运行环境检测结束,请尝试手动安装测结果为 [false] 的软件包!"
+	;;
+	-f)
+		shift
+		while [[ $1 ]];do
+			CHECK_PKG $1 > /dev/null 2>&1
+			if [[ $? != 0 ]]
+			then
+				ECHO r "未安装软件包: $1"
+				EXIT 1
+			fi
+			shift
+		done
+	;;
+	esac
 }
 
 function CHECK_TIME() {
@@ -440,13 +449,14 @@ function ANALYZE_API() {
 	local API_Cache=${Tmp_Path}/API_Cache
 	if [[ $(CHECK_TIME ${API_File} 1) == false ]]
 	then
-		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 5
+		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DL_DEPENDS[@]} --url "$(URL_X ${Github_Release}/API G@@1 F@@1) ${Github_API}@@1 " --no-url-name --timeout 5
 		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
 			ECHO r "Github API 请求错误,请检查网络后再试!"
 			EXIT 2
 		}
 	fi
-	RM ${API_File} && touch -a ${API_File}
+	[[ -f ${API_File} ]] && RM ${API_File}
+	touch -a ${API_File}
 	LOGGER "开始解析 Github API ..."
 	for i in $(seq 0 $(jq ".assets | length" ${API_Cache} 2> /dev/null));do
 		eval name=$(jq ".assets[${i}].name" ${API_Cache} 2> /dev/null)
@@ -475,9 +485,9 @@ function ANALYZE_API() {
 	if [[ ! $(cat ${API_File} 2> /dev/null) ]]
 	then
 		ECHO r "Github API 解析内容为空!"
-		return 1
+		EXIT 1
 	else
-		LOGGER "Github API 解析结束!"
+		LOGGER "Github API 解析成功!"
 		return 0
 	fi
 }
@@ -500,7 +510,7 @@ function GET_CLOUD_LOG() {
 	;;
 	esac
 	[[ $(CHECK_TIME ${Tmp_Path}/Update_Logs.json 1) == false ]] && {
-		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DOWNLOADERS} --url "$(URL_X ${Github_Release} G@@1)" --timeout 5
+		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DL_DEPENDS[@]} --url "$(URL_X ${Github_Release} G@@1)" --timeout 5
 	}
 	[[ ! -s ${Tmp_Path}/Update_Logs.json ]] && return 1
 	log_Test="$(jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null)"
@@ -517,8 +527,8 @@ function GET_CLOUD_LOG() {
 function GET_FW_INFO() {
 	local Info Type Result
 	[[ ! -s ${API_File} ]] && {
-		LOGGER "[GET_FW_INFO] 未检测到 API 文件!"
-		return 1
+		ECHO r "未检测到 API 文件!"
+		EXIT 1
 	}
 	if [[ $1 == "-a" ]];then
 		Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | uniq)
@@ -575,8 +585,8 @@ function UPGRADE() {
 			Special_Commands="${Special_Commands} [镜像加速 ${Proxy_Type}]"
 		;;
 		-D)
-			DOWNLOADERS="$2"
-			Special_Commands="${Special_Commands} [$1 ${DOWNLOADERS}]"
+			DL_DEPENDS=($2)
+			Special_Commands="${Special_Commands} [$1 ${DL_DEPENDS[@]}]"
 			shift
 		;;
 		-F | --force-flash)
@@ -706,7 +716,7 @@ $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 		URL="$(URL_X ${CLOUD_FW_Url} X@@2 G@@2 F@@1)"
 	;;
 	esac
-	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DOWNLOADERS} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
+	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
 	[[ ! -s ${Firmware_Path}/${CLOUD_FW_Name} || $? != 0 ]] && {
 		ECHO r "固件下载失败,请检查网络后再试!"
 		EXIT 1
@@ -772,7 +782,7 @@ function DOWNLOADER() {
 			shift
 			while [[ $1 ]];do	
 				case "$1" in
-				*wget-ssl* | *curl | *uclient-fetch)
+				wget* | curl | uclient-fetch)
 					[[ $(CHECK_PKG $1) == true ]] && {
 						DL_Downloader="$1"
 						break
@@ -867,14 +877,14 @@ function DOWNLOADER() {
 		esac
 	done
 	case "${DL_Downloader}" in
-	*wget*)
-		DL_Template="$(command -v wget) --quiet --no-check-certificate -x -4 --tries 1 --timeout 10 -O"
+	wget*)
+		DL_Template="${DL_Downloader} --quiet --no-check-certificate -x -4 --tries 1 --timeout 10 -O"
 	;;
-	*curl)
-		DL_Template="$(command -v curl) --silent --insecure -L -k --connect-timeout 10 --retry 1 -o"
+	curl)
+		DL_Template="${DL_Downloader} --silent --insecure -L -k --connect-timeout 10 --retry 1 -o"
 	;;
-	*uclient-fetch)
-		DL_Template="$(command -v uclient-fetch) --quiet --no-check-certificate -4 --timeout 10 -O"
+	uclient-fetch)
+		DL_Template="${DL_Downloader} --quiet --no-check-certificate -4 --timeout 10 -O"
 	;;
 	esac
 	[[ ${Test_Mode} == 1  || ${Verbose_Mode} == 1 ]] && {
@@ -1074,8 +1084,8 @@ function AutoUpdate_Main() {
 		;;
 		-D)
 			case "${Input[$((${E} + 1))]}" in
-			wget | curl | wget-ssl | uclient-fetch)
-				DOWNLOADERS=${Input[$((${E} + 1))]}
+			wget* | curl | uclient-fetch)
+				DL_DEPENDS=(${Input[$((${E} + 1))]})
 			;;
 			*)
 				ECHO r "暂不支持当前下载器: [${Input[$((${E} + 1))]}]"
@@ -1131,7 +1141,7 @@ function AutoUpdate_Main() {
 		;;
 		--chk)
 			shift
-			CHECK_DEPENDS bash uclient-fetch curl wget wget-ssl jq expr sysupgrade
+			CHECK_DEPENDS -e ${PKG_DEPENDS[@]} ${DL_DEPENDS[@]}
 			[[ $(NETWORK_CHECK www.baidu.com 2) == false ]] && {
 				ECHO r "网络连接错误!"
 			}
@@ -1200,7 +1210,7 @@ function AutoUpdate_Main() {
 			case "$1" in
 			[Cc]loud)
 				Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh G@@1)"
-				DOWNLOADER --dl ${DOWNLOADERS} --url ${Script_URL} --path /tmp --print --type 脚本 | egrep -o "V[0-9].+"
+				DOWNLOADER --dl ${DL_DEPENDS[@]} --url ${Script_URL} --path /tmp --print --type 脚本 | egrep -o "V[0-9].+"
 			;;
 			*)
 				SHELL_HELP
@@ -1275,7 +1285,17 @@ ENV_DEPENDS=(
 	OP_BRANCH
 	OP_REPO
 )
-DOWNLOADERS="$(command -v wget-ssl) $(command -v curl) $(command -v wget) $(command -v uclient-fetch)"
+PKG_DEPENDS=(
+	jq
+	expr
+	sysupgrade
+)
+DL_DEPENDS=(
+	wget-ssl
+	curl
+	wget
+	uclient-fetch
+)
 REGEX_Skip_Format=".vdi|.vhdx|.vmdk|kernel|rootfs|factory"
 
 White="\e[0m"
