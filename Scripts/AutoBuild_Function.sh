@@ -61,7 +61,7 @@ Firmware_Diy_Before() {
 		;;
 		esac
 	}
-	if [[ ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
+	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
 	then
 		FLAG="-FLAG"
 	else
