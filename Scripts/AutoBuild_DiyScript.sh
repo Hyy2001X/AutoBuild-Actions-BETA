@@ -60,12 +60,6 @@ Firmware_Diy() {
 			AddPackage git other luci-app-usb3disable rufengsuixing master
 		;;
 		x86_64)
-			cat >> ${Version_File} <<EOF
-
-sed -i 's#mirrors.cloud.tencent.com/lede#downloads.immortalwrt.cnsztl.eu.org#g' /etc/opkg/distfeeds.conf
-sed -i 's#18.06.9/##g' /etc/opkg/distfeeds.conf
-sed -i 's#releases/#snapshots/#g' /etc/opkg/distfeeds.conf
-EOF
 			AddPackage git other openwrt-passwall xiaorouji main
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master

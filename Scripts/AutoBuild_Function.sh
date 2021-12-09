@@ -61,12 +61,19 @@ Firmware_Diy_Before() {
 		;;
 		esac
 	}
+	if [[ ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
+	then
+		FLAG="-FLAG"
+	else
+		unset FLAG
+		echo "Tempoary_FLAG=\"\"" >> ${GITHUB_ENV}
+	fi
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-SHA256.FORMAT"
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT${FLAG}-SHA256.FORMAT"
 	;;
 	*)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-SHA256.FORMAT"
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}${FLAG}-SHA256.FORMAT"
 	;;
 	esac
 
@@ -117,8 +124,7 @@ EOF
 Author=${Author}
 Github=${Github}
 TARGET_PROFILE=${TARGET_PROFILE}
-TARGET_BOARD=${TARGET_BOARD}
-TARGET_SUBTARGET=${TARGET_SUBTARGET}
+TARGET_FLAG=${Tempoary_FLAG}
 OP_VERSION=${OP_VERSION}
 OP_AUTHOR=${OP_AUTHOR}
 OP_REPO=${OP_REPO}
@@ -151,9 +157,6 @@ EOF
 			cat >> ${Version_File} <<EOF
 
 sed -i '/check_signature/d' /etc/opkg.conf
-# sed -i 's#mirrors.cloud.tencent.com/lede#downloads.immortalwrt.cnsztl.eu.org#g' /etc/opkg/distfeeds.conf
-# sed -i 's#18.06.9/##g' /etc/opkg/distfeeds.conf
-# sed -i 's#releases/#snapshots/#g' /etc/opkg/distfeeds.conf
 
 sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/aliyundrive-webdav.lua
 sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aliyundrive-webdav/aliyundrive-webdav_log.htm
@@ -333,6 +336,7 @@ Process_Firmware_Core() {
 		esac
 		AutoBuild_Firmware=${AutoBuild_Firmware/SHA256/$(Get_SHA256 $1)}
 		AutoBuild_Firmware=${AutoBuild_Firmware/FORMAT/${Firmware_Format_Defined}}
+		[[ -n ${Tempoary_FLAG} ]] && AutoBuild_Firmware=${AutoBuild_Firmware/FLAG/${Tempoary_FLAG}}
 		[[ -f $1 ]] && {
 			ECHO "Copying [$1] to [${AutoBuild_Firmware}] ..."
 			cp -a $1 ${AutoBuild_Firmware}
