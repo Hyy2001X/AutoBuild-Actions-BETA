@@ -66,7 +66,6 @@ Firmware_Diy_Before() {
 		FLAG="-FLAG"
 	else
 		unset FLAG
-		echo "Tempoary_FLAG=\"\"" >> ${GITHUB_ENV}
 	fi
 	case "${TARGET_BOARD}" in
 	x86)
@@ -336,7 +335,7 @@ Process_Firmware_Core() {
 		esac
 		AutoBuild_Firmware=${AutoBuild_Firmware/SHA256/$(Get_SHA256 $1)}
 		AutoBuild_Firmware=${AutoBuild_Firmware/FORMAT/${Firmware_Format_Defined}}
-		[[ -n ${Tempoary_FLAG} ]] && AutoBuild_Firmware=${AutoBuild_Firmware/FLAG/${Tempoary_FLAG}}
+		[[ -n ${TARGET_FLAG} ]] && AutoBuild_Firmware=${AutoBuild_Firmware/FLAG/${TARGET_FLAG}}
 		[[ -f $1 ]] && {
 			ECHO "Copying [$1] to [${AutoBuild_Firmware}] ..."
 			cp -a $1 ${AutoBuild_Firmware}
