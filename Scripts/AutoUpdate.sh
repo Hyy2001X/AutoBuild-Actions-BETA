@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.8.1
+Version=V6.8.2
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -36,6 +36,8 @@ function SHELL_HELP() {
 	-B, --boot-mode <TYPE>		指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI BIOS)
 	-C <Github URL>			更改 Github 地址为提供的 <Github URL>
 	--api				打印 Github API 内容
+	--flag <FLAG>			更改固件名称后缀为提供的 <FLAG>
+	--flag reset			恢复默认的固件名称后缀
 	--help				打印 AutoUpdate 帮助信息
 	--log < | del>			<打印 | 删除> AutoUpdate 历史运行日志
 	--log --path <PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
@@ -45,7 +47,6 @@ function SHELL_HELP() {
 	--chk				检查 AutoUpdate 运行环境
 	--clean				清理 AutoUpdate 缓存
 	--fw-log < | *>			打印 <当前 | 指定> 版本的固件更新日志
-	--fw-list			打印所有云端固件名称
 	--list				打印当前系统信息
 	--var <VARIABLE>		打印用户指定的环境变量 <VARIABLE>
 	--verbose			打印详细下载信息 *
@@ -313,6 +314,12 @@ function LOAD_VARIABLE() {
 	[[ ! ${TARGET_PROFILE} ]] && eval TARGET_PROFILE="$(jq .model.id /etc/board.json 2> /dev/null)"
 	[[ ! ${TARGET_PROFILE} || ${TARGET_PROFILE} == null ]] && ECHO r "当前设备名称获取失败!" && EXIT 1
 	[[ ! ${OP_VERSION} ]] && OP_VERSION="未知"
+	if [[ $(LIST_ENV 1) =~ TARGET_FLAG ]]
+	then
+		[[ -z ${TARGET_FLAG} ]] && TARGET_FLAG="Full"
+	else
+		unset TARGET_FLAG
+	fi
 	DISTRIB_TARGET="$(GET_VARIABLE DISTRIB_TARGET /etc/openwrt_release)"
 	TARGET_BOARD="$(echo ${DISTRIB_TARGET} | cut -d '/' -f1)"
 	TARGET_SUBTARGET="$(echo ${DISTRIB_TARGET} | cut -d '/' -f2)"
@@ -370,6 +377,29 @@ function CHANGE_BOOT() {
 	*)
 		ECHO r "错误的参数: [$1],当前支持的选项: [UEFI/BIOS]"
 		EXIT 1
+	;;
+	esac
+}
+
+function CHANGE_FLAG() {
+	case $1 in
+	reset)
+		EDIT_VARIABLE rm ${Custom_Variable} TARGET_FLAG
+		ECHO y "固件名称后缀已恢复为默认!"
+		ECHO y "当前固件名称后缀: [$(GET_VARIABLE TARGET_FLAG ${Default_Variable})]"
+		EXIT 0
+	;;
+	*)
+		if [[ ! $1 =~ (\"|=|-|_|\.|\#|\|) && $1 =~ [a-zA-Z0-9] ]]
+		then
+			EDIT_VARIABLE edit ${Custom_Variable} TARGET_FLAG $1
+			ECHO r "警告: 修改此设置后更新固件后可能导致无法检测到更新!"
+			ECHO y "固件名称后缀已指定为: [$1]"
+			EXIT 0
+		else
+			ECHO r "错误的参数: [$1], 当前仅支持 [a-zA-Z0-9] 且不能包含 <\" = - _ # |> 等特殊字符!"
+			EXIT 1
+		fi
 	;;
 	esac
 }
@@ -492,6 +522,34 @@ function ANALYZE_API() {
 	fi
 }
 
+function GET_FW_INFO() {
+	local Info Type Result
+	[[ ! -s ${API_File} ]] && {
+		ECHO r "未检测到 API 文件!"
+		EXIT 1
+	}
+	Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | grep "${TARGET_FLAG}" | awk 'BEGIN {MAX = 0} {if ($6+0 > MAX+0) {MAX=$6 ;content=$0} } END {print content}')
+	Result="$(echo "${Info}" | awk '{print $"'${1}'"}' 2> /dev/null)"
+	case $1 in
+	1) Type="固件名称";;
+	2) Type="固件格式";;
+	3) Type="下载次数";;
+	4) Type="校验信息";;
+	5) Type="固件版本";;
+	6) Type="发布日期";;
+	7) Type="固件体积";;
+	8) Type="固件链接";;
+	*) Type="未定义信息";;
+	esac
+	[[ ! ${Result} == "-" ]] && {
+		LOGGER "${Type}: ${Result}"
+		echo -e "${Result}"
+	} || {
+		LOGGER "${Type}获取失败!"
+		return 1
+	}
+}
+
 function GET_CLOUD_LOG() {
 	local Version log_Test
 	[[ ! $(cat ${API_File} 2> /dev/null) =~ Update_Logs.json ]] && {
@@ -522,39 +580,6 @@ function GET_CLOUD_LOG() {
 	else
 		LOGGER "未获取到 [${Version}] 固件的日志信息!"
 	fi
-}
-
-function GET_FW_INFO() {
-	local Info Type Result
-	[[ ! -s ${API_File} ]] && {
-		ECHO r "未检测到 API 文件!"
-		EXIT 1
-	}
-	if [[ $1 == "-a" ]];then
-		Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | uniq)
-		shift
-	else
-		Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | awk 'BEGIN {MAX = 0} {if ($6+0 > MAX+0) {MAX=$6 ;content=$0} } END {print content}')
-	fi
-	Result="$(echo "${Info}" | awk '{print $"'${1}'"}' 2> /dev/null)"
-	case $1 in
-	1) Type="固件名称";;
-	2) Type="固件格式";;
-	3) Type="下载次数";;
-	4) Type="校验信息";;
-	5) Type="固件版本";;
-	6) Type="发布日期";;
-	7) Type="固件体积";;
-	8) Type="固件链接";;
-	*) Type="未定义信息";;
-	esac
-	[[ ! ${Result} == "-" ]] && {
-		LOGGER "获取${Type}: ${Result}"
-		echo -e "${Result}"
-	} || {
-		LOGGER "[GET_FW_INFO] ${Type}获取失败!"
-		return 1
-	}
 }
 
 function UPGRADE() {
@@ -1153,15 +1178,20 @@ function AutoUpdate_Main() {
 		;;
 		--env-list)
 			shift
-			[[ ! $* ]] && LIST_ENV 0 && EXIT 0
 			case "$1" in
 			1 | 2)
 				LIST_ENV $1
 			;;
 			*)
-				SHELL_HELP
+				LIST_ENV 0
 			;;
 			esac
+			EXIT
+		;;
+		--flag)
+			shift
+			[[ -z $* ]] && SHELL_HELP
+			CHANGE_FLAG $1
 			EXIT
 		;;
 		-V)
@@ -1248,11 +1278,6 @@ function AutoUpdate_Main() {
 		--log)
 			shift
 			LOG $*
-			EXIT
-		;;
-		--fw-list)
-			ANALYZE_API
-			GET_FW_INFO -a 1
 			EXIT
 		;;
 		*)

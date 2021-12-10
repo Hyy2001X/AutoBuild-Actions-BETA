@@ -97,6 +97,8 @@ jobs:
         then
             echo "FLAG: [${{ github.event.inputs.Tempoary_FLAG }}]"
             echo "Tempoary_FLAG=${{ github.event.inputs.Tempoary_FLAG }}" >> $GITHUB_ENV
+        else
+            echo "env Tempoary_FLAG is not detected !"
         fi
         REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
         REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)

@@ -61,12 +61,20 @@ Firmware_Diy_Before() {
 		;;
 		esac
 	}
+	if [[ ${Default_FLAG} == AUTO ]]
+	then
+		TARGET_FLAG="$(echo ${CONFIG_FILE} | sed -r 's/'${TARGET_PROFILE}'-/\1/')"
+		[[ ${TARGET_FLAG} =~ ${TARGET_PROFILE} || -z ${TARGET_FLAG} ]] && TARGET_FLAG=Full
+	else
+		if [[ ! ${Default_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Default_FLAG} =~ [a-zA-Z0-9] ]]
+			TARGET_FLAG="${Default_FLAG}"
+		fi
+	fi
+	_FLAG="${TARGET_FLAG}"
 	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
 	then
 		TARGET_FLAG="${Tempoary_FLAG}"
 		_FLAG="${Tempoary_FLAG}"
-	else
-		unset TARGET_FLAG
 	fi
 	case "${TARGET_BOARD}" in
 	x86)
