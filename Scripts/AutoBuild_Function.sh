@@ -71,18 +71,16 @@ Firmware_Diy_Before() {
 			TARGET_FLAG="${Default_FLAG}"
 		fi
 	fi
-	_FLAG="${TARGET_FLAG}"
 	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
 	then
 		TARGET_FLAG="${Tempoary_FLAG}"
-		_FLAG="${Tempoary_FLAG}"
 	fi
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT${_FLAG}-SHA256.FORMAT"
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-${TARGET_FLAG}-SHA256.FORMAT"
 	;;
 	*)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}${_FLAG}-SHA256.FORMAT"
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-${TARGET_FLAG}-SHA256.FORMAT"
 	;;
 	esac
 	unset _FLAG
