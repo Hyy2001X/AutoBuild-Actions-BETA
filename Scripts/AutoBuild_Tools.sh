@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.7.9
+Version=V1.8
 
 ECHO() {
 	case $1 in
@@ -254,7 +254,7 @@ USB_Info() {
 			[[ -z ${Logic_Available} ]] && Logic_Available='-'
 			echo "${Disk_Name}	${UUID}	${Logic_Format}	${Logic_Mount}	${Logic_Available}" >> ${Disk_Processed_List}
 		done
-		egrep -v "sd[a-z][0-9]|mmcblk[0-9][a-z][0-9]|nvme[0-9][a-z].+" ${Logic_Disk_List} | sort | uniq > ${Phy_Disk_List}
+		lsblk | grep disk | awk '{print "/dev/"$1}' | sort | uniq > ${Phy_Disk_List}
 	}
 	echo -ne "\r                             \r"
 	return
@@ -535,47 +535,53 @@ SmartInfo_UI() {
 SmartInfo_Core() {
 	Smart_Info1="${Tools_Cache}/Smart_Info1"
 	Smart_Info2="${Tools_Cache}/Smart_Info2"
+	Smart_Info3="${Tools_Cache}/Smart_Info3"
+	rm -f ${Smart_Info1} ${Smart_Info2} ${Smart_Info3}
 	smartctl -H -A -i $1 > ${Smart_Info1}
 	smartctl -H -A -i -d scsi $1 > ${Smart_Info2}
-	if [[ ! $(smartctl -H $1) =~ Unknown ]];then
-		[[ $(smartctl -H $1) =~ PASSED ]] && Phy_Health=PASSED || Phy_Health=Failure
-	else
-		Phy_Health=$(GET_INFO "SMART Health Status:" ${Smart_Info2})
+	smartctl -H -A -i -d sat $1 > ${Smart_Info3}
+	Phy_Health=$(GET_INFO "SMART Health Status:")
+	if [[ -z ${Phy_Health} ]]
+	then
+		Phy_Health=$(GET_INFO "SMART overall-health self-assessment test result:")
 	fi
-	Phy_Name=$(GET_INFO "Device Model:" ${Smart_Info1})
-	Phy_ID=$(GET_INFO "Serial number:" ${Smart_Info2})
-	Phy_Capacity=$(GET_INFO "User Capacity:" ${Smart_Info2})
+	Phy_Name=$(GET_INFO "Device Model:")
+	Phy_Temp=$(grep "Temperature_Celsius" ${Smart_Info3} | awk '{print $10}')
+	[[ -z ${Phy_Temp} ]] && Phy_Temp="未知"
+	Phy_ID=$(GET_INFO "Serial number:")
+	Phy_Capacity=$(GET_INFO "User Capacity:")
 	Phy_Part_Number=$(grep -c "${Phy_Disk}" ${Disk_Processed_List})
-	Phy_Factor=$(GET_INFO "Form Factor:" ${Smart_Info2})
+	Phy_Factor=$(GET_INFO "Form Factor:")
 	[[ -z ${Phy_Factor} ]] && Phy_Factor="未知"
-	Phy_Sata_Version=$(GET_INFO "SATA Version is:" ${Smart_Info1})
+	Phy_Sata_Version=$(GET_INFO "SATA Version is:")
 	[[ -z ${Phy_Sata_Version} ]] && Phy_Sata_Version="未知"
-	TRIM_Command=$(GET_INFO "TRIM Command:" ${Smart_Info1})
+	TRIM_Command=$(GET_INFO "TRIM Command:")
 	[[ -z ${TRIM_Command} ]] && TRIM_Command="不可用"
-	Power_On=$(grep "Power_On" ${Smart_Info1} | awk '{print $NF}')
-	Power_Cycle_Count=$(grep "Power_Cycle_Count" ${Smart_Info1} | awk '{print $NF}')
-	[[ -z ${Power_On} ]] && {
+	Power_On=$(grep "Power_On_Hours" ${Smart_Info3} | awk '{print $10}')
+	Power_Cycle_Count=$(grep "Power_Cycle_Count" ${Smart_Info3} | awk '{print $10}')
+	if [[ -z ${Power_On} ]]
+	then
 		Power_Status="未知"
-	} || {
+	else
 		Power_Status="${Power_On} 小时 / ${Power_Cycle_Count} 次"
-	}
-	if [[ $(GET_INFO "Rotation Rate:" ${Smart_Info2}) =~ "Solid State" ]];then
+	fi
+	if [[ $(GET_INFO "Rotation Rate:") =~ "Solid State" ]];then
 		Phy_Type="固态硬盘"
 		Phy_RPM="不可用"
 	else
 		Phy_Type="其他"
-		if [[ $(GET_INFO "Rotation Rate:" ${Smart_Info2}) =~ rpm ]];then
-			Phy_RPM=$(GET_INFO "Rotation Rate:" ${Smart_Info2})
+		if [[ $(GET_INFO "Rotation Rate:") =~ rpm ]];then
+			Phy_RPM=$(GET_INFO "Rotation Rate:")
 			Phy_Type="机械硬盘"
 		else
 			Phy_RPM="未知"
 		fi
 	fi
 	[[ -z ${Phy_Name} ]] && {
-		Phy_Name=$(GET_INFO Vendor: ${Smart_Info2})$(GET_INFO Product: ${Smart_Info2})
+		Phy_Name=$(GET_INFO "Vendor:")$(GET_INFO "Product:")
 	}
-	Phy_LB=$(GET_INFO "Logical block size:" ${Smart_Info2})
-	Phy_PB=$(GET_INFO "Physical block size:" ${Smart_Info2})
+	Phy_LB=$(GET_INFO "Logical block size:")
+	Phy_PB=$(GET_INFO "Physical block size:")
 	if [[ -n ${Phy_PB} ]];then
 		Phy_BS="${Phy_LB} / ${Phy_PB}"
 	else
@@ -584,19 +590,21 @@ SmartInfo_Core() {
 	cat <<EOF
 
 	硬盘型号: ${Phy_Name}
+	硬盘温度: ${Phy_Temp}
+	硬盘路径: $1
 	硬盘尺寸: ${Phy_Factor}
 	硬盘 ID : ${Phy_ID}
 	硬盘容量: ${Phy_Capacity}
 	健康状况: ${Phy_Health}
 	分区数量: ${Phy_Part_Number}
-	SATA 版本: ${Phy_Sata_Version}
-	TRIM 指令: ${TRIM_Command}
+	SATA版本: ${Phy_Sata_Version}
+	TRIM指令: ${TRIM_Command}
 	硬盘类型: ${Phy_Type}
 	硬盘转速: ${Phy_RPM}
 	扇区大小: ${Phy_BS}
 	通电情况: ${Power_Status}
 
-========================================================
+===========================================================
 
 EOF
 }
@@ -668,7 +676,12 @@ GET_IP() {
 }
 
 GET_INFO() {
-	grep "$1" $2 | sed "s/^[$1]*//g" 2> /dev/null | sed 's/^[ \t]*//g' 2> /dev/null
+	for i in ${Smart_Info1} ${Smart_Info2} ${Smart_Info3};do
+		_Result="$(grep "$1" ${i} 2> /dev/null | cut -d ':' -f2-10)"
+		Result=$(eval echo "\${_Result}")
+		[[ -n ${Result} ]] && break
+	done
+	echo ${Result}
 }
 
 CHECK_PKG() {
