@@ -27,16 +27,18 @@ Firmware_Diy() {
 	# ${OP_AUTHOR}			OpenWrt 源码作者
 	# ${OP_REPO}			OpenWrt 仓库名称
 	# ${OP_BRANCH}			OpenWrt 源码分支
-	# ${TARGET_PROFILE}		设备名称, 例如: d-team_newifi-d2
-	# ${TARGET_BOARD}		设备架构, 例如: ramips
+	# ${TARGET_PROFILE}		设备名称
+	# ${TARGET_BOARD}		设备架构
+	# ${TARGET_FLAG}		固件名称后缀
 
 	# ${Home}				OpenWrt 源码位置
-	# ${FEEDS_CONF}			[feeds.conf.default] 文件
+	# ${CONFIG_FILE}		使用的配置文件名称
+	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
 	# ${CustomFiles}		仓库中的 /CustomFiles 绝对路径
 	# ${Scripts}			仓库中的 /Scripts 绝对路径
-	# ${FEEDS_LUCI}			OpenWrt 源码目录下的 package/feeds/luci
-	# ${FEEDS_PKG}			OpenWrt 源码目录下的 package/feeds/packages
-	# ${BASE_FILES}			俗称替换大法的路径, 位于 package/base-files/files
+	# ${FEEDS_LUCI}			OpenWrt 源码目录下的 package/feeds/luci 目录
+	# ${FEEDS_PKG}			OpenWrt 源码目录下的 package/feeds/packages 目录
+	# ${BASE_FILES}			OpenWrt 源码目录下的 package/base-files/files 目录
 
 	case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)
@@ -48,6 +50,7 @@ Firmware_Diy() {
 		AddPackage svn other luci-app-socat Lienol/openwrt-package/trunk
 		AddPackage svn other luci-app-eqos kenzok8/openwrt-packages/trunk
 		AddPackage git other OpenClash vernesong master
+		AddPackage git other luci-app-usb3disable rufengsuixing master
 		# AddPackage git other OpenAppFilter destan19 master
 		# AddPackage svn other luci-app-ddnsto linkease/nas-packages/trunk/luci
 		# AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
@@ -57,7 +60,6 @@ Firmware_Diy() {
 			patch -i ${CustomFiles}/${TARGET_PROFILE}_mac80211.patch package/kernel/mac80211/files/lib/wifi/mac80211.sh
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
-			AddPackage git other luci-app-usb3disable rufengsuixing master
 		;;
 		x86_64)
 			AddPackage git other openwrt-passwall xiaorouji main
