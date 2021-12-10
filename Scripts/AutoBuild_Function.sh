@@ -63,19 +63,20 @@ Firmware_Diy_Before() {
 	}
 	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
 	then
-		FLAG="-${Tempoary_FLAG}"
+		TARGET_FLAG="${Tempoary_FLAG}"
+		_FLAG="${Tempoary_FLAG}"
 	else
-		unset FLAG
+		unset TARGET_FLAG
 	fi
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT${FLAG}-SHA256.FORMAT"
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT${_FLAG}-SHA256.FORMAT"
 	;;
 	*)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}${FLAG}-SHA256.FORMAT"
+		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}${_FLAG}-SHA256.FORMAT"
 	;;
 	esac
-
+	unset _FLAG
 	cat >> ${GITHUB_ENV} <<EOF
 Home=${Home}
 CONFIG_TEMP=${CONFIG_TEMP}
@@ -125,7 +126,7 @@ Github=${Github}
 TARGET_PROFILE=${TARGET_PROFILE}
 TARGET_BOARD=${TARGET_BOARD}
 TARGET_SUBTARGET=${TARGET_SUBTARGET}
-TARGET_FLAG=${Tempoary_FLAG}
+TARGET_FLAG=${TARGET_FLAG}
 OP_VERSION=${OP_VERSION}
 OP_AUTHOR=${OP_AUTHOR}
 OP_REPO=${OP_REPO}
@@ -180,19 +181,37 @@ then
 fi
 exit 0
 EOF
-			sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
+			if [[ -n ${TARGET_FLAG} ]]
+			then
+				sed -i "s?${zzz_Default_Version}?${TARGET_FLAG} ${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
+			else
+				sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
+			fi
 			ECHO "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
 			AddPackage git other helloworld fw876 master
 			sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		;;
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/openwrt_release_${OP_AUTHOR} ${BASE_FILES}/etc openwrt_release
-			sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
+			if [[ -n ${TARGET_FLAG} ]]
+			then
+				sed -i "s?ImmortalWrt?ImmortalWrt ${TARGET_FLAG} @ ${Author} [${Display_Date}]?g" ${Version_File}
+			else
+				sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
+			fi
 		;;
 		esac
 		sed -i "s?By?By ${Author}?g" ${CustomFiles}/Depends/banner
 		sed -i "s?Openwrt?Openwrt ${OP_VERSION} / AutoUpdate ${AutoUpdate_Version}?g" ${CustomFiles}/Depends/banner
-		[[ -n ${Banner_Message} ]] && sed -i "s?Powered by AutoBuild-Actions?${Banner_Message}?g" ${CustomFiles}/Depends/banner
+		if [[ -n ${Banner_Message} ]]
+		then
+			if [[ -n ${TARGET_FLAG} ]]
+			then
+				sed -i "s?Powered by AutoBuild-Actions?${Banner_Message} @ ${TARGET_FLAG}?g" ${CustomFiles}/Depends/banner
+			else
+				sed -i "s?Powered by AutoBuild-Actions?${Banner_Message}?g" ${CustomFiles}/Depends/banner
+			fi
+		fi
 		case "${OP_AUTHOR}/${OP_REPO}" in
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/banner ${Home}/$(PKG_Finder d package default-settings)/files openwrt_banner
@@ -326,7 +345,6 @@ Process_Firmware_Core() {
 	Firmware_Format_Defined=$1
 	shift
 	while [[ $1 ]];do
-		AutoBuild_Firmware=$(Get_Variable AutoBuild_Firmware)
 		case "${TARGET_BOARD}" in
 		x86)
 			[[ $1 =~ efi ]] && {
@@ -372,17 +390,6 @@ List_REGEX() {
 
 Get_SHA256() {
 	List_REGEX | grep "$1" | cut -c1-5
-}
-
-Get_Variable() {
-	local Result="$(grep "$1" ${ENV_FILE} | grep -v "#" | awk -F '=' '{print $2}')"
-	if [[ -n ${Result} ]]
-	then
-		eval echo "${Result}"
-		return 0
-	else
-		return 1
-	fi
 }
 
 GET_Branch() {
