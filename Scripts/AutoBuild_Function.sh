@@ -67,6 +67,7 @@ Firmware_Diy_Before() {
 		[[ ${TARGET_FLAG} =~ ${TARGET_PROFILE} || -z ${TARGET_FLAG} ]] && TARGET_FLAG=Full
 	else
 		if [[ ! ${Default_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Default_FLAG} =~ [a-zA-Z0-9] ]]
+		then
 			TARGET_FLAG="${Default_FLAG}"
 		fi
 	fi
