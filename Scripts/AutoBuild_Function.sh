@@ -63,7 +63,7 @@ Firmware_Diy_Before() {
 	}
 	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
 	then
-		FLAG="-FLAG"
+		FLAG="-${Tempoary_FLAG}"
 	else
 		unset FLAG
 	fi
@@ -337,7 +337,6 @@ Process_Firmware_Core() {
 		esac
 		AutoBuild_Firmware=${AutoBuild_Firmware/SHA256/$(Get_SHA256 $1)}
 		AutoBuild_Firmware=${AutoBuild_Firmware/FORMAT/${Firmware_Format_Defined}}
-		[[ -n ${TARGET_FLAG} ]] && AutoBuild_Firmware=${AutoBuild_Firmware/FLAG/${TARGET_FLAG}}
 		[[ -f $1 ]] && {
 			ECHO "Copying [$1] to [${AutoBuild_Firmware}] ..."
 			cp -a $1 ${AutoBuild_Firmware}
