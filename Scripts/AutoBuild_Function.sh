@@ -63,8 +63,8 @@ Firmware_Diy_Before() {
 	}
 	if [[ ${Default_FLAG} == AUTO ]]
 	then
-		TARGET_FLAG=${CONFIG_FILE/${TARGET_PROFILE}/}
-		[[ ${TARGET_FLAG} =~ ${TARGET_PROFILE} || -z ${TARGET_FLAG} ]] && TARGET_FLAG=Full
+		TARGET_FLAG=${CONFIG_FILE/${TARGET_PROFILE}-/}
+		[[ ${TARGET_FLAG} =~ ${TARGET_PROFILE} || -z ${TARGET_FLAG} || ${TARGET_FLAG} == ${CONFIG_FILE} ]] && TARGET_FLAG=Full
 	else
 		if [[ ! ${Default_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Default_FLAG} =~ [a-zA-Z0-9] ]]
 		then
