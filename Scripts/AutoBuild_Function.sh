@@ -352,20 +352,21 @@ Process_Firmware_Core() {
 	Firmware_Format_Defined=$1
 	shift
 	while [[ $1 ]];do
+		Firmware=${AutoBuild_Firmware}
 		case "${TARGET_BOARD}" in
 		x86)
 			[[ $1 =~ efi ]] && {
 				FW_Boot_Method=UEFI
 			} || FW_Boot_Method=BIOS
-			AutoBuild_Firmware=${AutoBuild_Firmware/BOOT/${FW_Boot_Method}}
+			Firmware=${Firmware/BOOT/${FW_Boot_Method}}
 		;;
 		esac
-		AutoBuild_Firmware=${AutoBuild_Firmware/SHA256/$(Get_SHA256 $1)}
-		AutoBuild_Firmware=${AutoBuild_Firmware/FORMAT/${Firmware_Format_Defined}}
+		Firmware=${Firmware/SHA256/$(Get_SHA256 $1)}
+		Firmware=${Firmware/FORMAT/${Firmware_Format_Defined}}
 		[[ -f $1 ]] && {
-			ECHO "Copying [$1] to [${AutoBuild_Firmware}] ..."
-			cp -a $1 ${AutoBuild_Firmware}
-		} || ECHO "Unable to access [${AutoBuild_Firmware}] ..."
+			ECHO "Copying [$1] to [${Firmware}] ..."
+			cp -a $1 ${Firmware}
+		} || ECHO "Unable to access [${Firmware}] ..."
 		shift
 	done
 }
