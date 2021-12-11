@@ -51,13 +51,21 @@ Firmware_Diy_Before() {
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG_TEMP})"
 	[[ -z ${Firmware_Format} || ${Firmware_Format} =~ (false|AUTO) ]] && {
 		case "${TARGET_BOARD}" in
-		ramips | reltek | ath* | ipq*)
+		ramips | reltek | ath* | ipq* | bcm47xx | bmips | kirkwood | mediatek)
 			Firmware_Format=bin
 		;;
-		rockchip | x86)
-			[[ $(cat ${CONFIG_TEMP}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
-				Firmware_Format=img.gz
-			} || Firmware_Format=img
+		rockchip | x86 | bcm27xx | mxs | sunxi | zynq)
+			Firmware_Format=$(if_IMG)
+		;;
+		mvebu)
+			case "${TARGET_SUBTARGET}" in
+			cortexa53 | cortexa72)
+				Firmware_Format=$(if_IMG)
+			;;
+			esac
+		;;
+		octeon | oxnas | pistachio)
+			Firmware_Format=tar
 		;;
 		esac
 	}
@@ -330,7 +338,12 @@ Firmware_Diy_End() {
 		}
 	;;
 	*)
-		Process_Firmware ${Firmware_Format}
+		if [[ -n ${Firmware_Format} ]]
+		then
+			Process_Firmware ${Firmware_Format}
+		else
+			Process_Firmware $(List_Format)
+		fi
 	;;
 	esac
 	[[ $(ls) =~ 'AutoBuild-' ]] && {
@@ -404,6 +417,12 @@ GET_Branch() {
     git -C $(pwd) rev-parse --abbrev-ref HEAD | grep -v HEAD || \
     git -C $(pwd) describe --exact-match HEAD || \
     git -C $(pwd) rev-parse HEAD
+}
+
+if_IMG() {
+	[[ $(cat ${CONFIG_TEMP}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
+		echo img.gz
+	} || echo img
 }
 
 ECHO() {
