@@ -12,10 +12,13 @@ on:
   workflow_dispatch:
     inputs:
       Tempoary_IP:
-        description: '临时修改 IP 地址 [可选]'
+        description: '固件 IP 地址 [可选]'
         default: ''
       Tempoary_CONFIG:
         description: '配置文件 [可选]'
+        default: ''
+      Tempoary_FLAG:
+        description: '固件名称后缀 [可选]'
         default: ''
 ### 结束
 
@@ -87,7 +90,15 @@ jobs:
         fi
         if [ -n "${{ github.event.inputs.Tempoary_IP }}" ]
         then
+            echo "IP: [${{ github.event.inputs.Tempoary_IP }}]"
             echo "Tempoary_IP=${{ github.event.inputs.Tempoary_IP }}" >> $GITHUB_ENV
+        fi
+        if [ -n "${{ github.event.inputs.Tempoary_FLAG }}" ]
+        then
+            echo "FLAG: [${{ github.event.inputs.Tempoary_FLAG }}]"
+            echo "Tempoary_FLAG=${{ github.event.inputs.Tempoary_FLAG }}" >> $GITHUB_ENV
+        else
+            echo "env Tempoary_FLAG is not detected !"
         fi
         REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
         REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
