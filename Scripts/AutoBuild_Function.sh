@@ -51,7 +51,7 @@ Firmware_Diy_Before() {
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG_TEMP})"
 	[[ -z ${Firmware_Format} || ${Firmware_Format} =~ (false|AUTO) ]] && {
 		case "${TARGET_BOARD}" in
-		ramips | reltek | ipq40xx | ath79 | ipq807x)
+		ramips | reltek | ath* | ipq*)
 			Firmware_Format=bin
 		;;
 		rockchip | x86)
@@ -61,6 +61,8 @@ Firmware_Diy_Before() {
 		;;
 		esac
 	}
+	[[ ${Author_URL} != false && ${Author_URL} == AUTO ]] && Author_URL=${Github}
+	[[ ${Author_URL} == false ]] && unset Author_URL
 	if [[ ${Default_FLAG} == AUTO ]]
 	then
 		TARGET_FLAG=${CONFIG_FILE/${TARGET_PROFILE}-/}
@@ -83,7 +85,6 @@ Firmware_Diy_Before() {
 		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-${TARGET_FLAG}-SHA256.FORMAT"
 	;;
 	esac
-	unset _FLAG
 	cat >> ${GITHUB_ENV} <<EOF
 Home=${Home}
 CONFIG_TEMP=${CONFIG_TEMP}
@@ -301,9 +302,8 @@ EOF
 			ECHO "[${OP_AUTHOR}]: Current OP_AUTHOR is not supported !"
 		fi
 	fi
-	if [[ ${Author_URL} != false ]]
+	if [[ -n ${Author_URL} ]]
 	then
-		[[ ${Author_URL} == AUTO ]] && Author_URL=${Github}
 			cat >> ${CONFIG_TEMP} <<EOF
 
 CONFIG_KERNEL_BUILD_USER="${Author}"
