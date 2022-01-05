@@ -301,8 +301,8 @@ CONFIG_PACKAGE_dnsmasq-full=y
 # CONFIG_PACKAGE_wpad-wolfssl is not set
 CONFIG_PACKAGE_wpad-openssl=y
 EOF
-				Copy ${CustomFiles}/Patches/0003-upx-ucl-${OP_BRANCH}.patch ${Home}
-				cat 0003-upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
+				Copy ${CustomFiles}/Patches/fix_upx-ucl-${OP_BRANCH}.patch ${Home}
+				cat fix_upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
 				AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
 				ECHO "Starting to convert zh-cn translation files to zh_Hans ..."
 				cd package && bash ${Scripts}/Convert_Translation.sh && cd -
