@@ -55,6 +55,7 @@ Firmware_Diy() {
 		# AddPackage git other OpenAppFilter destan19 master
 		# AddPackage svn other luci-app-ddnsto linkease/nas-packages/trunk/luci
 		# AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
+		cat ${CustomFiles}/Patches/revert_remove-alterId-config.patch | patch -p1 -d ${Home}/package/other
 
 		case "${TARGET_PROFILE}" in
 		d-team_newifi-d2)
