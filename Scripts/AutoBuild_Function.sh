@@ -263,6 +263,11 @@ EOF
 		done
 		unset X
 	}
+	for X in $(ls -1 target/linux/generic | grep "config-")
+	do
+		sed -i '/CONFIG_FAT_DEFAULT_IOCHARSET/d' target/linux/generic/${X}
+		echo -e '\nCONFIG_FAT_DEFAULT_IOCHARSET="utf8"' >> target/linux/generic/${X}
+	done
 	ECHO "[Firmware_Diy_Main] Done"
 }
 

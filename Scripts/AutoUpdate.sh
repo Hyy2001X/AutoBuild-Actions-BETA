@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.8.2
+Version=V6.8.5
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -36,8 +36,8 @@ function SHELL_HELP() {
 	-B, --boot-mode <TYPE>		指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI BIOS)
 	-C <Github URL>			更改 Github 地址为提供的 <Github URL>
 	--api				打印 Github API 内容
-	--flag <FLAG>			更改固件名称后缀为提供的 <FLAG>
-	--flag reset			恢复默认的固件名称后缀
+	--flag <FLAG>			更改固件标签为提供的 <FLAG>
+	--flag reset			恢复默认的固件标签
 	--help				打印 AutoUpdate 帮助信息
 	--log < | del>			<打印 | 删除> AutoUpdate 历史运行日志
 	--log --path <PATH>		更改 AutoUpdate 运行日志路径为提供的绝对路径 <PATH>
@@ -65,6 +65,7 @@ function SHOW_VARIABLE() {
 
 设备名称:		$(uname -n) / ${TARGET_PROFILE}
 固件版本:		${OP_VERSION}
+固件标签:		${TARGET_FLAG}
 内核版本:		$(uname -r)
 运行内存:		Mem: $(MEMINFO Mem)M | Swap: $(MEMINFO Swap)M | Total: $(MEMINFO All)M
 其他参数:		${TARGET_BOARD} / ${TARGET_SUBTARGET}
@@ -132,7 +133,7 @@ function STRING() {
 	-f)
 		shift
 		[[ ! -r $1 ]] && return
-		cat "$1" 2> /dev/null | egrep -q "$2" 2> /dev/null && echo -n $2
+		egrep -q "$2" $1 2> /dev/null && echo -n $2
 	;;
 	*)
 		echo -n $1 | egrep -q $2 2> /dev/null && echo -n $2
@@ -298,7 +299,7 @@ function LOAD_VARIABLE() {
 		local if_ENV="$(GET_VARIABLE ${i} $1)"
 		if [[ ! ${if_ENV} ]]
 		then
-			ECHO r "未检测到环境变量: ${i}"
+			ECHO r "警告: 未检测到环境变量: ${i}"
 		fi
 		eval ${i}="${if_ENV}" 2> /dev/null
 	done
@@ -340,16 +341,18 @@ function LOAD_VARIABLE() {
 }
 
 function CHANGE_GITHUB() {
-	if [[ ! $1 =~ https://github.com/ ]]
+	if [[ ! $1 =~ https://github.com/ || $# != 1 ]]
 	then
 		ECHO r "Github 地址格式错误,正确地址示例: https://github.com/Hyy2001X/AutoBuild-Actions"
 		EXIT 1
 	fi
-	UCI_Github="$(uci get autoupdate.@common[0].github 2> /dev/null)"
-	[[ ${UCI_Github} && ! ${UCI_Github} == $1 ]] && {
-		uci set autoupdate.@common[0].github="$1" 2> /dev/null
-		LOGGER "UCI 地址已修改为 [$1]"
-	}
+	UCI_Github="$(uci get autoupdate.@autoupdate[0].github 2> /dev/null)"
+	if [[ ${UCI_Github} && ! ${UCI_Github} == $1 ]]
+	then
+		uci set autoupdate.@autoupdate[0].github="$1" 2> /dev/null
+		uci commit autoupdate
+		LOGGER "UCI Github 地址已修改为 [$1]"
+	fi
 	if [[ ! ${Github} == $1 ]]
 	then
 		EDIT_VARIABLE edit ${Custom_Variable} Github $1
@@ -371,7 +374,7 @@ function CHANGE_BOOT() {
 	UEFI | BIOS)
 		EDIT_VARIABLE edit ${Custom_Variable} x86_Boot_Method $1
 		ECHO r "警告: 修改此设置后更新固件后可能导致设备无法启动!"
-		ECHO y "固件引导格式已指定为: [$1]"
+		ECHO y "固件引导格式已修改为: $1"
 		EXIT 0
 	;;
 	*)
@@ -385,16 +388,30 @@ function CHANGE_FLAG() {
 	case $1 in
 	reset)
 		EDIT_VARIABLE rm ${Custom_Variable} TARGET_FLAG
-		ECHO y "固件名称后缀已恢复为默认!"
-		ECHO y "当前固件名称后缀: [$(GET_VARIABLE TARGET_FLAG ${Default_Variable})]"
+		uci set autoupdate.@autoupdate[0].flag="$(GET_VARIABLE TARGET_FLAG ${Default_Variable})" 2> /dev/null
+		uci commit autoupdate
+		ECHO y "固件标签已恢复为默认!"
+		ECHO y "当前固件标签: $(GET_VARIABLE TARGET_FLAG ${Default_Variable})"
 		EXIT 0
 	;;
 	*)
 		if [[ ! $1 =~ (\"|=|-|_|\.|\#|\|) && $1 =~ [a-zA-Z0-9] ]]
 		then
-			EDIT_VARIABLE edit ${Custom_Variable} TARGET_FLAG $1
-			ECHO r "警告: 修改此设置后更新固件后可能导致无法检测到更新!"
-			ECHO y "固件名称后缀已指定为: [$1]"
+			UCI_Flag="$(uci get autoupdate.@autoupdate[0].flag 2> /dev/null)"
+			if [[ ${UCI_Flag} && ! ${UCI_Flag} == $1 ]]
+			then
+				uci set autoupdate.@autoupdate[0].flag="$1" 2> /dev/null
+				uci commit autoupdate
+				LOGGER "UCI 固件标签已修改为: $1"
+			fi
+			if [[ ! ${TARGET_FLAG} == $1 ]]
+			then
+				EDIT_VARIABLE edit ${Custom_Variable} TARGET_FLAG $1
+				ECHO r "警告: 修改此设置后可能导致无法检测到更新!"
+				ECHO y "固件标签已修改为: $1"
+			else
+				ECHO g "固件标签未修改!"
+			fi
 			EXIT 0
 		else
 			ECHO r "错误的参数: [$1], 当前仅支持 [a-zA-Z0-9] 且不能包含 <\" = - _ # |> 等特殊字符!"
@@ -691,6 +708,7 @@ function UPGRADE() {
 ${Grey}### 系统 & 云端固件详情 ###${White}
 
 设备名称: ${TARGET_PROFILE}
+固件标签: ${TARGET_FLAG}
 内核版本: $(uname -sr)
 $([[ ${TARGET_BOARD} == x86 ]] && echo "固件格式: ${CLOUD_FW_Format} / ${x86_Boot_Method}" || echo "固件格式: ${CLOUD_FW_Format}")
 
@@ -1190,7 +1208,7 @@ function AutoUpdate_Main() {
 		;;
 		--flag)
 			shift
-			[[ -z $* ]] && SHELL_HELP
+			[[ -z $* || $# != 1 ]] && SHELL_HELP
 			CHANGE_FLAG $1
 			EXIT
 		;;
@@ -1268,6 +1286,7 @@ function AutoUpdate_Main() {
 		;;
 		-C)
 			shift
+			[[ -z $* || $# != 1 ]] && SHELL_HELP
 			CHANGE_GITHUB $*
 			EXIT
 		;;
@@ -1305,6 +1324,7 @@ ENV_DEPENDS=(
 	Author
 	Github
 	TARGET_PROFILE
+	TARGET_FLAG
 	OP_VERSION
 	OP_AUTHOR
 	OP_BRANCH
