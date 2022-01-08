@@ -1,0 +1,34 @@
+diff -uprN antfs-mount/Makefile antfs-mount1/Makefile
+--- antfs-mount/Makefile
++++ antfs-mount1/Makefile
+@@ -1,7 +1,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ PKG_NAME:=antfs-mount
+-PKG_RELEASE:=1
++PKG_RELEASE:=2
+ 
+ include $(INCLUDE_DIR)/package.mk
+ 
+@@ -22,7 +22,7 @@ endef
+ 
+ define Package/antfs-mount/install
+ 	$(INSTALL_DIR) $(1)/sbin
+-	$(INSTALL_BIN) ./files/mount.ntfs $(1)/sbin
++	$(INSTALL_BIN) ./files/mount.antfs $(1)/sbin
+ endef
+ 
+ $(eval $(call BuildPackage,antfs-mount))
+diff -uprN antfs-mount/files/mount.antfs antfs-mount1/files/mount.antfs
+--- antfs-mount/files/mount.antfs
++++ antfs-mount1/files/mount.antfs
+@@ -0,0 +1,3 @@
++#!/bin/sh
++mount -t antfs "$@" -o rw,noatime,async,nodiratime,relatime
++
+diff -uprN antfs-mount/files/mount.ntfs antfs-mount1/files/mount.ntfs
+--- antfs-mount/files/mount.ntfs
++++ antfs-mount1/files/mount.ntfs
+@@ -1,2 +0,0 @@
+-#!/bin/sh
+-mount -t antfs "$@"
