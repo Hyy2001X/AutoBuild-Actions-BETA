@@ -1,6 +1,5 @@
-diff -uprN helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua helloworld1/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua
---- helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua	2022-01-05 17:40:24.000000000 +0800
-+++ helloworld1/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua	2022-01-05 17:41:24.000000000 +0800
+--- package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua	2022-01-05 17:40:24.000000000 +0800
++++ package/other/helloworld1/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua	2022-01-05 17:41:24.000000000 +0800
 @@ -302,6 +302,13 @@ o:depends("type", "ssr")
  o = s:option(Value, "obfs_param", translate("Obfs param(optional)"))
  o:depends("type", "ssr")
@@ -15,9 +14,9 @@ diff -uprN helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-con
  -- VmessId
  o = s:option(Value, "vmess_id", translate("Vmess/VLESS ID (UUID)"))
  o.rmempty = true
-diff -uprN helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm helloworld1/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm
---- helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm	2022-01-05 17:40:24.000000000 +0800
-+++ helloworld1/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm	2022-01-05 17:41:45.000000000 +0800
+
+--- package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm	2022-01-05 17:40:24.000000000 +0800
++++ package/other/helloworld1/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm	2022-01-05 17:41:45.000000000 +0800
 @@ -242,6 +242,7 @@ function import_ssr_url(btn, urlname, si
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.alias')[0].value = ssm.ps;
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server')[0].value = ssm.add;
@@ -26,9 +25,9 @@ diff -uprN helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm hell
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.vmess_id')[0].value = ssm.id;
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.transport')[0].value = ssm.net;
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.transport')[0].dispatchEvent(event);
-diff -uprN helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua
---- helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua	2022-01-05 17:40:24.000000000 +0800
-+++ helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua	2022-01-05 17:42:14.000000000 +0800
+
+--- package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua	2022-01-05 17:40:24.000000000 +0800
++++ package/other/helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua	2022-01-05 17:42:14.000000000 +0800
 @@ -15,6 +15,7 @@ function vmess_vless()
  				users = {
  					{
@@ -37,9 +36,9 @@ diff -uprN helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.l
  						security = (server.v2ray_protocol == "vmess" or not server.v2ray_protocol) and server.security or nil,
  						encryption = (server.v2ray_protocol == "vless") and server.vless_encryption or nil,
  						flow = (server.xtls == '1') and (server.vless_flow and server.vless_flow or "xtls-rprx-splice") or nil
-diff -uprN helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua
---- helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua	2022-01-05 17:40:24.000000000 +0800
-+++ helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua	2022-01-05 17:42:29.000000000 +0800
+
+--- package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua	2022-01-05 17:40:24.000000000 +0800
++++ package/other/helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua	2022-01-05 17:42:29.000000000 +0800
 @@ -163,6 +163,7 @@ local function processData(szType, conte
  		result.server = info.add
  		result.server_port = info.port

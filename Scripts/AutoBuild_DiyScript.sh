@@ -16,7 +16,6 @@ Firmware_Diy_Core() {
 	REGEX_Skip_Checkout="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory"
 
 	INCLUDE_AutoBuild_Features=true
-	INCLUDE_DRM_I915=true
 	INCLUDE_Original_OpenWrt_Compatible=false
 }
 
@@ -55,7 +54,7 @@ Firmware_Diy() {
 		# AddPackage git other OpenAppFilter destan19 master
 		# AddPackage svn other luci-app-ddnsto linkease/nas-packages/trunk/luci
 		# AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
-		patch < ${CustomFiles}/Patches/revert_remove-alterId-config.patch -p0 -d ${Home}/package/other
+		patch < ${CustomFiles}/Patches/revert_remove-alterId-config.patch -p0 -d ${Home}
 		patch < ${CustomFiles}/Patches/fix_ntfs3_antfs_conflict.patch -p0 -d ${Home}/feeds/packages/utils
 
 		case "${TARGET_PROFILE}" in

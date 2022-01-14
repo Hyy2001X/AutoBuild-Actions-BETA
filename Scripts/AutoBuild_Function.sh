@@ -98,7 +98,6 @@ Home=${Home}
 CONFIG_TEMP=${CONFIG_TEMP}
 INCLUDE_AutoBuild_Features=${INCLUDE_AutoBuild_Features}
 INCLUDE_Original_OpenWrt_Compatible=${INCLUDE_Original_OpenWrt_Compatible}
-INCLUDE_DRM_I915=${INCLUDE_DRM_I915}
 Checkout_Virtual_Images=${Checkout_Virtual_Images}
 AutoBuild_Firmware=${AutoBuild_Firmware}
 CustomFiles=${GITHUB_WORKSPACE}/CustomFiles
@@ -248,20 +247,6 @@ EOF
 			ECHO "Setting default IP Address to ${Default_IP} ..."
 			sed -i "s/${Old_IP}/${Default_IP}/g" ${BASE_FILES}/bin/config_generate
 		fi
-	}
-	[[ ${INCLUDE_DRM_I915} == true && ${TARGET_BOARD} == x86 ]] && {
-		for X in $(ls -1 target/linux/x86 | grep "config-")
-		do
-			cat >> ${Home}/target/linux/x86/${X} <<EOF
-
-CONFIG_64BIT=y
-CONFIG_DRM=y
-CONFIG_DRM_I915=y
-CONFIG_DRM_I915_GVT=y
-CONFIG_DUMMY_CONSOLE=y
-EOF
-		done
-		unset X
 	}
 	for X in $(ls -1 target/linux/generic | grep "config-")
 	do

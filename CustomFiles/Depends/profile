@@ -1,34 +1,30 @@
 Sysinfo() {
-	local TARGET_PROFILE CoreMark TEMP
+	local TARGET_PROFILE TARGET_BOOTABLE TEMP CoreMark
 	TARGET_PROFILE=$(getinf TARGET_PROFILE /rom/etc/AutoBuild/Default_Variable)
 	TARGET_BOARD=$(getinf TARGET_BOARD /rom/etc/AutoBuild/Default_Variable)
 	[ -z "${TARGET_PROFILE}" ] && return 1
 	if [ "${TARGET_BOARD}" == x86 ]
 	then
-		[ -d /sys/firmware/efi ] && TARGET_BOOTABLE="UEFI" || TARGET_BOOTABLE="Legacy"
+		[ -d /sys/firmware/efi ] && TARGET_BOOTABLE="UEFI" || TARGET_BOOTABLE="BIOS"
 	fi
 	[ -f /etc/bench.log ] && CoreMark=$(egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
-	[ -n "$(sensors 2> /dev/null | grep Core)" ] && TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null | awk '{a=$1;b=32+$1*1.8} {printf("%.1f°C %.1f°F\n",a,b)}')
+	[ -n "$(sensors 2> /dev/null | grep Core)" ] && TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null)
 	[ -n "${TARGET_BOOTABLE}" ] && printf "            设备信息:		%-7s ${Div} ${Green}%-12s${White}\n" ${TARGET_PROFILE} ${TARGET_BOOTABLE} || \
-		printf "            设备信息:		${TARGET_PROFILE}\n"
+	printf "            设备信息:		${TARGET_PROFILE}\n"
 	printf "            内核版本:		$(uname -rs | cut -d ' ' -f2)\n"
 	printf "            可用内存:		%-7s ${Div} %s of %s\n" $(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
 	printf "            可用存储:		%-7s ${Div} %s of %s\n" $(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
-	[ -n "${TEMP}" ] && printf "            设备温度:		%-8s ${Div} %s\n" ${TEMP}
-	[ -n "${CoreMark}" ] && printf "            性能得分:		${CoreMark} Scores\n"
+	[ -n "${TEMP}" ] && printf "            设备温度:		${TEMP}°C\n"
+	[ -n "${CoreMark}" ] && printf "            性能得分:		${CoreMark}\n"
 	[ -f /proc/uptime ] && printf "            运行时间: 		$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)\n"
-	[ -n "${SSH_CONNECTION}" ] && printf "            登录用户:		%-7s ${Div} %s\n" ${LOGNAME} $(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')
-	echo -e "${White}"
+	[ -n "${SSH_CONNECTION}" ] && printf "           登录用户:		 %-7s ${Div} %s\n" ${LOGNAME} $(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')
+	printf "${White}\n"
 }
 
 getinf() {
-	local X
-	[ -z "$*" ] && return 1
-	[ ! -f "$2" ] && return 1
-	local X
-	X=$(grep $1 $2 | awk 'END {print}')
-	[ -z "$X" ] && return 1
-	eval echo $X | sed "s/^[$1=]*//g" 2> /dev/null
+	local i=$(grep $1 $2 | awk 'END {print}')
+	[ -z "${i}" ] && return 1
+	eval echo ${i} | sed "s/^[$1=]*//g" 2> /dev/null
 }
 
 White="\e[0m"
@@ -42,13 +38,14 @@ Div="${Grey}|${White}"
 clear
 
 [ -e /tmp/.failsafe ] && export FAILSAFE=1
-[ -f /etc/banner ] && echo -e "$(cat /etc/banner)"
+[ -f /etc/banner ] && printf "$(cat /etc/banner)\n"
 [ -n "$FAILSAFE" ] && cat /etc/banner.failsafe
 
 Sysinfo
 
 fgrep -sq '/ overlay ro,' /proc/mounts && {
-	echo -e "${Red}            警告: 固件空间可能已满,请尝试从 /overlay 中删除一些文件然后重启设备!${White}\n"
+	printf "${Red}警告: 固件可用空间已满,请尝试清理文件或重新刷写固件!
+      相反地,卸载系统自带软件包对空间清理没有任何帮助; 因此,请尝试卸载用户安装的软件包${White}\n\n"
 }
 
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
@@ -85,7 +82,7 @@ alias reload='/etc/profile'
 alias autoupdate='bash /bin/AutoUpdate.sh'
 alias tools='bash /bin/AutoBuild_Tools.sh'
 alias coremarkd='/etc/coremark.sh'
-alias shutdown='sync && poweroff'
+alias shutdown='sync && block umount && poweroff'
 alias ls='ls --color=auto'
 alias l='ls -CF'
 alias ll='ls -alF'
@@ -93,5 +90,3 @@ alias la='ls -A'
 alias cls='clear'
 alias dh='df -h'
 alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'
-
-unset White Red Yellow Green Blue Grey
