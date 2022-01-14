@@ -1,5 +1,5 @@
---- package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua	2022-01-05 17:40:24.000000000 +0800
-+++ package/other/helloworld1/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua	2022-01-05 17:41:24.000000000 +0800
+--- a/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua
 @@ -302,6 +302,13 @@ o:depends("type", "ssr")
  o = s:option(Value, "obfs_param", translate("Obfs param(optional)"))
  o:depends("type", "ssr")
@@ -15,8 +15,8 @@
  o = s:option(Value, "vmess_id", translate("Vmess/VLESS ID (UUID)"))
  o.rmempty = true
 
---- package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm	2022-01-05 17:40:24.000000000 +0800
-+++ package/other/helloworld1/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm	2022-01-05 17:41:45.000000000 +0800
+--- a/package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm
++++ b/package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm
 @@ -242,6 +242,7 @@ function import_ssr_url(btn, urlname, si
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.alias')[0].value = ssm.ps;
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server')[0].value = ssm.add;
@@ -26,8 +26,8 @@
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.transport')[0].value = ssm.net;
  			document.getElementsByName('cbid.shadowsocksr.' + sid + '.transport')[0].dispatchEvent(event);
 
---- package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua	2022-01-05 17:40:24.000000000 +0800
-+++ package/other/helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua	2022-01-05 17:42:14.000000000 +0800
+--- a/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua
 @@ -15,6 +15,7 @@ function vmess_vless()
  				users = {
  					{
@@ -37,8 +37,8 @@
  						encryption = (server.v2ray_protocol == "vless") and server.vless_encryption or nil,
  						flow = (server.xtls == '1') and (server.vless_flow and server.vless_flow or "xtls-rprx-splice") or nil
 
---- package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua	2022-01-05 17:40:24.000000000 +0800
-+++ package/other/helloworld1/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua	2022-01-05 17:42:29.000000000 +0800
+--- a/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua
 @@ -163,6 +163,7 @@ local function processData(szType, conte
  		result.server = info.add
  		result.server_port = info.port
