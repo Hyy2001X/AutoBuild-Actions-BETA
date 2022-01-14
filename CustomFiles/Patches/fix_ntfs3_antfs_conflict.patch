@@ -1,5 +1,5 @@
---- a/feeds/packages/utils/Makefile
-+++ b/feeds/packages/utils/Makefile
+--- a/feeds/packages/utils/antfs-mount/Makefile
++++ b/feeds/packages/utils/antfs-mount/Makefile
 @@ -1,7 +1,7 @@
  include $(TOPDIR)/rules.mk
  
@@ -19,15 +19,15 @@
  
  $(eval $(call BuildPackage,antfs-mount))
 
---- a/feeds/packages/utils/files/mount.antfs
-+++ b/feeds/packages/utils/files/mount.antfs
+--- a/feeds/packages/utils/antfs-mount/files/mount.antfs
++++ b/feeds/packages/utils/antfs-mount/files/mount.antfs
 @@ -0,0 +1,3 @@
 +#!/bin/sh
-+mount -t antfs "$@" -o rw
++mount -t antfs $@ -o rw
 +
 
---- a/feeds/packages/utils/files/mount.ntfs
-+++ b/feeds/packages/utils/files/mount.ntfs
+--- a/feeds/packages/utils/antfs-mount/files/mount.ntfs
++++ b/feeds/packages/utils/antfs-mount/files/mount.ntfs
 @@ -1,2 +0,0 @@
 -#!/bin/sh
 -mount -t antfs "$@"
