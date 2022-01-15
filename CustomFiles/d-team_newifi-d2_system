@@ -12,7 +12,7 @@ config system
 
 config timeserver 'ntp'
 	option enabled '1'
-	option enable_server '1'
+	option enable_server '0'
 	list server 'ntp1.aliyun.com'
 	list server 'time1.cloud.tencent.com'
 	list server 'time.ustc.edu.cn'
