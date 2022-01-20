@@ -152,7 +152,7 @@ jobs:
         Firmware_Diy_Other
         ./scripts/feeds install -a > /dev/null 2>&1
         make defconfig
-        make download -j$(nproc)
+        make download -j$(nproc) V=s
         make -j$(nproc) || make -j1 V=s
         [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV || echo "Result=false" >> $GITHUB_ENV
 
