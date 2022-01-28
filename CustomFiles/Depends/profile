@@ -17,7 +17,7 @@ Sysinfo() {
 	[ -n "${TEMP}" ] && printf "            设备温度:		${TEMP}°C\n"
 	[ -n "${CoreMark}" ] && printf "            性能得分:		${CoreMark}\n"
 	[ -f /proc/uptime ] && printf "            运行时间: 		$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)\n"
-	[ -n "${SSH_CONNECTION}" ] && printf "           登录用户:		 %-7s ${Div} %s\n" ${LOGNAME} $(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')
+	[ -n "${SSH_CONNECTION}" ] && printf "            登录用户:		%-7s ${Div} %s\n" ${LOGNAME} $(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')
 	printf "${White}\n"
 }
 

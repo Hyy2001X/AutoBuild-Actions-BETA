@@ -1,25 +1,18 @@
 --- a/package/kernel/mac80211/files/lib/wifi/mac80211.sh
 +++ b/package/kernel/mac80211/files/lib/wifi/mac80211.sh
-@@ -171,17 +171,21 @@ detect_mac80211() {
- 			set wireless.radio${devidx}=wifi-device
- 			set wireless.radio${devidx}.type=mac80211
- 			${dev_id}
--			set wireless.radio${devidx}.channel=${channel}
+@@ -174,14 +174,15 @@ detect_mac80211() {
+ 			set wireless.radio${devidx}.channel=${channel}
  			set wireless.radio${devidx}.band=${mode_band}
--			set wireless.radio${devidx}.htmode=$htmode
+ 			set wireless.radio${devidx}.htmode=$htmode
++			set wireless.radio${devidx}.country=CN
  			set wireless.radio${devidx}.disabled=0
- 			set wireless.radio${devidx}.country=US
+-			set wireless.radio${devidx}.country=US
 -			
-+
-+			set wireless.default_radio${devidx}.mu_beamformer=1
-+			set wireless.default_radio${devidx}.disassoc_low_ack=0
-+			set wireless.default_radio0.ssid=OpenWrt_2.4G
-+			set wireless.default_radio0.channel=11
-+			set wireless.default_radio1.ssid=OpenWrt_5G
-+			set wireless.default_radio1.channel=40
 +
  			set wireless.default_radio${devidx}=wifi-iface
  			set wireless.default_radio${devidx}.device=radio${devidx}
++			set wireless.default_radio0.ssid=OpenWrt_2.4G
++			set wireless.default_radio1.ssid=OpenWrt_5G
  			set wireless.default_radio${devidx}.network=lan
  			set wireless.default_radio${devidx}.mode=ap
 -			set wireless.default_radio${devidx}.ssid=OpenWrt

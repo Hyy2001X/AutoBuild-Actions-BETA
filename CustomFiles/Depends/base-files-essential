@@ -10,5 +10,5 @@
 /etc/rc.local
 /etc/AutoBuild/Custom_Variable
 /etc/docker/daemon.json
-/.uuplugin_uuid
 /root/.config/htop
+/root/.ssh/known_hosts
