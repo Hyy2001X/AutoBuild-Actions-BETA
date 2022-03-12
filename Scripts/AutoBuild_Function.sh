@@ -28,7 +28,7 @@ Firmware_Diy_Before() {
 		OP_VERSION="${zzz_Default_Version}-${Compile_Date}"
 	;;
 	immortalwrt/immortalwrt)
-		Version_File=${BASE_FILES}/etc/openwrt_release
+		Version_File=package/base-files/files/etc/openwrt_release
 		OP_VERSION="${OP_VERSION_HEAD}${Compile_Date}"
 	;;
 	*)
@@ -104,7 +104,6 @@ CustomFiles=${GITHUB_WORKSPACE}/CustomFiles
 Scripts=${GITHUB_WORKSPACE}/Scripts
 FEEDS_LUCI=${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
 FEEDS_PKG=${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
-BASE_FILES=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
 Banner_Message="${Banner_Message}"
 REGEX_Skip_Checkout="${REGEX_Skip_Checkout}"
 Version_File=${Version_File}
