@@ -66,7 +66,7 @@ Firmware_Diy() {
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 		;;
 		x86_64)
-			AddPackage git other openwrt-passwall xiaorouji main
+			# AddPackage git other openwrt-passwall xiaorouji main
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 		;;
