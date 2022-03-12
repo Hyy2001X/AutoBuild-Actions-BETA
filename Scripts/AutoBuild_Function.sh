@@ -23,7 +23,7 @@ Firmware_Diy_Before() {
 	fi
 	case "${OP_AUTHOR}/${OP_REPO}" in
 	coolsnowwolf/lede)
-		Version_File="package/lean/default-settings/files/zzz-default-settings"
+		Version_File=package/lean/default-settings/files/zzz-default-settings
 		zzz_Default_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
 		OP_VERSION="${zzz_Default_Version}-${Compile_Date}"
 	;;
@@ -55,12 +55,12 @@ Firmware_Diy_Before() {
 			Firmware_Format=bin
 		;;
 		rockchip | x86 | bcm27xx | mxs | sunxi | zynq)
-			Firmware_Format=$(if_IMG)
+			Firmware_Format="$(if_IMG)"
 		;;
 		mvebu)
 			case "${TARGET_SUBTARGET}" in
 			cortexa53 | cortexa72)
-				Firmware_Format=$(if_IMG)
+				Firmware_Format="$(if_IMG)"
 			;;
 			esac
 		;;
@@ -69,7 +69,7 @@ Firmware_Diy_Before() {
 		;;
 		esac
 	}
-	[[ ${Author_URL} != false && ${Author_URL} == AUTO ]] && Author_URL=${Github}
+	[[ ${Author_URL} != false && ${Author_URL} == AUTO ]] && Author_URL="${Github}"
 	[[ ${Author_URL} == false ]] && unset Author_URL
 	if [[ ${Default_FLAG} == AUTO ]]
 	then
@@ -102,6 +102,7 @@ Checkout_Virtual_Images=${Checkout_Virtual_Images}
 AutoBuild_Firmware=${AutoBuild_Firmware}
 CustomFiles=${GITHUB_WORKSPACE}/CustomFiles
 Scripts=${GITHUB_WORKSPACE}/Scripts
+BASE_FILES=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
 FEEDS_LUCI=${GITHUB_WORKSPACE}/openwrt/package/feeds/luci
 FEEDS_PKG=${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
 Banner_Message="${Banner_Message}"
@@ -121,8 +122,7 @@ EOF
 Firmware_Diy_Main() {
 	ECHO "[Firmware_Diy_Main] Starting ..."
 	CD ${Home}
-	chmod +x -R ${Scripts}
-	chmod 777 -R ${CustomFiles}
+	chmod 777 -R ${Scripts} ${CustomFiles}
 	if [[ ${INCLUDE_AutoBuild_Features} == true ]]
 	then
 		MKDIR ${BASE_FILES}/etc/AutoBuild
@@ -201,9 +201,6 @@ EOF
 			else
 				sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 			fi
-			ECHO "Downloading [ShadowSocksR Plus+] for coolsnowwolf/lede ..."
-			AddPackage git other helloworld fw876 master
-			sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 		;;
 		immortalwrt/immortalwrt)
 			Copy ${CustomFiles}/Depends/openwrt_release_${OP_AUTHOR} ${BASE_FILES}/etc openwrt_release
