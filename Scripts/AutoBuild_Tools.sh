@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.8.5
+Version=V1.8.6
 
 ECHO() {
 	case $1 in
@@ -257,10 +257,13 @@ USB_Info() {
 	Phy_Disk_List="${Tools_Cache}/Phy_Disk_List"
 	Block_Info="${Tools_Cache}/Block_Info"
 	Disk_Processed_List="${Tools_Cache}/Disk_Processed_List"
-	echo -ne "\n${Yellow}Loading USB Configuration ...${White}"
 	rm -f ${Block_Info} ${Logic_Disk_List} ${Disk_Processed_List} ${Phy_Disk_List}
 	touch ${Disk_Processed_List}
-	block mount
+	case $1 in
+	-a)
+		block mount
+	;;
+	esac
 	block info | grep -v "mtdblock" | egrep "sd[a-z][0-9]|mmcblk[0-9]+[a-z][0-9]+" > ${Block_Info}
 	[[ -s ${Block_Info} ]] && {
 		lsblk -l | grep part | awk '{print "/dev/"$1}' > ${Logic_Disk_List}
@@ -278,7 +281,7 @@ USB_Info() {
 			printf "%-3s %-14s %-40s %-14s %-15s %-18s %-10s\n" ${i} ${Disk_Name} ${UUID} ${Logic_Format} ${Logic_Mount} ${Logic_Available} >> ${Disk_Processed_List}
 			i=$(expr $i + 1 2> /dev/null)
 		done
-		lsblk | grep disk | awk '{print "/dev/"$1}' | sort | uniq > ${Phy_Disk_List}
+		lsblk | grep disk | grep -v mtdblock | awk '{print "/dev/"$1}' | sort | uniq > ${Phy_Disk_List}
 	}
 	echo -ne "\r                             \r"
 	[[ $(cat ${Phy_Disk_List}) ]] && return 0 || return 1
@@ -289,29 +292,26 @@ AutoExpand_Core() {
 	ECHO r "      固件更新将改变分区表,从而导致扩容失效,当前硬盘上的数据可能会丢失"
 	echo -ne "\n${Yellow}本操作将把设备 '$1' 格式化为 ext4 格式,${White}"
 	read -p "是否确认执行格式化操作?[Y/n]:" Choose
-	[[ ${Choose} == [Yesyes] ]] && {
-		ECHO y "\n开始运行一键挂载脚本 ..."
-		sleep 2
-	} || return 0
+	[[ ${Choose} == [Yesyes] ]] || return 0
 	echo "禁用自动挂载 ..."
 	uci set fstab.@global[0].auto_mount='0'
 	uci commit fstab
 	[[ ! $2 == '-' ]] && {
 		echo "卸载设备 '$1' 位于 '$2' ..."
-		umount -l $2 > /dev/null 2>&1 && {
-			ECHO r "设备 '$2' 卸载失败!"
-			exit 1
-		}
+		umount -l $2 > /dev/null 2>&1
 	}
 	echo "正在格式化设备 '$1' 为 ext4 格式,请耐心等待 ..."
 	mkfs.ext4 -F $1 > /dev/null 2>&1 && {
-		USB_Info
 		echo "设备 '$1' 已成功格式化为 ext4 格式!"
 	} || {
 		ECHO r "设备 '$1' 格式化失败!"
 		exit 1
 	}
-	UUID=$(grep "$1" ${Disk_Processed_List} | awk '{print $2}')
+	UUID=$(block info | grep $1 | egrep -o 'UUID=".+"' | awk -F '["]' '/UUID/{print $2}')
+	[[ -z ${UUID} ]] && {
+		ECHO r "设备 '$1' UUID 获取失败!"
+		exit 1
+	}
 	echo "UUID: ${UUID}"
 	echo "挂载设备 '$1' 到 ' /tmp/extroot' ..."
 	mkdir -p /tmp/introot || {
@@ -326,10 +326,9 @@ AutoExpand_Core() {
 		ECHO r "绑定 '/' 到 '/tmp/introot' 失败!"
 		exit 1
 	}
-	mount $1 /tmp/extroot || {
+	mount -t ext4 $1 /tmp/extroot || {
 		ECHO r "挂载 '$1' 到 '/tmp/extroot' 失败!"
 		exit 1
-
 	}
 	echo "正在复制系统文件到 '$1' ..."
 	tar -C /tmp/introot -cf - . | tar -C /tmp/extroot -xf -
@@ -362,7 +361,7 @@ Samba_UI() {
 	[[ ! -d ${Tools_Cache} ]] && mkdir -p "${Tools_Cache}"
 	while :
 	do
-		USB_Info
+		USB_Info -a
 		autoshare_Mode="$(uci get samba.@samba[0].autoshare)"
 		clear
 		ECHO x "Samba 工具箱\n"
@@ -533,7 +532,7 @@ done
 }
 
 SmartInfo_UI() {
-	USB_Info && {
+	USB_Info -a && {
 		clear
 		ECHO x "硬盘信息列表"
 		cat ${Phy_Disk_List} | while read Phy_Disk;do

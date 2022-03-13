@@ -13,7 +13,7 @@ Sysinfo() {
 	printf "            设备信息:		${TARGET_PROFILE}\n"
 	printf "            内核版本:		$(uname -rs | cut -d ' ' -f2)\n"
 	printf "            可用内存:		%-7s ${Div} %s of %s\n" $(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
-	printf "            可用存储:		%-7s ${Div} %s of %s\n" $(df -T / | grep 'overlay' | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
+	printf "            可用存储:		%-7s ${Div} %s of %s\n" $(df -T '/' | grep -v File | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
 	[ -n "${TEMP}" ] && printf "            设备温度:		${TEMP}°C\n"
 	[ -n "${CoreMark}" ] && printf "            性能得分:		${CoreMark}\n"
 	[ -f /proc/uptime ] && printf "            运行时间: 		$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)\n"
