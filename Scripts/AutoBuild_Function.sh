@@ -18,7 +18,7 @@ Firmware_Diy_Before() {
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
 	else
-		OP_BRANCH="$(echo ${OP_BRANCH} | egrep -o "[0-9]+.[0-9]+")"
+		OP_BRANCH="$(echo ${OP_BRANCH} | egrep -o "[0-9]+.[0-9]+" | awk 'NR==1')"
 		OP_VERSION_HEAD="R${OP_BRANCH}-"
 	fi
 	case "${OP_AUTHOR}/${OP_REPO}" in
@@ -49,23 +49,23 @@ Firmware_Diy_Before() {
 	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to get [TARGET_PROFILE] !"
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${CONFIG_TEMP})"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG_TEMP})"
-	[[ -z ${Firmware_Format} || ${Firmware_Format} =~ (false|AUTO) ]] && {
+	[[ -z ${Fw_MFormat} || ${Fw_MFormat} =~ (false|AUTO) ]] && {
 		case "${TARGET_BOARD}" in
 		ramips | reltek | ath* | ipq* | bcm47xx | bmips | kirkwood | mediatek)
-			Firmware_Format=bin
+			Fw_MFormat=bin
 		;;
 		rockchip | x86 | bcm27xx | mxs | sunxi | zynq)
-			Firmware_Format="$(if_IMG)"
+			Fw_MFormat="$(gz_Check)"
 		;;
 		mvebu)
 			case "${TARGET_SUBTARGET}" in
 			cortexa53 | cortexa72)
-				Firmware_Format="$(if_IMG)"
+				Fw_MFormat="$(gz_Check)"
 			;;
 			esac
 		;;
 		octeon | oxnas | pistachio)
-			Firmware_Format=tar
+			Fw_MFormat=tar
 		;;
 		esac
 	}
@@ -87,10 +87,10 @@ Firmware_Diy_Before() {
 	fi
 	case "${TARGET_BOARD}" in
 	x86)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-${TARGET_FLAG}-SHA256.FORMAT"
+		AutoBuild_Fw="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-${TARGET_FLAG}-SHA256.FORMAT"
 	;;
 	*)
-		AutoBuild_Firmware="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-${TARGET_FLAG}-SHA256.FORMAT"
+		AutoBuild_Fw="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-${TARGET_FLAG}-SHA256.FORMAT"
 	;;
 	esac
 	cat >> ${GITHUB_ENV} <<EOF
@@ -99,7 +99,7 @@ CONFIG_TEMP=${CONFIG_TEMP}
 INCLUDE_AutoBuild_Features=${INCLUDE_AutoBuild_Features}
 INCLUDE_Original_OpenWrt_Compatible=${INCLUDE_Original_OpenWrt_Compatible}
 Checkout_Virtual_Images=${Checkout_Virtual_Images}
-AutoBuild_Firmware=${AutoBuild_Firmware}
+AutoBuild_Fw=${AutoBuild_Fw}
 CustomFiles=${GITHUB_WORKSPACE}/CustomFiles
 Scripts=${GITHUB_WORKSPACE}/Scripts
 BASE_FILES=${GITHUB_WORKSPACE}/openwrt/package/base-files/files
@@ -108,7 +108,7 @@ FEEDS_PKG=${GITHUB_WORKSPACE}/openwrt/package/feeds/packages
 Banner_Message="${Banner_Message}"
 REGEX_Skip_Checkout="${REGEX_Skip_Checkout}"
 Version_File=${Version_File}
-Firmware_Format=${Firmware_Format}
+Fw_MFormat=${Fw_MFormat}
 FEEDS_CONF=${Home}/feeds.conf.default
 Author_URL=${Author_URL}
 ENV_FILE=${GITHUB_ENV}
@@ -163,7 +163,7 @@ EOF
 		Copy ${Scripts}/AutoBuild_Tools.sh ${BASE_FILES}/bin
 		Copy ${Scripts}/AutoUpdate.sh ${BASE_FILES}/bin
 		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' ${BASE_FILES}/bin/AutoUpdate.sh | awk 'NR==1')
-		AddPackage svn lean luci-app-autoupdate Hyy2001X/AutoBuild-Packages/trunk
+		AddPackage svn other luci-app-autoupdate Hyy2001X/AutoBuild-Packages/trunk
 		Copy ${CustomFiles}/Depends/profile ${BASE_FILES}/etc
 		Copy ${CustomFiles}/Depends/base-files-essential ${BASE_FILES}/lib/upgrade/keep.d
 		case "${OP_AUTHOR}/${OP_REPO}" in
@@ -311,92 +311,94 @@ Firmware_Diy_End() {
 	ECHO "[Firmware_Diy_End] Starting ..."
 	cd ${Home}
 	MKDIR ${Home}/bin/Firmware
-	Firmware_Path="${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
-	SHA256_File="${Firmware_Path}/sha256sums"
-	cd ${Firmware_Path}
-	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1 | egrep -v "packages|buildinfo|sha256sums|manifest")\n"
+	Fw_Path="${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
+	SHA256_File="${Fw_Path}/sha256sums"
+	cd ${Fw_Path}
+	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1)\n"
 	case "${TARGET_BOARD}" in
 	x86)
-		[[ ${Checkout_Virtual_Images} == true ]] && {
-			Process_Firmware $(List_Format)
-		} || {
-			Process_Firmware ${Firmware_Format}
-		}
+		if [[ ${Checkout_Virtual_Images} == true ]]
+		then
+			Process_Fw $(List_MFormat)
+		else
+			Process_Fw ${Fw_MFormat}
+		fi
 	;;
 	*)
-		if [[ -n ${Firmware_Format} ]]
+		if [[ -n ${Fw_MFormat} ]]
 		then
-			Process_Firmware ${Firmware_Format}
+			Process_Fw ${Fw_MFormat}
 		else
-			Process_Firmware $(List_Format)
+			Process_Fw $(List_MFormat)
 		fi
 	;;
 	esac
-	[[ $(ls) =~ 'AutoBuild-' ]] && {
+	if [[ $(ls) =~ 'AutoBuild-' ]]
+	then
 		cd -
-		cp -a ${Firmware_Path}/AutoBuild-* bin/Firmware
-	}
+		cp -a ${Fw_Path}/AutoBuild-* bin/Firmware
+	fi
 	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 	ECHO "[Firmware_Diy_End] Done"
 }
 
-Process_Firmware() {
+Process_Fw() {
 	while [[ $1 ]];do
-		Process_Firmware_Core $1 $(List_Firmware $1)
+		Process_Fw_Core $1 $(List_Fw $1)
 		shift
 	done
 }
 
-Process_Firmware_Core() {
-	Firmware_Format_Defined=$1
+Process_Fw_Core() {
+	Fw_Format=$1
 	shift
 	while [[ $1 ]];do
-		Firmware=${AutoBuild_Firmware}
+		Fw=${AutoBuild_Fw}
 		case "${TARGET_BOARD}" in
 		x86)
-			[[ $1 =~ efi ]] && {
-				FW_Boot_Method=UEFI
-			} || FW_Boot_Method=BIOS
-			Firmware=${Firmware/BOOT/${FW_Boot_Method}}
+			[[ $1 =~ efi ]] && Fw_Boot=UEFI || Fw_Boot=BIOS
+			Fw=${Fw/BOOT/${Fw_Boot}}
 		;;
 		esac
-		Firmware=${Firmware/SHA256/$(Get_SHA256 $1)}
-		Firmware=${Firmware/FORMAT/${Firmware_Format_Defined}}
-		[[ -f $1 ]] && {
-			ECHO "Copying [$1] to [${Firmware}] ..."
-			cp -a $1 ${Firmware}
-		} || ECHO "Unable to access [${Firmware}] ..."
+		Fw=${Fw/SHA256/$(GET_sha256 $1)}
+		Fw=${Fw/FORMAT/${Fw_Format}}
+		if [[ -f $1 ]]
+		then
+			ECHO "Copying [$1] to [${Fw}] ..."
+			cp -a $1 ${Fw}
+		else
+			ECHO "Failed to copy [${Fw}] ..."
+		fi
 		shift
 	done
 }
 
-List_Firmware() {
-	[[ -z $* ]] && {
-		List_REGEX | while read X;do
+List_Fw() {
+	if [[ -z $* ]]
+	then
+		for X in $(List_Regex);do
 			echo ${X} | cut -d "*" -f2
 		done
-	} || {
+	else
 		while [[ $1 ]];do
-			for X in $(echo $(List_REGEX));do
+			for X in $(List_Regex);do
 				[[ ${X} == *$1 ]] && echo "${X}" | cut -d "*" -f2
 			done
 			shift
 		done
-	}
+	fi
 }
 
-List_Format() {
-	echo "$(List_REGEX | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
+List_Regex() {
+	egrep -v "${REGEX_Skip_Checkout}" ${SHA256_File} | tr -s '\n'
 }
 
-List_REGEX() {
-	[[ -n ${REGEX_Skip_Checkout} ]] && {
-		egrep -v "${REGEX_Skip_Checkout}" ${SHA256_File} | tr -s '\n'
-	} || egrep -v "packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory" ${SHA256_File} | tr -s '\n'
+List_MFormat() {
+	echo "$(List_Regex | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
 }
 
-Get_SHA256() {
-	List_REGEX | grep "$1" | cut -c1-5
+GET_sha256() {
+	List_Regex | grep $1 | awk '{print $1}' | cut -c1-5
 }
 
 GET_Branch() {
@@ -405,7 +407,7 @@ GET_Branch() {
     git -C $(pwd) rev-parse HEAD
 }
 
-if_IMG() {
+gz_Check() {
 	[[ $(cat ${CONFIG_TEMP}) =~ CONFIG_TARGET_IMAGES_GZIP=y ]] && {
 		echo img.gz
 	} || echo img
@@ -499,11 +501,11 @@ Copy() {
 	MKDIR $2
 	if [[ -z $3 ]]
 	then
-		ECHO "Copying $1 to $2 ..."
+		ECHO "[C] Copying $1 to $2 ..."
 		cp -a $1 $2
 	else
-		ECHO "Copying and renaming $1 to $2/$3 ..."
+		ECHO "[R] Copying $1 to $2/$3 ..."
 		cp -a $1 $2/$3
 	fi
-	[[ $? == 0 ]] && ECHO "Done" || ECHO "Failed"
+	[[ $? == 0 ]] && ECHO "Done"
 }

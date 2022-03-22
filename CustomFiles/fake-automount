@@ -1,0 +1,69 @@
+#!/bin/sh
+
+LOGGER() {
+	echo $*
+	logger -t "automount[$$]" "$*"
+}
+
+[ -f /tmp/automount.pid ] && exit
+echo "$$" > /tmp/automount.pid
+
+case "$HOTPLUG_TYPE,$DEVTYPE" in
+block,partition)
+	mkdir -p /var/log/automount
+	if [ "$ACTION" = remove ]
+	then
+		for disk in $(mount | awk '{print $1}' | grep /dev | egrep -v "mmcblk|mtdblock|loop");do
+			part=$(mount | grep $disk | awk '{print $3}')
+			[ ! "$part" ] && continue
+			skip_umount=$(lsblk --list $disk > /dev/null 2>&1; echo $?)
+			if [ "$skip_umount" = 0 -a "$force_umount" != 1 ]
+			then
+				LOGGER "Skip umounting [$part] ..."
+				continue
+			fi
+			umount $part 2> /dev/null || umount -l $part 2> /dev/null
+			sleep 1
+			LOGGER "Successfully umounted invisible part [$part]"
+			[ ! "$(ls -A $part)" ] && rm -rf $part
+		done
+		LOGGER "umount: Finished"
+	fi
+	if [ "$ACTION" = add ]
+	then
+		for part in $(lsblk --list | egrep -v "mmcblk|mtdblock" | grep part | awk '{print $1}');do
+			skip_mount=$(mount | awk '{print $1}' | grep -q $part ; echo $?)
+			fstype=$(block info /dev/$part | egrep -o 'TYPE="[0-9a-zA-Z].+' | awk -F '["]' '/TYPE/{print $2}')
+			if [ -z "$fstype" ]
+			then
+				LOGGER "Unknown filesystem type of [/dev/$part]"
+				continue
+			fi
+			if [ "$skip_mount" = 0 ]
+			then
+				LOGGER "Already mounted [/dev/$part] on this device"
+				continue
+			fi
+			mkdir -p /mnt/$part
+			chmod 777 /mnt/$part
+			case "$fstype" in
+			ntfs)
+				extra_cmd="-o nls=utf8"
+			;;
+			vfat)
+				extra_cmd="-o iocharset=utf8"
+			;;
+			esac
+			LOGGER "Try to mount disk [/dev/$part]($fstype) on [/mnt/$part] ..."
+			mount -t $fstype /dev/$part /mnt/$part -o rw,defaults $extra_cmd && LOGGER "Successfully mounted disk [/dev/$part] on [/mnt/$part]" || {
+				LOGGER "Failed to mount disk [/dev/$part] on [/mnt/$part]"
+			}
+			sleep 1
+		done
+		LOGGER "mount: Finished"
+	fi
+;;
+esac
+
+rm -f /tmp/automount.pid
+exit 0

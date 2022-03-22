@@ -2,15 +2,18 @@ Sysinfo() {
 	local TARGET_PROFILE TARGET_BOOTABLE TEMP CoreMark
 	TARGET_PROFILE=$(getinf TARGET_PROFILE /rom/etc/AutoBuild/Default_Variable)
 	TARGET_BOARD=$(getinf TARGET_BOARD /rom/etc/AutoBuild/Default_Variable)
-	[ -z "${TARGET_PROFILE}" ] && return 1
+	[ -z "${TARGET_PROFILE}" ] && echo
 	if [ "${TARGET_BOARD}" == x86 ]
 	then
 		[ -d /sys/firmware/efi ] && TARGET_BOOTABLE="UEFI" || TARGET_BOOTABLE="BIOS"
 	fi
 	[ -f /etc/bench.log ] && CoreMark=$(egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
-	[ -n "$(sensors 2> /dev/null | grep Core)" ] && TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null)
+	if [ -n "$(sensors 2> /dev/null | grep Core)" ]
+	then
+		TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null)
+	fi
 	[ -n "${TARGET_BOOTABLE}" ] && printf "            设备信息:		%-7s ${Div} ${Green}%-12s${White}\n" ${TARGET_PROFILE} ${TARGET_BOOTABLE} || \
-	printf "            设备信息:		${TARGET_PROFILE}\n"
+	[ -n "${TARGET_PROFILE}" ] && printf "            设备信息:		${TARGET_PROFILE}\n"
 	printf "            内核版本:		$(uname -rs | cut -d ' ' -f2)\n"
 	printf "            可用内存:		%-7s ${Div} %s of %s\n" $(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
 	printf "            可用存储:		%-7s ${Div} %s of %s\n" $(df -T '/' | grep -v File | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
@@ -22,7 +25,7 @@ Sysinfo() {
 }
 
 getinf() {
-	local i=$(grep $1 $2 | awk 'END {print}')
+	local i=$(grep $1 $2  2> /dev/null | awk 'END {print}')
 	[ -z "${i}" ] && return 1
 	eval echo ${i} | sed "s/^[$1=]*//g" 2> /dev/null
 }
@@ -89,4 +92,5 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias cls='clear'
 alias dh='df -h'
+alias syslog='cat /tmp/system.log 2> /dev/null'
 alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'

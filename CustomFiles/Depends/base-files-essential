@@ -11,4 +11,4 @@
 /etc/AutoBuild/Custom_Variable
 /etc/docker/daemon.json
 /root/.config/htop
-/root/.ssh/known_hosts
+/root/.ssh

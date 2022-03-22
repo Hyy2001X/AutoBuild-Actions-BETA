@@ -1,6 +1,6 @@
-CONFIG_TARGET_ramips=y
-CONFIG_TARGET_ramips_mt7621=y
-CONFIG_TARGET_ramips_mt7621_DEVICE_xiaomi_redmi-router-ac2100=y
+CONFIG_TARGET_mediatek=y
+CONFIG_TARGET_mediatek_mt7622=y
+CONFIG_TARGET_mediatek_mt7622_DEVICE_xiaomi_redmi-router-ax6s=y
 
 # CONFIG_SIGNATURE_CHECK is not set
 # CONFIG_SIGNED_PACKAGES is not set
@@ -10,16 +10,6 @@ CONFIG_IPV6=y
 CONFIG_KERNEL_IPV6=y
 CONFIG_PACKAGE_ipv6helper=y
 CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
-
-# Wireless 驱动程序(开源)
-CONFIG_PACKAGE_kmod-mt7603=y
-CONFIG_PACKAGE_kmod-mt7615e=y
-
-# Wireless 驱动程序(闭源)
-# CONFIG_PACKAGE_kmod-mt7603e is not set
-# CONFIG_PACKAGE_kmod-mt7615d is not set
-# CONFIG_PACKAGE_luci-app-mtwifi is not set
-# CONFIG_PACKAGE_mt_wifi is not set
 
 # LUCI Appliciations
 CONFIG_PACKAGE_luci-app-argon-config=y
