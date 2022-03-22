@@ -13,7 +13,7 @@ Firmware_Diy_Before() {
 	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(echo "${Github}" | cut -d "/" -f4)"
 	OP_AUTHOR="$(echo "${REPO_URL}" | cut -d "/" -f4)"
 	OP_REPO="$(echo "${REPO_URL}" | cut -d "/" -f5)"
-	OP_BRANCH="$(GET_Branch)"
+	OP_BRANCH="$(Get_Branch)"
 	if [[ ${OP_BRANCH} =~ (master|main) ]]
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
@@ -312,7 +312,6 @@ Firmware_Diy_End() {
 	cd ${Home}
 	MKDIR ${Home}/bin/Firmware
 	Fw_Path="${Home}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
-	SHA256_File="${Fw_Path}/sha256sums"
 	cd ${Fw_Path}
 	echo -e "### FIRMWARE OUTPUT ###\n$(ls -1)\n"
 	case "${TARGET_BOARD}" in
@@ -344,7 +343,7 @@ Firmware_Diy_End() {
 
 Process_Fw() {
 	while [[ $1 ]];do
-		Process_Fw_Core $1 $(List_Fw $1)
+		Process_Fw_Core $1 $(List_Fw $1 | Regex)
 		shift
 	done
 }
@@ -360,7 +359,7 @@ Process_Fw_Core() {
 			Fw=${Fw/BOOT/${Fw_Boot}}
 		;;
 		esac
-		Fw=${Fw/SHA256/$(GET_sha256 $1)}
+		Fw=${Fw/SHA256/$(Get_sha256 $1)}
 		Fw=${Fw/FORMAT/${Fw_Format}}
 		if [[ -f $1 ]]
 		then
@@ -376,12 +375,12 @@ Process_Fw_Core() {
 List_Fw() {
 	if [[ -z $* ]]
 	then
-		for X in $(List_Regex);do
+		for X in $(List_sha256);do
 			echo ${X} | cut -d "*" -f2
 		done
 	else
 		while [[ $1 ]];do
-			for X in $(List_Regex);do
+			for X in $(List_sha256);do
 				[[ ${X} == *$1 ]] && echo "${X}" | cut -d "*" -f2
 			done
 			shift
@@ -389,19 +388,23 @@ List_Fw() {
 	fi
 }
 
-List_Regex() {
-	egrep -v "${REGEX_Skip_Checkout}" ${SHA256_File} | tr -s '\n'
+Regex() {
+	egrep -v "${REGEX_Skip_Checkout}"
+}
+
+List_sha256() {
+	cat ${Fw_Path}/sha256sums 2> /dev/null | Regex | tr -s '\n'
 }
 
 List_MFormat() {
-	echo "$(List_Regex | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
+	echo "$(List_sha256 | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
 }
 
-GET_sha256() {
-	List_Regex | grep $1 | awk '{print $1}' | cut -c1-5
+Get_sha256() {
+	List_sha256 | grep $1 | awk '{print $1}' | cut -c1-5
 }
 
-GET_Branch() {
+Get_Branch() {
     git -C $(pwd) rev-parse --abbrev-ref HEAD | grep -v HEAD || \
     git -C $(pwd) describe --exact-match HEAD || \
     git -C $(pwd) rev-parse HEAD
