@@ -6,17 +6,17 @@ Firmware_Diy_Core() {
 
 	Author=AUTO
 	Author_URL=AUTO
-	Default_FLAG=AUTO
+	Default_Flag=AUTO
 	Default_IP="192.168.1.1"
-	Banner_Message="Powered by AutoBuild-Actions"
+	Default_Title="Powered by AutoBuild-Actions"
 
-	Short_Firmware_Date=true
-	Checkout_Virtual_Images=false
-	Firmware_Format=AUTO
-	REGEX_Skip_Checkout="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|profiles|itb"
+	Short_Fw_Date=true
+	x86_Full_Images=false
+	Fw_Format=false
+	Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile"
 
-	INCLUDE_AutoBuild_Features=true
-	INCLUDE_Original_OpenWrt_Compatible=false
+	AutoBuild_Features=true
+	Compatible=false
 }
 
 Firmware_Diy() {
@@ -31,7 +31,7 @@ Firmware_Diy() {
 	# ${TARGET_BOARD}		设备架构
 	# ${TARGET_FLAG}		固件名称后缀
 
-	# ${Home}				OpenWrt 源码位置
+	# ${WORK}				OpenWrt 源码位置
 	# ${CONFIG_FILE}		使用的配置文件名称
 	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
 	# ${CustomFiles}		仓库中的 /CustomFiles 绝对路径
@@ -57,13 +57,13 @@ Firmware_Diy() {
 		# AddPackage svn other ddnsto linkease/nas-packages/trunk/network/services
 		AddPackage git other helloworld fw876 master
 		sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
-		patch < ${CustomFiles}/Patches/revert_remove-alterId-config.patch -p1 -d ${Home}
-		patch < ${CustomFiles}/Patches/fix_ntfs3_antfs_conflict.patch -p1 -d ${Home}
-		patch < ${CustomFiles}/Patches/fix_aria2_autocreate_path.patch -p1 -d ${Home}
+		patch < ${CustomFiles}/Patches/revert_remove-alterId-config.patch -p1 -d ${WORK}
+		patch < ${CustomFiles}/Patches/fix_ntfs3_antfs_conflict.patch -p1 -d ${WORK}
+		patch < ${CustomFiles}/Patches/fix_aria2_autocreate_path.patch -p1 -d ${WORK}
 
 		case "${TARGET_PROFILE}" in
 		d-team_newifi-d2)
-			patch < ${CustomFiles}/${TARGET_PROFILE}_mac80211.patch -p1 -d ${Home}
+			patch < ${CustomFiles}/${TARGET_PROFILE}_mac80211.patch -p1 -d ${WORK}
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 			Copy ${CustomFiles}/fake-automount $(PKG_Finder d "package" automount)/files 15-automount
@@ -73,7 +73,7 @@ Firmware_Diy() {
 		;;
 		x86_64)
 			AddPackage git other openwrt-passwall xiaorouji main
-			AddPackage git other luci-app-passwall2 xiaorouji main
+			AddPackage git other openwrt-passwall2 xiaorouji main
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 		;;
