@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.8.5
+Version=V6.8.6
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -429,7 +429,7 @@ function UPDATE_SCRIPT() {
 		}
 	fi
 	ECHO "脚本保存路径: [$1]"
-	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DL_DEPENDS[@]} --url $2 --path ${Tmp_Path} --timeout 5 --type 脚本
+	DOWNLOADER --file-name AutoUpdate.sh --no-url-name --dl ${DL_DEPENDS[@]} --url "$2" --path ${Tmp_Path} --timeout 5 --type 脚本
 	if [[ $? == 0 && -s ${Tmp_Path}/AutoUpdate.sh ]];then
 		chmod +x ${Tmp_Path}/AutoUpdate.sh
 		Script_Version="$(awk -F '=' '/Version/{print $2}' ${Tmp_Path}/AutoUpdate.sh | awk 'NR==1')"
@@ -511,7 +511,7 @@ function ANALYZE_API() {
 		case ${name} in
 		AutoBuild-${OP_REPO}-${TARGET_PROFILE}-* | Update_Logs.json)
 			LOGGER "可用固件/日志: ${name}"
-			eval format=$(echo ${name} | egrep -o "\-[0-9a-z]{5}.[a-z].+" | egrep -o "\..+" | cut -c2-10)
+			eval format=$(echo ${name} | egrep -o '\.[a-z]+.+' | cut -c2-10)
 			eval version=$(echo ${name} | egrep -o "R[0-9.]+-[0-9]+")
 			eval sha256=$(echo ${name} | egrep -o "\-[a-z0-9]+" | cut -c2-6 | awk 'END{print}')
 			eval browser_download_url=$(jq ".assets[${i}].browser_download_url" ${API_Cache} 2> /dev/null)
@@ -1267,7 +1267,7 @@ function AutoUpdate_Main() {
 		;;
 		-x)
 			shift
-			Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh G@@1 F@@1 X@@1)"
+			Script_URL="$(URL_X ${Github_Raw}/Scripts/AutoUpdate.sh X@@3)"
 			[[ $(NETWORK_CHECK 223.5.5.5 2) == false ]] && {
 				ECHO r "网络连接错误,请稍后再试!"
 				EXIT 1
@@ -1275,7 +1275,7 @@ function AutoUpdate_Main() {
 			Script_Path=/bin
 			[[ ${Custom_Path} ]] && Script_Path="${Custom_Path}"
 			[[ ${Custom_URL} ]] && Script_URL="${Custom_URL}"
-			UPDATE_SCRIPT ${Script_Path} ${Script_URL}
+			UPDATE_SCRIPT ${Script_Path} "${Script_URL}"
 			EXIT
 		;;
 		-B | --boot-mode)
