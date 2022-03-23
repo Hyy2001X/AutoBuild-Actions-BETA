@@ -72,8 +72,8 @@ Firmware_Diy() {
 			Copy ${CustomFiles}/fake-automount $(PKG_Finder d "package" automount)/files 15-automount
 		;;
 		x86_64)
-			AddPackage git other openwrt-passwall xiaorouji main
-			AddPackage git other openwrt-passwall2 xiaorouji main
+			AddPackage git other openwrt-passwall xiaorouji packages
+			AddPackage git other openwrt-passwall xiaorouji luci
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 		;;
