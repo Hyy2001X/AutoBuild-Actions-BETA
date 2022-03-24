@@ -37,7 +37,7 @@ env:
 # 编译时调用的 [.config] 文件名称
   CONFIG_FILE: xiaomi_redmi-router-ax6s
 # 源码仓库:分支
-  DEFAULT_SOURCE: coolsnowwolf/lede:master
+  DEFAULT_SOURCE: immortalwrt/immortalwrt:master
 # 上传固件到 Github Releases
   UPLOAD_RELEASES: true
 # 上传固件到 Github Artifacts
