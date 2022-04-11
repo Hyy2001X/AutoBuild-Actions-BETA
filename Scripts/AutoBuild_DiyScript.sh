@@ -63,7 +63,7 @@ Firmware_Diy() {
 
 		case "${TARGET_PROFILE}" in
 		d-team_newifi-d2)
-			patch < ${CustomFiles}/${TARGET_PROFILE}_mac80211.patch -p1 -d ${WORK}
+			# patch < ${CustomFiles}/${TARGET_PROFILE}_mac80211.patch -p1 -d ${WORK}
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 			Copy ${CustomFiles}/fake-automount $(PKG_Finder d "package" automount)/files 15-automount
@@ -76,6 +76,7 @@ Firmware_Diy() {
 			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
+			cat ${CustomFiles}/x86_64_kconfig >> ${WORK}/target/linux/x86/config-5.15
 		;;
 		esac
 	;;

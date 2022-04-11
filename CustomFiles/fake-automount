@@ -1,69 +1,97 @@
 #!/bin/sh
 
 LOGGER() {
-	echo $*
+	echo "[$(date +%D-%H:%M:%S)] [$$] $*" >> /tmp/automount.log
 	logger -t "automount[$$]" "$*"
 }
 
-[ -f /tmp/automount.pid ] && exit
+get_mnt() {
+	[ -z "$*" ] && return
+	mnt_count=$(uci show | egrep 'fstab.@mount.*uuid' | wc -l)
+	[ "$mnt_count" = 0 ] && return
+	local i=1;for i in $(seq 0 $mnt_count)
+	do
+		if_enabled=$(uci get fstab.@mount[$i].enabled 2> /dev/null)
+		[ "$if_enabled" != 1 ] && continue
+		uuid=$(uci get fstab.@mount[$i].uuid 2> /dev/null)
+		[ "$uuid" != "$1" ] && continue
+		mnt=$(uci get fstab.@mount[$i].target 2> /dev/null)
+		echo $mnt
+	done
+}
+
+if [ "$(uci get fstab.@global[0].auto_mount)" != 1 ]
+then
+	block mount
+	rm -f /tmp/automount.pid
+	exit
+fi
+
+# [ -f /tmp/automount.pid ] && exit
 echo "$$" > /tmp/automount.pid
+touch -f /tmp/automount.log
 
 case "$HOTPLUG_TYPE,$DEVTYPE" in
 block,partition)
-	mkdir -p /var/log/automount
-	if [ "$ACTION" = remove ]
+	sleep 1
+	if [ "$ACTION" = remove -o "$ACTION" = add ]
 	then
-		for disk in $(mount | awk '{print $1}' | grep /dev | egrep -v "mmcblk|mtdblock|loop");do
-			part=$(mount | grep $disk | awk '{print $3}')
+		for disk in $(mount | awk '{print $1}' | grep /dev | egrep -v "rom|mtdblock|loop|overlay");do
+			part=$(mount | grep $disk | egrep -v "rom|mtdblock|loop|overlay" | awk '{print $3}')
 			[ ! "$part" ] && continue
 			skip_umount=$(lsblk --list $disk > /dev/null 2>&1; echo $?)
-			if [ "$skip_umount" = 0 -a "$force_umount" != 1 ]
+			if [ "$skip_umount" != 0 ]
 			then
-				LOGGER "Skip umounting [$part] ..."
-				continue
+				umount $part 2> /dev/null || umount -l $part 2> /dev/null
+				LOGGER "Successfully umounted [$part]"
+				[ ! "$(ls -A $part)" ] && rm -rf $part
 			fi
-			umount $part 2> /dev/null || umount -l $part 2> /dev/null
-			sleep 1
-			LOGGER "Successfully umounted invisible part [$part]"
-			[ ! "$(ls -A $part)" ] && rm -rf $part
 		done
-		LOGGER "umount: Finished"
 	fi
+	sleep 1
 	if [ "$ACTION" = add ]
 	then
-		for part in $(lsblk --list | egrep -v "mmcblk|mtdblock" | grep part | awk '{print $1}');do
+		block mount
+		for part in $(lsblk --list | egrep -v "mtdblock|loop|overlay" | grep part | awk '{print $1}');do
+			blk_id="$(block info /dev/$part | egrep -o 'UUID="[0-9a-zA-Z].+' | awk -F '["]' '/UUID/{print $2}')"
 			skip_mount=$(mount | awk '{print $1}' | grep -q $part ; echo $?)
-			fstype=$(block info /dev/$part | egrep -o 'TYPE="[0-9a-zA-Z].+' | awk -F '["]' '/TYPE/{print $2}')
-			if [ -z "$fstype" ]
-			then
-				LOGGER "Unknown filesystem type of [/dev/$part]"
-				continue
-			fi
+			fstype=$(block info /dev/$part 2> /dev/null | egrep -o 'TYPE="[0-9a-zA-Z].+' | awk -F '["]' '/TYPE/{print $2}')
 			if [ "$skip_mount" = 0 ]
 			then
 				LOGGER "Already mounted [/dev/$part] on this device"
 				continue
 			fi
-			mkdir -p /mnt/$part
-			chmod 777 /mnt/$part
 			case "$fstype" in
-			ntfs)
-				extra_cmd="-o nls=utf8"
+			*ntfs*)
+				extra="-o nls=utf8"
+				[ -n "$(opkg list | grep ntfs3-oot 2> /dev/null)" ] && extra="$extra -o force"
+				[ -n "$(opkg list | grep antfs 2> /dev/null)" ] && fstype="antfs"
 			;;
 			vfat)
-				extra_cmd="-o iocharset=utf8"
+				extra="-o iocharset=utf8"
 			;;
 			esac
-			LOGGER "Try to mount disk [/dev/$part]($fstype) on [/mnt/$part] ..."
-			mount -t $fstype /dev/$part /mnt/$part -o rw,defaults $extra_cmd && LOGGER "Successfully mounted disk [/dev/$part] on [/mnt/$part]" || {
-				LOGGER "Failed to mount disk [/dev/$part] on [/mnt/$part]"
+			mnt_point="$(get_mnt $blk_id)"
+			[ -z "$mnt_point" ] && mnt_point="/mnt/$part"
+			LOGGER "Mounting disk [/dev/$part]($fstype:$blk_id) on [$mnt_point] ..."
+			mkdir -p $mnt_point || LOGGER "Failed to create mount point [$mnt_point]"
+			chmod 777 $mnt_point
+			mount -t $fstype /dev/$part $mnt_point -o rw,defaults,discard $extra 
+			if [ "$?" != 0 ]
+			then
+				mount /dev/$part $mnt_point -o rw,defaults && failed=0 || failed=1
+			else
+				failed=0
+			fi
+			[ "$failed" = 0 ] && LOGGER "Successfully mounted disk [/dev/$part]" || {
+				LOGGER "Failed to mount disk [/dev/$part]"
 			}
-			sleep 1
+			sleep 1 & unset failed
 		done
-		LOGGER "mount: Finished"
 	fi
 ;;
 esac
 
 rm -f /tmp/automount.pid
+LOGGER "automount: Done"
 exit 0
