@@ -127,14 +127,8 @@ Firmware_Diy_Main() {
 	chmod 777 -R ${Scripts} ${CustomFiles}
 	if [[ ${AutoBuild_Features} == true ]]
 	then
-		MKDIR ${BASE_FILES}/etc/AutoBuild
-		touch ${BASE_FILES}/etc/AutoBuild/Default_Variable ${BASE_FILES}/etc/AutoBuild/Custom_Variable
-		cat >> ${BASE_FILES}/etc/AutoBuild/Default_Variable <<EOF
-## 请不要修改此文件中的内容, 自定义变量请在 Custom_Variable 中添加或修改
-## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级低于 Custom_Variable
-
-EOF
-		for i in ${BASE_FILES}/etc/AutoBuild/Default_Variable ${GITHUB_ENV}
+		AddPackage git other AutoBuild-Packages Hyy2001X master
+		for i in ${GITHUB_ENV} $(PKG_Finder d package AutoBuild-Packages)/autoupdate/files/etc/autoupdate/default
 		do
 			cat >> ${i} <<EOF
 Author=${Author}
@@ -149,28 +143,14 @@ OP_REPO=${OP_REPO}
 OP_BRANCH=${OP_BRANCH}
 
 EOF
-		done
-		unset i
-		cat >> ${BASE_FILES}/etc/AutoBuild/Custom_Variable <<EOF
-## 请在下方输入你的自定义变量,一行只能填写一个变量
-## 该文件将在运行 AutoUpdate.sh 时被读取, 该文件中的变量优先级高于 Default_Variable
-## 示例:
-# Author=Hyy2001
-# TARGET_PROFILE=x86_64
-# Github=https://github.com/Hyy2001X/AutoBuild-Actions
-# Tmp_Path=/tmp/AutoUpdate
-# Log_Path=/tmp
-
-EOF
-		Copy ${Scripts}/AutoBuild_Tools.sh ${BASE_FILES}/bin
-		Copy ${Scripts}/AutoUpdate.sh ${BASE_FILES}/bin
-		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' ${BASE_FILES}/bin/AutoUpdate.sh | awk 'NR==1')
-		AddPackage svn other luci-app-autoupdate Hyy2001X/AutoBuild-Packages/trunk
+		done ; unset i
+		AutoUpdate_Version=$(awk -F '=' '/Version/{print $2}' $(PKG_Finder d package AutoBuild-Packages)/autoupdate/files/bin/autoupdate | awk 'NR==1')
+		Copy ${CustomFiles}/Depends/tools ${BASE_FILES}/bin
 		Copy ${CustomFiles}/Depends/profile ${BASE_FILES}/etc
 		Copy ${CustomFiles}/Depends/base-files-essential ${BASE_FILES}/lib/upgrade/keep.d
 		case "${OP_AUTHOR}/${OP_REPO}" in
 		coolsnowwolf/lede)
-			Copy ${CustomFiles}/Depends/coremark.sh ${WORK}/$(PKG_Finder d "package feeds" coremark)
+			Copy ${CustomFiles}/Depends/coremark.sh $(PKG_Finder d "package feeds" coremark)
 			sed -i '\/etc\/firewall.user/d;/exit 0/d' ${Version_File}
 			cat >> ${Version_File} <<EOF
 
@@ -227,7 +207,7 @@ EOF
 		fi
 		case "${OP_AUTHOR}/${OP_REPO}" in
 		immortalwrt/immortalwrt)
-			Copy ${CustomFiles}/Depends/banner ${WORK}/$(PKG_Finder d package default-settings)/files openwrt_banner
+			Copy ${CustomFiles}/Depends/banner $(PKG_Finder d package default-settings)/files openwrt_banner
 		;;
 		*)
 			Copy ${CustomFiles}/Depends/banner ${BASE_FILES}/etc
@@ -259,47 +239,6 @@ EOF
 Firmware_Diy_Other() {
 	ECHO "[Firmware_Diy_Other] Starting ..."
 	CD ${WORK}
-	case "${Compatible}" in
-	19.07)
-		OP_BRANCH=19.07
-		Force_mode=1
-		Compatible=true
-	;;
-	21.02)
-		OP_BRANCH=21.02
-		Force_mode=1
-		Compatible=true
-	;;
-	esac
-	if [[ ${Compatible} == true ]]
-	then
-		if [[ ${OP_AUTHOR} =~ (openwrt|[Ll]ienol) || ${Force_mode} == 1 ]]
-		then
-			ECHO "Starting to run [Obsolete_Package_Compatible] Script ..."
-			case "${OP_BRANCH}" in
-			19.07 | 21.02 | main)
-				[[ ${OP_BRANCH} == main ]] && OP_BRANCH=21.02
-				cat >> ${CONFIG_TEMP} <<EOF
-
-# CONFIG_PACKAGE_dnsmasq is not set
-CONFIG_PACKAGE_dnsmasq-full=y
-# CONFIG_PACKAGE_wpad-wolfssl is not set
-CONFIG_PACKAGE_wpad-openssl=y
-EOF
-				Copy ${CustomFiles}/Patches/fix_upx-ucl-${OP_BRANCH}.patch ${WORK}
-				cat fix_upx-ucl-${OP_BRANCH}.patch | patch -p1 > /dev/null 2>&1
-				AddPackage svn feeds/packages golang coolsnowwolf/packages/trunk/lang
-				ECHO "Starting to convert zh-cn translation files to zh_Hans ..."
-				cd package && bash ${Scripts}/Convert_Translation.sh && cd -
-			;;
-			*)
-				ECHO "[${OP_BRANCH}]: Current OP_BRANCH is not supported !"
-			;;
-			esac
-		else
-			ECHO "[${OP_AUTHOR}]: Current OP_AUTHOR is not supported !"
-		fi
-	fi
 	if [[ -n ${Author_URL} ]]
 	then
 			cat >> ${CONFIG_TEMP} <<EOF

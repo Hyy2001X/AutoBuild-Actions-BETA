@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.8.6
+Version=V1.8.8
 
 ECHO() {
 	case $1 in
@@ -45,17 +45,17 @@ ${White}q. 退出
 		[[ -s ${AutoUpdate_File} ]] && {
 			AutoUpdate_UI
 		} || {
-			ECHO r "\n未检测到 '/bin/AutoUpdate.sh',请确保当前固件支持一键更新!"
+			ECHO r "\n未检测到 ${AutoUpdate_File}, 请确保当前固件支持定时更新!"
 			sleep 2
 		}
 	;;
 	x)
-		wget -q ${Github_Raw}/Scripts/AutoBuild_Tools.sh -O ${Tools_Cache}/AutoBuild_Tools.sh
-		if [[ $? == 0 && -s ${Tools_Cache}/AutoBuild_Tools.sh ]]
+		wget -q ${Github_Raw}/CustomFiles/Depends/tools -O ${Tools_Cache}/tools
+		if [[ $? == 0 && -s ${Tools_Cache}/tools ]]
 		then
 			ECHO y "\n[AutoBuild_Tools] 脚本更新成功!"
 			rm -f ${Tools_File}
-			mv -f ${Tools_Cache}/AutoBuild_Tools.sh ${Tools_File}
+			mv -f ${Tools_Cache}/tools ${Tools_File}
 			chmod +x ${Tools_File}
 			sleep 2
 			exec ${Tools_File}
@@ -125,12 +125,13 @@ ${White}q. 退出
 		}
 	;;
 	6)
-		cp -a /rom/etc/AutoBuild/Default_Variable /etc/AutoBuild
 		cp -a /rom/etc/profile /etc
 		cp -a /rom/etc/banner /etc
 		cp -a /rom/etc/openwrt_release /etc
-		cp -a /rom/bin/AutoUpdate.sh ${AutoUpdate_File}
-		cp -a /rom/bin/AutoBuild_Tools.sh ${Tools_File}
+		cp -a /rom/etc/autoupdate/default /etc/autoupdate
+		cp -a /rom/bin/autoupdate ${AutoUpdate_File}
+		chmod +x ${AutoUpdate_File}
+		cp -a /rom/bin/tools ${Tools_File}
 		cp -a /rom/etc/config/autoupdate /etc/config
 		ECHO y "\n固件环境修复完成!"
 		sleep 2
@@ -467,7 +468,7 @@ ${Red}3. 更新固件 [保留配置]${White}
 8. 打印脚本运行日志 (反馈问题)
 9. 检查 AutoUpdate 运行环境
 10. 备份系统配置
-$([ $(bash ${AutoUpdate_File} --var TARGET_BOARD) == x86 ] && echo "11. 指定下载 <UEFI | BIOS> 引导的固件\n")
+$([ $(bash ${AutoUpdate_File} --env TARGET_BOARD) == x86 ] && echo "11. 指定下载 <UEFI | BIOS> 引导的固件\n")
 ${Yellow}x. 更新 [AutoUpdate] 脚本
 ${White}q. 返回\n"
 	read -p "请从上方选择一个操作:" Choose
@@ -724,8 +725,9 @@ Grey="\e[36m"
 Green="\e[32m"
 
 Tools_Cache=/tmp/AutoBuild_Tools
-Tools_File=$(cd $(dirname $0) && pwd)/AutoBuild_Tools.sh
-AutoUpdate_File=/bin/AutoUpdate.sh
+Tools_File=$(command -v tools)
+AutoUpdate_File=$(command -v autoupdate)
+
 [[ ! -d ${Tools_Cache} ]] && mkdir -p ${Tools_Cache}
 Github_Raw="https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
 AutoBuild_Tools_UI

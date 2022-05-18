@@ -6,7 +6,7 @@
 
 name: NEWIFI D2
 
-### 以下内容请保持不变 (请修改下方的 环境变量设置)
+### 以下内容请保持不变 ( 请修改下方的 [环境变量设置] )
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -18,9 +18,9 @@ on:
         description: '配置文件 [可选]'
         default: ''
       Tempoary_FLAG:
-        description: '固件名称后缀 [可选]'
+        description: '固件标签 [可选]'
         default: ''
-### 结束
+### 控制部分结束 ( 以上内容请保持不变 )
 
   #push:
   #  branches: 
@@ -53,6 +53,11 @@ env:
 jobs:
   Compile:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+
     steps:
     - name: Maximize Build Space
       uses: easimon/maximize-build-space@master
