@@ -1,5 +1,4 @@
 Sysinfo() {
-	local TARGET_PROFILE TARGET_BOOTABLE TEMP CoreMark
 	TARGET_PROFILE=$(getinf TARGET_PROFILE /rom/etc/autoupdate/default)
 	TARGET_BOARD=$(getinf TARGET_BOARD /rom/etc/autoupdate/default)
 	[ -z "${TARGET_PROFILE}" ] && echo
@@ -10,8 +9,9 @@ Sysinfo() {
 	[ -f /etc/bench.log ] && CoreMark=$(egrep -o "[0-9]+" /etc/bench.log | awk 'NR==1')
 	if [ -n "$(sensors 2> /dev/null | grep Core)" ]
 	then
-		TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2>/dev/null)
+		TEMP=$(echo "$(sensors 2> /dev/null | grep Core | awk '{Sum += $3};END {print Sum}') / $(sensors 2>/dev/null | grep Core | wc -l)" | bc 2> /dev/null)
 	fi
+	TEMP="$(temp_color ${TEMP})"
 	if [ -n "${TARGET_BOOTABLE}" ]
 	then
 		printf "            设备信息:		%-7s ${Div} ${Green}%-12s${White}\n" ${TARGET_PROFILE} ${TARGET_BOOTABLE}
@@ -21,7 +21,7 @@ Sysinfo() {
 	printf "            内核版本:		$(uname -rs | cut -d ' ' -f2)\n"
 	printf "            可用内存:		%-7s ${Div} %s of %s\n" $(free | grep Mem | awk '{a=$7*100/$2;b=$7/1024;c=$2/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
 	printf "            可用存储:		%-7s ${Div} %s of %s\n" $(df -T '/' | grep -v File | awk '{a=$5*100/$3;b=$5/1024;c=$3/1024} {printf("%.1fM %.1f%% %.1fM",b,a,c)}')
-	[ -n "${TEMP}" ] && printf "            设备温度:		${TEMP}°C\n"
+	[ -n "${TEMP}" ] && printf "            设备温度:		${TEMP}\n"
 	[ -n "${CoreMark}" ] && printf "            性能得分:		${CoreMark}\n"
 	[ -f /proc/uptime ] && printf "            运行时间: 		$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=($1%60)} {printf("%d 天 %d 小时 %d 分钟 %d 秒\n",a,b,c,d)}' /proc/uptime)\n"
 	[ -n "${SSH_CONNECTION}" ] && printf "            登录用户:		%-7s ${Div} %s\n" ${LOGNAME} $(echo ${SSH_CONNECTION} | awk '{print $1":"$2}')
@@ -32,6 +32,18 @@ getinf() {
 	local i=$(grep $1 $2  2> /dev/null | awk 'END {print}')
 	[ -z "${i}" ] && return 1
 	eval echo ${i} | sed "s/^[$1=]*//g" 2> /dev/null
+}
+
+temp_color() {
+	if [ -n "$1" ]
+	then
+		if [ $1 -gt 60 ]
+		then
+			echo -ne "${Red}WARN ${1}°C${White}"
+		else
+			echo -n "${1}°C"
+		fi
+	fi
 }
 
 White="\e[0m"
@@ -58,7 +70,13 @@ fgrep -sq '/ overlay ro,' /proc/mounts && {
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 export HOME=$(grep -e "^${USER:-root}:" /etc/passwd | cut -d ":" -f 6)
 export HOME=${HOME:-/root}
-export PS1='\u@\h:\w\$ '
+export CONFIG=/etc/config
+if [ -n "${TARGET_PROFILE}" ]
+then
+	export PS1='${Green}\u${White}@${Yellow}\h(${TARGET_PROFILE})${White}:\w${Yellow}\$ ${White}'
+else
+	export PS1='${Green}\u${White}@${Yellow}\h${White}:\w${Yellow}\$ ${White}'
+fi
 export ENV=/etc/shinit
 
 case "$TERM" in
