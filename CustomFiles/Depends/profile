@@ -73,9 +73,9 @@ export HOME=${HOME:-/root}
 export CONFIG=/etc/config
 if [ -n "${TARGET_PROFILE}" ]
 then
-	export PS1='${Green}\u${White}@${Yellow}\h(${TARGET_PROFILE})${White}:\w${Yellow}\$ ${White}'
+	export PS1='${Yellow}\u@\h(${TARGET_PROFILE})${White}:${Grey}\w${White}\$ '
 else
-	export PS1='${Green}\u${White}@${Yellow}\h${White}:\w${Yellow}\$ ${White}'
+	export PS1='${Yellow}\u@\h${White}:${Grey}\w${White}\$ '
 fi
 export ENV=/etc/shinit
 

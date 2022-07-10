@@ -8,7 +8,6 @@
 /etc/shinit
 /etc/sysctl.conf
 /etc/rc.local
-/etc/AutoBuild/Custom_Variable
 /etc/docker/daemon.json
 /root/.config/htop
 /root/.ssh
