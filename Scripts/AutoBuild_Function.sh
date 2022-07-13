@@ -99,7 +99,6 @@ Firmware_Diy_Before() {
 WORK=${WORK}
 CONFIG_TEMP=${CONFIG_TEMP}
 AutoBuild_Features=${AutoBuild_Features}
-Compatible=${Compatible}
 x86_Full_Images=${x86_Full_Images}
 AutoBuild_Fw=${AutoBuild_Fw}
 CustomFiles=${GITHUB_WORKSPACE}/CustomFiles

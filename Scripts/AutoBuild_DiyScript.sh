@@ -55,35 +55,31 @@ Firmware_Diy() {
 		AddPackage git other OpenClash vernesong master
 		AddPackage git other luci-app-ikoolproxy iwrt main
 		AddPackage git other helloworld fw876 master
-		sed -i 's/143/143,8080,8443/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
+		sed -i 's/143/143,8080,8443,6969,1337/' $(PKG_Finder d package luci-app-ssr-plus)/root/etc/init.d/shadowsocksr
 
 		patch < ${CustomFiles}/Patches/fix_shadowsocksr_alterId.patch -p1 -d ${WORK}
 		patch < ${CustomFiles}/Patches/fix_ntfs3_conflict_with_antfs.patch -p1 -d ${WORK}
 		patch < ${CustomFiles}/Patches/fix_aria2_auto_create_download_path.patch -p1 -d ${WORK}
-		
-		
+
 		case "${TARGET_BOARD}" in
 		ramips)
-			rm -f target/linux/ramips/patches-5.4/991-mt7621-improve_cpu_clock.patch
+			rm -rf target/linux/ramips/patches-5.4/*mt7621-improve_cpu_clock.patch
+			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
+			Copy ${CustomFiles}/Depends/automount $(PKG_Finder d "package" automount)/files 15-automount
 		;;
 		esac
-		
+
 		case "${TARGET_PROFILE}" in
 		d-team_newifi-d2)
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
-			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
-			Copy ${CustomFiles}/Depends/automount $(PKG_Finder d "package" automount)/files 15-automount
 			patch < ${CustomFiles}/d-team_newifi-d2_mt76_dualband.patch -p1 -d ${WORK}
-		;;
-		xiaoyu_xy-c5)
-			Copy ${CustomFiles}/Depends/automount $(PKG_Finder d "package" automount)/files 15-automount
 		;;
 		x86_64)
 			AddPackage git passwall-depends openwrt-passwall xiaorouji packages
 			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
-			cat ${CustomFiles}/x86_64_Kconfig >> ${WORK}/target/linux/x86/config-5.15
+			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.15
 		;;
 		esac
 	;;
