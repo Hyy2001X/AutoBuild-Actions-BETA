@@ -44,14 +44,14 @@ Firmware_Diy() {
 		rm -r $(PKG_Finder d "package feeds" luci-theme-argon)
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 		
-		AddPackage git lean luci-theme-argon jerrykuku 18.06
+		# AddPackage git lean luci-theme-argon jerrykuku 18.06
 		AddPackage git lean luci-app-argon-config jerrykuku master
 		AddPackage svn other luci-app-smartdns immortalwrt/luci/branches/openwrt-18.06/applications
 		sed -i 's/..\/..\//\$\(TOPDIR\)\/feeds\/luci\//g' $(PKG_Finder d package luci-app-smartdns)/Makefile
 		AddPackage svn other luci-app-eqos immortalwrt/luci/branches/openwrt-18.06/applications
 		sed -i 's/..\/..\//\$\(TOPDIR\)\/feeds\/luci\//g' $(PKG_Finder d package luci-app-eqos)/Makefile
-		AddPackage svn other luci-app-socat immortalwrt/luci/branches/openwrt-18.06/applications
-		sed -i 's/..\/..\//\$\(TOPDIR\)\/feeds\/luci\//g' $(PKG_Finder d package luci-app-socat)/Makefile
+		# AddPackage svn other luci-app-socat immortalwrt/luci/branches/openwrt-18.06/applications
+		# sed -i 's/..\/..\//\$\(TOPDIR\)\/feeds\/luci\//g' $(PKG_Finder d package luci-app-socat)/Makefile
 		AddPackage git other OpenClash vernesong master
 		AddPackage git other luci-app-ikoolproxy iwrt main
 		AddPackage git other helloworld fw876 master
@@ -80,6 +80,8 @@ Firmware_Diy() {
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.15
+			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.18
+			patch < ${CustomFiles}/Patches/i915.patch -p1 -d ${WORK}
 		;;
 		esac
 	;;
