@@ -1,0 +1,39 @@
+############################################################
+#   Description: GitHub Action to Synchronise Forks        #
+#   Based on: danshui-git/github-forks-sync-action.git     #
+#   Modify: Hyy2001X                                       #
+#   Thanks to: https://github.com/281677160                #
+############################################################
+
+name: Synchronise Forks
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      sync_mode:
+        description: '同步上游所有内容'
+        default: 'false'
+
+env:
+  SCRIPT_FILE: Scripts/Sync.sh
+
+jobs:
+  Job:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Run Synchronise Script
+      run: |
+        [ "${{github.event.inputs.sync_mode}}" == true ] && {
+            bash $GITHUB_WORKSPACE/Scripts/Sync.sh ${{secrets.GITHUB_TOKEN}} ${{github.repository}} --sync-all
+        } || {
+            bash $GITHUB_WORKSPACE/Scripts/Sync.sh ${{secrets.GITHUB_TOKEN}} ${{github.repository}}
+        }

@@ -1,0 +1,42 @@
+###########################################################
+#   Description: Refresh Release API                      #
+#   Author: Hyy2001X                                      #
+###########################################################
+
+name: Refresh API
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      refresh_switch:
+        description: '手动刷新 API'
+        default: 'true'
+
+  schedule:
+    - cron: 0 4,16 * * *
+
+jobs:
+  Job:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Download Github Release API
+      run: |
+        wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
+        
+    - name: Upload API to Github Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./API
+        file_glob: true
+        tag: AutoUpdate
+        overwrite: true
