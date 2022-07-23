@@ -79,9 +79,9 @@ Firmware_Diy() {
 			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
-			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.15
+			# cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.15
 			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.18
-			patch < ${CustomFiles}/Patches/i915.patch -p1 -d ${WORK}
+			patch < ${CustomFiles}/Patches/fix_intel_11th_igpu_drv.patch -p1 -d ${WORK}
 		;;
 		esac
 	;;
