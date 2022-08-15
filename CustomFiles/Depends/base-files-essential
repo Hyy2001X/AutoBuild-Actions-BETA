@@ -11,3 +11,5 @@
 /etc/docker/daemon.json
 /root/.config/htop
 /root/.ssh
+/root/.bash_history
+/root/.bash_profile

@@ -37,7 +37,7 @@ getinf() {
 temp_color() {
 	if [ -n "$1" ]
 	then
-		if [ $1 -gt 60 ]
+		if [ $1 -gt 55 ]
 		then
 			echo -ne "${Red}WARN ${1}°C${White}"
 		else
@@ -73,9 +73,9 @@ export HOME=${HOME:-/root}
 export CONFIG=/etc/config
 if [ -n "${TARGET_PROFILE}" ]
 then
-	export PS1='${Yellow}\u@\h(${TARGET_PROFILE})${White}:${Grey}\w${White}\$ '
+	export PS1='\u@\h[${TARGET_PROFILE}]:\w\$ '
 else
-	export PS1='${Yellow}\u@\h${White}:${Grey}\w${White}\$ '
+	export PS1='\u@\h:\w\$ '
 fi
 export ENV=/etc/shinit
 
@@ -103,7 +103,7 @@ then
 "
 fi
 
-alias reload='/etc/profile'
+alias reload='. /etc/profile'
 alias coremarkd='/etc/coremark.sh'
 alias shutdown='sync && poweroff'
 alias ls='ls --color=auto'
