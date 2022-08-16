@@ -42,8 +42,8 @@ Firmware_Diy() {
 	case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
-		sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
-		sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
+		sed -i 's/luci-theme-bootstrap/luci-theme-argon-mod/g' feeds/luci/collections/luci/Makefile
+		sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon-mod"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
 		# AddPackage git lean luci-theme-argon jerrykuku 18.06
 		AddPackage git lean luci-app-argon-config jerrykuku master
 		AddPackage svn other luci-app-smartdns immortalwrt/luci/branches/openwrt-18.06/applications
@@ -80,7 +80,7 @@ Firmware_Diy() {
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
-			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.19
+			# cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.19
 			# patch < ${CustomFiles}/Patches/upgrade_intel_igpu_drv.patch -p1 -d ${WORK}
 		;;
 		esac
