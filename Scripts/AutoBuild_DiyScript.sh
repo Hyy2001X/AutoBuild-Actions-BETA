@@ -30,7 +30,7 @@ Firmware_Diy() {
 	# ${TARGET_BOARD}		设备架构
 	# ${TARGET_FLAG}		固件名称后缀
 
-	# ${WORK}				OpenWrt 源码位置
+	# ${WORK}			OpenWrt 源码位置
 	# ${CONFIG_FILE}		使用的配置文件名称
 	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
 	# ${CustomFiles}		仓库中的 /CustomFiles 绝对路径
@@ -42,7 +42,8 @@ Firmware_Diy() {
 	case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
-		sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+		sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' ${FEEDS_LUCI}/luci/collections/luci/Makefile
+		sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
 		# AddPackage git lean luci-theme-argon jerrykuku 18.06
 		AddPackage git lean luci-app-argon-config jerrykuku master
 		AddPackage svn other luci-app-smartdns immortalwrt/luci/branches/openwrt-18.06/applications
@@ -62,7 +63,7 @@ Firmware_Diy() {
 
 		case "${TARGET_BOARD}" in
 		ramips)
-			rm -rf target/linux/ramips/patches-5.4/*mt7621-improve_cpu_clock.patch
+			rm -r target/linux/ramips/patches-5.4/*mt7621-improve_cpu_clock.patch
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 			Copy ${CustomFiles}/Depends/automount $(PKG_Finder d "package" automount)/files 15-automount
 		;;
