@@ -155,8 +155,8 @@ CONFIG_PACKAGE_luci-app-webd=y
 CONFIG_PACKAGE_luci-app-zerotier=y
 
 # Themes
-CONFIG_PACKAGE_luci-theme-argon=y
-CONFIG_PACKAGE_luci-theme-netgear=y
+# CONFIG_PACKAGE_luci-theme-argon is not set
+CONFIG_PACKAGE_luci-theme-argon-mod=y
 
 # 其他 Appliciations
 CONFIG_PACKAGE_ath10k-board-qca988x=y
