@@ -82,6 +82,7 @@ Firmware_Diy() {
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			cat ${CustomFiles}/${TARGET_PROFILE}_kExtra >> ${WORK}/target/linux/x86/config-5.19
 			patch < ${CustomFiles}/Patches/upgrade_intel_igpu_drv.patch -p1 -d ${WORK}
+			cat package/firmware/linux-firmware/intel.mk
 		;;
 		esac
 	;;
