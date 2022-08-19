@@ -230,30 +230,30 @@ EOF
 		then
 			_Kconfig=$(dirname $i)
 			__Kconfig=$(basename $i)
-			echo " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
+			ECHO " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
 			if [[ -e ${Tree}/$i && ${__Kconfig} != config-generic ]]
 			then
-				echo " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
+				ECHO " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
 				echo >> ${Tree}/$i
 				if [[ $? == 0 ]]
 				then
 					cat $i >> ${Tree}/$i
-					echo " --- Done"
+					ECHO " --- Done"
 				else
-					echo " --- Failed to write new content ..."
+					ECHO " --- Failed to write new content ..."
 				fi
 			elif [[ ${__Kconfig} == config-generic ]]
 			then
 				for j in $(ls -1 ${Tree}/${_Kconfig} | egrep "config-[0-9]+")
 				do
-					echo " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
+					ECHO " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
 					echo >> ${Tree}/${_Kconfig}/$j
 					if [[ $? == 0 ]]
 					then
 						cat $i >> ${Tree}/${_Kconfig}/$j
-						echo " --- Done"
+						ECHO " --- Done"
 					else
-						echo " --- Failed to write new content ..."
+						ECHO " --- Failed to write new content ..."
 					fi
 				done
 			fi
@@ -292,7 +292,7 @@ Firmware_Diy_End() {
 		cd -
 		cp -a ${Fw_Path}/AutoBuild-* bin/Firmware
 	fi
-	echo "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
+	ECHO "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 	ECHO "[Firmware_Diy_End] Done"
 }
 
