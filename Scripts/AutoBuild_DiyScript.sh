@@ -88,7 +88,6 @@ EOF
 
 		case "${TARGET_BOARD}" in
 		ramips)
-			rm -r target/linux/ramips/patches-5.4/*mt7621-improve_cpu_clock.patch
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
 			Copy ${CustomFiles}/Depends/automount $(PKG_Finder d "package" automount)/files 15-automount
 		;;

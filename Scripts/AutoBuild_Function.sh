@@ -258,7 +258,8 @@ EOF
 				done
 			fi
 		fi
-done
+	done
+	CD ${WORK}
 	ECHO "[Firmware_Diy_Other] Done"
 }
 
