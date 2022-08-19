@@ -151,31 +151,6 @@ EOF
 		coolsnowwolf/lede)
 			Copy ${CustomFiles}/Depends/coremark.sh $(PKG_Finder d "package feeds" coremark)
 			sed -i '\/etc\/firewall.user/d;/exit 0/d' ${Version_File}
-			cat >> ${Version_File} <<EOF
-
-sed -i '/check_signature/d' /etc/opkg.conf
-
-sed -i 's/\"services\"/\"nas\"/g' /usr/lib/lua/luci/controller/aliyundrive-webdav.lua
-sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aliyundrive-webdav/aliyundrive-webdav_log.htm
-sed -i 's/services/nas/g' /usr/lib/lua/luci/view/aliyundrive-webdav/aliyundrive-webdav_status.htm
-
-sed -i 's/\"services\"/\"vpn\"/g' /usr/lib/lua/luci/controller/v2ray_server.lua
-sed -i 's/\"services\"/\"vpn\"/g' /usr/lib/lua/luci/model/cbi/v2ray_server/index.lua
-sed -i 's/\"services\"/\"vpn\"/g' /usr/lib/lua/luci/model/cbi/v2ray_server/user.lua
-sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/log.htm
-sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/users_list_status.htm
-sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/users_list_status.htm
-sed -i 's/services/vpn/g' /usr/lib/lua/luci/view/v2ray_server/v2ray.htm
-
-if [ -z "\$(grep "REDIRECT --to-ports 53" /etc/firewall.user 2> /dev/null)" ]
-then
-	echo '#iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
-	echo '#iptables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
-	echo '#[ -n "\$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
-	echo '#[ -n "\$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
-fi
-exit 0
-EOF
 			if [[ -n ${TARGET_FLAG} ]]
 			then
 				sed -i "s?${zzz_Default_Version}?${TARGET_FLAG} ${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
@@ -227,11 +202,6 @@ EOF
 			sed -i "s/${Old_IP}/${Default_IP}/g" ${BASE_FILES}/bin/config_generate
 		fi
 	fi
-	for X in $(ls -1 target/linux/generic | grep "config-")
-	do
-		sed -i '/CONFIG_FAT_DEFAULT_IOCHARSET/d' target/linux/generic/${X}
-		echo -e '\nCONFIG_FAT_DEFAULT_IOCHARSET="utf8"' >> target/linux/generic/${X}
-	done
 	ECHO "[Firmware_Diy_Main] Done"
 }
 
@@ -246,6 +216,49 @@ CONFIG_KERNEL_BUILD_USER="${Author}"
 CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
 	fi
+
+	Kconfig_Path=${CustomFiles}/Kconfig
+	Tree=${WORK}/target/linux
+
+	cd ${Kconfig_Path}
+	for i in $(du -a | awk '{print $2}' | busybox sed -r 's/.\//\1/' | grep -wv '^.' | sort | uniq)
+	do
+		if [[ -d $i && $(ls -1 $i 2> /dev/null) ]]
+		then
+			:
+		elif [[ -e $i ]]
+		then
+			_Kconfig=$(dirname $i)
+			__Kconfig=$(basename $i)
+			echo " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
+			if [[ -e ${Tree}/$i && ${__Kconfig} != config-generic ]]
+			then
+				echo " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
+				echo >> ${Tree}/$i
+				if [[ $? == 0 ]]
+				then
+					cat $i >> ${Tree}/$i
+					echo " --- Done"
+				else
+					echo " --- Failed to write new content ..."
+				fi
+			elif [[ ${__Kconfig} == config-generic ]]
+			then
+				for j in $(ls -1 ${Tree}/${_Kconfig} | egrep "config-[0-9]+")
+				do
+					echo " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
+					echo >> ${Tree}/${_Kconfig}/$j
+					if [[ $? == 0 ]]
+					then
+						cat $i >> ${Tree}/${_Kconfig}/$j
+						echo " --- Done"
+					else
+						echo " --- Failed to write new content ..."
+					fi
+				done
+			fi
+		fi
+done
 	ECHO "[Firmware_Diy_Other] Done"
 }
 
