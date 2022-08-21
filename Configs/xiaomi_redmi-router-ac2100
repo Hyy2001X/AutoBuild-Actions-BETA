@@ -70,7 +70,8 @@ CONFIG_PACKAGE_luci-app-zerotier=y
 CONFIG_PACKAGE_luci-ssl-openssl=y
 
 # 主题包
-CONFIG_PACKAGE_luci-theme-argon=y
+# CONFIG_PACKAGE_luci-theme-argon is not set
+CONFIG_PACKAGE_luci-theme-argon-mod=y
 
 # Other Appliciations
 CONFIG_PACKAGE_bash=y
