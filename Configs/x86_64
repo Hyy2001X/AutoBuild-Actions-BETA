@@ -29,6 +29,12 @@ CONFIG_PACKAGE_6in4=y
 CONFIG_PACKAGE_6rd=y
 CONFIG_PACKAGE_6to4=y
 
+# 固件
+CONFIG_PACKAGE_rtl8821cu-firmware=y
+CONFIG_PACKAGE_iwlwifi-firmware-ax200=y
+CONFIG_PACKAGE_iwlwifi-firmware-ax210=y
+CONFIG_PACKAGE_i915-firmware=y
+
 # 内核模块
 CONFIG_PACKAGE_kmod-fs-xfs=y
 CONFIG_PACKAGE_kmod-fs-btrfs=y
@@ -39,30 +45,56 @@ CONFIG_PACKAGE_kmod-drm-i915=y
 CONFIG_PACKAGE_kmod-i915-gvt=y
 CONFIG_PACKAGE_kmod-kvm-intel=y
 CONFIG_PACKAGE_kmod-kvm-x86=y
-CONFIG_PACKAGE_kmod-vfio-mdev=y
+CONFIG_PACKAGE_kmod-md-raid456=y
 
 # USB 驱动程序
-CONFIG_PACKAGE_kmod-usb-net=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
+CONFIG_PACKAGE_kmod-usb-net-aqc111=y
+CONFIG_PACKAGE_kmod-usb-net-asix=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-eem=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-subset=y
+CONFIG_PACKAGE_kmod-usb-net-dm9601-ether=y
+CONFIG_PACKAGE_kmod-usb-net-hso=y
 CONFIG_PACKAGE_kmod-usb-net-huawei-cdc-ncm=y
 CONFIG_PACKAGE_kmod-usb-net-ipheth=y
 CONFIG_PACKAGE_kmod-usb-net-kalmia=y
 CONFIG_PACKAGE_kmod-usb-net-kaweth=y
+CONFIG_PACKAGE_kmod-usb-net-mcs7830=y
+CONFIG_PACKAGE_kmod-usb-net-pegasus=y
+CONFIG_PACKAGE_kmod-usb-net-pl=y
+CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
 CONFIG_PACKAGE_kmod-usb-net-rndis=y
-CONFIG_PACKAGE_kmod-usb3=y
-CONFIG_PACKAGE_kmod-usb-ehci=y
-CONFIG_PACKAGE_kmod-usb-uhci=y
+CONFIG_PACKAGE_kmod-usb-net-sierrawireless=y
+CONFIG_PACKAGE_kmod-usb-net-sr9700=y
 CONFIG_PACKAGE_kmod-usb-ohci=y
 CONFIG_PACKAGE_kmod-usb-ohci-pci=y
+CONFIG_PACKAGE_kmod-usb-printer=y
 CONFIG_PACKAGE_kmod-usb-serial=y
 CONFIG_PACKAGE_kmod-usb-serial-ch341=y
+CONFIG_PACKAGE_kmod-usb-uhci=y
+CONFIG_PACKAGE_kmod-usb-wdm=y
+CONFIG_PACKAGE_kmod-usb-xhci-hcd=y
+CONFIG_PACKAGE_kmod-usb3=y
+CONFIG_PACKAGE_kmod-usbip=y
 CONFIG_PACKAGE_kmod-usbmon=y
 
 # Wireless 驱动程序
+CONFIG_PACKAGE_kmod-ath=y
+CONFIG_PACKAGE_kmod-mt76=y
+CONFIG_PACKAGE_kmod-mt7915e=y
+CONFIG_PACKAGE_kmod-mt7921e=y
+CONFIG_PACKAGE_kmod-mt7921u=y
 CONFIG_PACKAGE_kmod-rtl8821ae=y
-# CONFIG_PACKAGE_kmod-rtl8821cu is not set
+CONFIG_PACKAGE_kmod-rtl8192ce=y
+CONFIG_PACKAGE_kmod-rtl8192cu=y
+CONFIG_PACKAGE_kmod-rtl8192de=y
+CONFIG_PACKAGE_kmod-rtl8192se=y
 CONFIG_PACKAGE_kmod-rtl8xxxu=y
+CONFIG_PACKAGE_kmod-iwlwifi=y
+CONFIG_PACKAGE_kmod-mac80211=y
+CONFIG_PACKAGE_kmod-rtw88=y
 
 # LUCI Appliciations
 CONFIG_PACKAGE_luci-app-argon-config=y
@@ -86,6 +118,7 @@ CONFIG_PACKAGE_luci-app-docker=y
 CONFIG_DOCKER_CGROUP_OPTIONS=y
 CONFIG_DOCKER_NET_MACVLAN=y
 CONFIG_DOCKER_OPTIONAL_FEATURES=y
+CONFIG_PACKAGE_luci-app-eqos=y
 CONFIG_PACKAGE_luci-app-hd-idle=y
 # CONFIG_PACKAGE_luci-app-ipsec-vpnd is not set
 CONFIG_PACKAGE_luci-app-iperf3-server=y
@@ -147,9 +180,10 @@ CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_luci-app-uhttpd=y
 CONFIG_PACKAGE_luci-app-usb-printer=y
 CONFIG_PACKAGE_luci-app-uugamebooster=y
-CONFIG_PACKAGE_luci-app-unblockmusic=y
-CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_Go=y
-CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_NodeJS=y
+# CONFIG_PACKAGE_luci-app-unblockmusic is not set
+# CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_Go is not set
+# CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_NodeJS is not set
+CONFIG_PACKAGE_luci-app-unblockneteasemusic=y
 # CONFIG_PACKAGE_luci-app-v2ray-server is not set
 # CONFIG_PACKAGE_luci-app-xlnetacc is not set
 CONFIG_PACKAGE_luci-app-wrtbwmon=y
@@ -163,7 +197,6 @@ CONFIG_PACKAGE_luci-app-zerotier=y
 CONFIG_PACKAGE_luci-theme-argon-mod=y
 
 # 其他 Appliciations
-CONFIG_PACKAGE_ath10k-board-qca988x=y
 CONFIG_PACKAGE_acpid=y
 CONFIG_PACKAGE_autosamba=y
 CONFIG_PACKAGE_antfs-mount=y
@@ -199,13 +232,11 @@ CONFIG_PACKAGE_git-http=y
 CONFIG_PACKAGE_httping=y
 CONFIG_PACKAGE_hdparm=y
 CONFIG_PACKAGE_htop=y
-CONFIG_PACKAGE_i915-firmware=y
 CONFIG_PACKAGE_iperf3=y
 CONFIG_PACKAGE_ipt2socks=y
 CONFIG_PACKAGE_jq=y
 CONFIG_PACKAGE_libudev-fbsd=y
 CONFIG_PACKAGE_lsof=y
-CONFIG_PACKAGE_luci-proto-qmi=y
 CONFIG_PACKAGE_net-snmp=y
 CONFIG_PACKAGE_nfs-utils=y
 CONFIG_PACKAGE_ntfs3-mount=y
@@ -216,6 +247,7 @@ CONFIG_PACKAGE_pciutils=y
 CONFIG_PACKAGE_smartmontools=y
 CONFIG_PACKAGE_speedtest-go=y
 CONFIG_PACKAGE_usbutils=y
+CONFIG_PACKAGE_usb-modeswitch=y
 CONFIG_PACKAGE_upx=y
 CONFIG_PACKAGE_wpad-openssl=y
 CONFIG_PACKAGE_wget-ssl=y

@@ -1,0 +1,54 @@
+diff --git a/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua b/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua
+index 50ee568..6d44871 100644
+--- a/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua
+@@ -319,6 +319,13 @@ o = s:option(Value, "obfs_param", translate("Obfs param (optional)"))
+ o:depends("type", "ssr")
+ o:depends({type = "v2ray", v2ray_protocol = "shadowsocksr"})
+ 
++-- AlterId
++o = s:option(Value, "alter_id", translate("AlterId"))
++o.datatype = "port"
++o.default = 16
++o.rmempty = true
++o:depends({type = "v2ray", v2ray_protocol = "vmess"})
++
+ -- [[ Hysteria ]]--
+ o = s:option(ListValue, "hysteria_protocol", translate("Protocol"))
+ o:depends("type", "hysteria")
+diff --git a/package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm b/package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm
+index cab2690..95d2ff1 100644
+--- a/package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm
++++ b/package/other/helloworld/luci-app-ssr-plus/luasrc/view/shadowsocksr/ssrurl.htm
+@@ -244,6 +244,7 @@ function import_ssr_url(btn, urlname, sid) {
+ 			}
+ 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server')[0].value = serverPart[0];
+ 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server_port')[0].value = port || '443';
++			document.getElementsByName('cbid.shadowsocksr.' + sid + '.alter_id')[0].value = ssm.aid;
+ 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.password')[0].value = password;
+ 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.tls')[0].checked = true;
+ 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.tls')[0].dispatchEvent(event);
+diff --git a/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua b/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua
+index 45f710a..32d3f3f 100755
+--- a/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/gen_config.lua
+@@ -20,6 +20,7 @@ function vmess_vless()
+ 				users = {
+ 					{
+ 						id = server.vmess_id,
++						alterId = (server.v2ray_protocol == "vmess" or not server.v2ray_protocol) and tonumber(server.alter_id) or nil,
+ 						security = (server.v2ray_protocol == "vmess" or not server.v2ray_protocol) and server.security or nil,
+ 						encryption = (server.v2ray_protocol == "vless") and server.vless_encryption or nil,
+ 						flow = (server.xtls == '1') and (server.vless_flow and server.vless_flow or "xtls-rprx-splice") or nil
+diff --git a/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua b/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua
+index 66219c3..8b62d38 100755
+--- a/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/root/usr/share/shadowsocksr/subscribe.lua
+@@ -176,6 +176,7 @@ local function processData(szType, content)
+ 		result.server = info.add
+ 		result.server_port = info.port
+ 		result.transport = info.net
++		result.alter_id = info.aid
+ 		result.vmess_id = info.id
+ 		result.alias = info.ps
+ 		result.packet_encoding = packet_encoding

@@ -42,6 +42,11 @@ CONFIG_PACKAGE_autosamba=y
 CONFIG_PACKAGE_luci-app-samba=y
 CONFIG_PACKAGE_luci-app-vsftpd=y
 
+# Wireless 驱动程序
+CONFIG_PACKAGE_kmod-iwlwifi=y
+CONFIG_PACKAGE_iwlwifi-firmware-ax200=y
+CONFIG_PACKAGE_iwlwifi-firmware-ax210=y
+
 # LUCI Appliciations
 CONFIG_PACKAGE_luci-app-accesscontrol=y
 CONFIG_PACKAGE_luci-app-argon-config=y

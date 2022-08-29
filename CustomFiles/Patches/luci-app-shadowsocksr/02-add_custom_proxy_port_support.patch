@@ -1,0 +1,57 @@
+diff --git a/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua b/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua
+index 1530930..609f880 100644
+--- a/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua
++++ b/package/other/helloworld/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua
+@@ -82,8 +82,14 @@ o.default = gfw
+ o = s:option(ListValue, "dports", translate("Proxy Ports"))
+ o:value("1", translate("All Ports"))
+ o:value("2", translate("Only Common Ports"))
++o:value("0", translate("Custom Ports"))
+ o.default = 1
+ 
++o = s:option(Value, "custom_dports", translate("Custom Ports"))
++o.description = translate("Muitiple proxy ports can saperate with ','")
++o.default = "22,53,587,465,995,993,143,80,443,853,9418"
++o:depends("dports", "0")
++
+ o = s:option(ListValue, "pdnsd_enable", translate("Resolve Dns Mode"))
+ o:value("1", translate("Use DNS2TCP query"))
+ o:value("2", translate("Use DNS2SOCKS query and cache"))
+diff --git a/package/other/helloworld/luci-app-ssr-plus/po/zh-cn/ssr-plus.po b/package/other/helloworld/luci-app-ssr-plus/po/zh-cn/ssr-plus.po
+index 9be3eb1..0cc120a 100644
+--- a/package/other/helloworld/luci-app-ssr-plus/po/zh-cn/ssr-plus.po
++++ b/package/other/helloworld/luci-app-ssr-plus/po/zh-cn/ssr-plus.po
+@@ -601,6 +601,12 @@ msgstr "所有端口（默认）"
+ msgid "Only Common Ports"
+ msgstr "仅常用端口（不走P2P流量到代理）"
+ 
++msgid "Custom Ports"
++msgstr "自定义端口"
++
++msgid "Muitiple proxy ports can saperate with ','"
++msgstr "多个代理端口请用 ',' 分隔（注意用英文逗号)"
++
+ msgid "Socket Connected"
+ msgstr "连接测试"
+ 
+diff --git a/package/other/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr b/package/other/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+index 4c5f0a2..a3751e6 100755
+--- a/package/other/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
++++ b/package/other/helloworld/luci-app-ssr-plus/root/etc/init.d/shadowsocksr
+@@ -778,9 +778,14 @@ start_rules() {
+ 		all) echo "-z" ;;
+ 		esac
+ 	}
+-	if [ "$(uci_get_by_type global dports 1)" == "2" ]; then
++	case "$(uci_get_by_type global dports 1)" in
++	0)
++		local proxyport="-m multiport --dports $(uci_get_by_type global custom_dports)"
++	;;
++	2)
+ 		local proxyport="-m multiport --dports 22,53,587,465,995,993,143,80,443,853,9418"
+-	fi
++	;;
++	esac
+ 	get_arg_out() {
+ 		case "$(uci_get_by_type access_control router_proxy 1)" in
+ 		1) echo "-o" ;;
