@@ -71,7 +71,7 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@main
-      with: |
+      with:
         fetch-depth: 0
 
     - name: Load Pre-Variables
