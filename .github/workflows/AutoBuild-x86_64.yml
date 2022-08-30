@@ -60,6 +60,7 @@ jobs:
 
     steps:
     - name: Maximize Build Space
+      if: env.DELETE_USELESS_FILES == 'true' && !cancelled()
       uses: easimon/maximize-build-space@master
       with:
         root-reserve-mb: 5120
