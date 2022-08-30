@@ -75,7 +75,8 @@ EOF
 			AddPackage svn apps luci-app-${i} immortalwrt/luci/branches/openwrt-18.06/applications
 			sed -i 's/..\/..\//\$\(TOPDIR\)\/feeds\/luci\//g' ${WORK}/package/apps/luci-app-${i}/Makefile
 		done ; unset i
-		
+
+		AddPackage svn apps minieap immortalwrt/packages/branches/openwrt-18.06/net
 		AddPackage git lean luci-app-argon-config jerrykuku master
 		AddPackage git other OpenClash vernesong master
 		AddPackage git other luci-app-ikoolproxy iwrt main
