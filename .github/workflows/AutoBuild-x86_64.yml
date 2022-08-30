@@ -73,7 +73,7 @@ jobs:
       with: |
         fetch-depth: 0
 
-    - name: Initialization Variables
+    - name: Load Pre-Variables
       run: |
         echo "Free space:"
         df -h
@@ -115,7 +115,7 @@ jobs:
         echo "Compile_Date=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_ENV
 
-    - name: Initialization Environment
+    - name: Initialize Environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -149,7 +149,7 @@ jobs:
         clean: false
         prefix: /workdir/openwrt
 
-    - name: Run AutoBuild_DiyScript.sh
+    - name: Run Diy-Scripts
       run: |
         chmod +x Scripts/AutoBuild_*.sh
         cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
@@ -162,7 +162,7 @@ jobs:
         Firmware_Diy_Main
         Firmware_Diy
 
-    - name: Compile
+    - name: Build OpenWrt
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
@@ -173,7 +173,7 @@ jobs:
         make -j$(nproc) || make -j1 V=s
         [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV || echo "Result=false" >> $GITHUB_ENV
 
-    - name: Process Firmware
+    - name: Checkout Firmware
       if: env.Result == 'true' && !cancelled()
       run: |
         cd openwrt
@@ -194,7 +194,7 @@ jobs:
         name: ${{ env.CONFIG_FILE }}_bin_${{ env.Compile_Date }}
         path: openwrt/bin
 
-    - name: Upload Firmware to Github Release
+    - name: Upload Firmware to Release
       uses: svenstaro/upload-release-action@v2
       if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
       with:
@@ -204,12 +204,12 @@ jobs:
         tag: AutoUpdate
         overwrite: true
         
-    - name: Download Github Release API
+    - name: Download Github API
       if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
       run: |
         wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
         
-    - name: Upload API to Github Release
+    - name: Upload Github API to Release
       if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
       uses: svenstaro/upload-release-action@v2
       with:
