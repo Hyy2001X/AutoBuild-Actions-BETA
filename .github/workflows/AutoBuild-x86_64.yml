@@ -66,6 +66,7 @@ jobs:
         swap-size-mb: 512
         remove-dotnet: 'true'
         remove-android: 'true'
+        remove-haskell: 'true'
 
     - name: Checkout
       uses: actions/checkout@main
