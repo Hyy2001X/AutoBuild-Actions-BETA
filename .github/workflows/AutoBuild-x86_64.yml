@@ -52,7 +52,7 @@ env:
 
 jobs:
   Compile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     permissions:
       issues: write
       pull-requests: write
@@ -69,6 +69,8 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@main
+      with: |
+        fetch-depth: 0
 
     - name: Initialization Variables
       run: |
@@ -136,6 +138,15 @@ jobs:
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
+
+    - name: Accelerate
+      uses: klever1988/cachewrtbuild@main
+      with:
+        ccache: false
+        toolchain: true
+        skip: true
+        clean: false
+        prefix: /workdir/openwrt
 
     - name: Run AutoBuild_DiyScript.sh
       run: |
