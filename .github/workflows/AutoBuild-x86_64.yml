@@ -170,7 +170,7 @@ jobs:
         cd openwrt
         ./scripts/feeds install -a
         make defconfig
-        make download -j$(nproc) V=s
+        make download -j8
 
     - name: Build OpenWrt
       run: |
