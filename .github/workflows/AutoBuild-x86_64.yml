@@ -148,7 +148,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: /workdir/openwrt
+        prefix: $GITHUB_WORKSPACE/openwrt
 
     - name: Run Diy-Scripts
       run: |
