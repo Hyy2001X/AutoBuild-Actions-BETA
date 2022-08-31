@@ -48,11 +48,13 @@ env:
   DELETE_USELESS_FILES: true
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: false
+# Cache 加速编译
+  CACHE_ACCELERATE: true
 ### 结束
 
 jobs:
   Compile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     permissions:
       issues: write
       pull-requests: write
@@ -60,17 +62,21 @@ jobs:
 
     steps:
     - name: Maximize Build Space
+      if: env.DELETE_USELESS_FILES == 'true' && !cancelled()
       uses: easimon/maximize-build-space@master
       with:
         root-reserve-mb: 5120
         swap-size-mb: 512
         remove-dotnet: 'true'
         remove-android: 'true'
+        remove-haskell: 'true'
 
     - name: Checkout
       uses: actions/checkout@main
+      with:
+        fetch-depth: 0
 
-    - name: Initialization Variables
+    - name: Load Custom Variables
       run: |
         echo "Free space:"
         df -h
@@ -87,7 +93,7 @@ jobs:
         fi
         if [ ! -f "$GITHUB_WORKSPACE/Configs/$CONFIG_FILE" ]
         then
-            echo "CONFIG_FILE: [/Config/$CONFIG_FILE] is not detected !"
+            echo "CONFIG_FILE: [/Config/$CONFIG_FILE] is not detected ..."
             exit 1
         else
             echo "CONFIG_FILE: [/Config/$CONFIG_FILE]"
@@ -102,17 +108,15 @@ jobs:
         then
             echo "FLAG: [${{ github.event.inputs.Tempoary_FLAG }}]"
             echo "Tempoary_FLAG=${{ github.event.inputs.Tempoary_FLAG }}" >> $GITHUB_ENV
-        else
-            echo "env Tempoary_FLAG is not detected !"
         fi
-        REPO_URL="https://github.com/$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 1)"
-        REPO_BRANCH=$(echo ${{ env.DEFAULT_SOURCE }} | cut -d \: -f 2)
+        REPO_URL="https://github.com/$(cut -d \: -f 1 <<< ${{ env.DEFAULT_SOURCE }})"
+        REPO_BRANCH=$(cut -d \: -f 2 <<< ${{ env.DEFAULT_SOURCE }})
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
         echo "Compile_Date=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
         echo "Display_Date=$(date +%Y/%m/%d)" >> $GITHUB_ENV
 
-    - name: Initialization Environment
+    - name: Initialize Environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -137,32 +141,45 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
-    - name: Run AutoBuild_DiyScript.sh
+    - name: Accelerate
+      if: env.CACHE_ACCELERATE == 'true'
+      uses: klever1988/cachewrtbuild@main
+      with:
+        ccache: false
+        toolchain: true
+        skip: true
+        clean: false
+        prefix: ${{ github.workspace }}/openwrt
+
+    - name: Run Diy Scripts
       run: |
         chmod +x Scripts/AutoBuild_*.sh
-        cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE openwrt/.config
         cd openwrt
-        make defconfig
+        cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
+        make defconfig
         Firmware_Diy_Before
-        rm .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
+        rm -f .config && cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
         Firmware_Diy_Main
         Firmware_Diy
+        Firmware_Diy_Other
 
-    - name: Compile
+    - name: Pre-download Libraries
       run: |
         cd openwrt
-        source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
-        Firmware_Diy_Other
-        ./scripts/feeds install -a > /dev/null 2>&1
+        ./scripts/feeds install -a
         make defconfig
-        make download -j$(nproc) V=s
-        make -j$(nproc) || make -j1 V=s
-        [ $? == 0 ] && echo "Result=true" >> $GITHUB_ENV || echo "Result=false" >> $GITHUB_ENV
+        make download -j8
 
-    - name: Process Firmware
-      if: env.Result == 'true' && !cancelled()
+    - name: Build OpenWrt
+      run: |
+        cd openwrt
+        make -j$(nproc) || make -j1 V=s
+        [ "$?" == 0 ] && echo "Compile_Result=true" >> $GITHUB_ENV || echo "Compile_Result=false" >> $GITHUB_ENV
+
+    - name: Checkout Firmware
+      if: env.Compile_Result == 'true' && !cancelled()
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
@@ -170,21 +187,21 @@ jobs:
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_ARTIFACTS == 'true' && env.Result == 'true' && !cancelled()
+      if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
         name: ${{ env.CONFIG_FILE }}_firmware_${{ env.Compile_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Result == 'true' && !cancelled()
+      if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
         name: ${{ env.CONFIG_FILE }}_bin_${{ env.Compile_Date }}
         path: openwrt/bin
 
-    - name: Upload Firmware to Github Release
+    - name: Upload Firmware to Release
       uses: svenstaro/upload-release-action@v2
-      if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: openwrt/bin/Firmware/*
@@ -192,13 +209,13 @@ jobs:
         tag: AutoUpdate
         overwrite: true
         
-    - name: Download Github Release API
-      if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
+    - name: Download Github API
+      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
       run: |
         wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
         
-    - name: Upload API to Github Release
-      if: env.UPLOAD_RELEASES == 'true' && env.Result == 'true' && !cancelled()
+    - name: Upload Github API to Release
+      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
