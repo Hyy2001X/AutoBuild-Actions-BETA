@@ -1,0 +1,160 @@
+#!/bin/bash
+
+get_thread() {
+	cat /proc/cpuinfo 2> /dev/null | grep MHz | wc -l
+}
+
+get_governor() {
+	cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor 2> /dev/null
+}
+
+set_governor() {
+	for i in $(seq $(get_thread))
+	do
+		i=$(( $i - 1 ))
+		echo $1 > /sys/devices/system/cpu/cpufreq/policy${i}/scaling_governor 2> /dev/null
+		[[ $? != 0 ]] && return 1
+	done
+	return 0
+}
+
+list_available_governor() {
+	cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors 2> /dev/null
+}
+
+list_available_freq() {
+	cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_${1}_freq 2> /dev/null
+}
+
+check_governor() {
+	for i in $(list_available_governor)
+	do
+		[[ $1 == $i ]] && return 0
+	done
+	return 1
+}
+
+list_available_freq() {
+	cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_${1}_freq 2> /dev/null
+}
+
+get_freq() {
+	case $1 in
+	cur)
+		cat /sys/devices/system/cpu/cpufreq/policy${1}/scaling_cur_freq 2> /dev/null
+	;;
+	min | max)
+		cat /sys/devices/system/cpu/cpufreq/policy0/scaling_${1}_freq 2> /dev/null
+	;;
+	esac
+}
+
+set_freq() {
+	for i in $(seq $(get_thread))
+	do
+		i=$(( $i - 1 ))
+		echo $2 > /sys/devices/system/cpu/cpufreq/policy${i}/scaling_${1}_freq 2> /dev/null
+		[[ $? != 0 ]] && return 1
+	done
+	return 0
+}
+
+help() {
+	case $1 in
+	governor)
+		case $2 in
+		set)
+			echo "Usage: $0 governor set < $(list_available_governor)>"
+		;;
+		*)
+			echo "Usage: $0 governor [ls] [show] [set]"
+		;;
+		esac
+	;;
+	freq)
+		case $2 in
+		set)
+			echo "Usage: $0 freq set [min] [max] <number[$(( $(list_available_freq min) / 100000 ))-$(( $(list_available_freq max) / 100000 ))]>"
+		;;
+		*)
+			echo "Usage: $0 freq [ls] [set] [show]"
+		;;
+		esac
+	;;
+	*)
+		echo "Usage: $0 [governor] [freq]"
+	;;
+	esac
+	exit
+}
+
+case $1 in
+governor)
+	case $2 in
+	ls)
+		echo "Available governor: $(list_available_governor)"
+	;;
+	show)
+		for i in $(seq $(get_thread))
+		do
+			i=$(( $i - 1 ))
+			echo CPU$i $(get_governor $i) $(get_freq cur $i)
+		done
+	;;
+	set)
+		if [[ $(check_governor $3; echo $?) == 0 ]]
+		then
+			set_governor $3 || echo "Failed to set CPU governor to $3 ..."
+		else
+			help $1 $2
+		fi
+	;;
+	*)
+		help $1
+	;;
+	esac
+;;
+freq)
+	case $2 in
+	ls)
+			echo "Available Min frequency: $(list_available_freq min)"
+			echo "Available Max frequency: $(list_available_freq max)"
+	;;
+	show)
+		case $3 in
+		min | max)
+			get_freq $3
+		;;
+		*)
+			get_freq min
+			get_freq max
+		;;
+		esac
+	;;
+	set)
+		case $3 in
+		min | max)
+			if [[ $4 =~ [0-9] && $4 != 0 && $4 -lt 99 ]] 2> /dev/null
+			then
+				set_freq $3 ${4}00000 || echo "Failed to set CPU frequency to $4 ..."
+			else
+				echo "Unknown freq number: [$4]"
+			fi
+		;;
+		reset)
+			set_freq min $(list_available_freq min)
+			set_freq max $(list_available_freq max)
+		;;
+		*)
+			help $1 $2
+		esac
+	;;
+	*)
+		help $1
+	;;
+	esac
+;;
+*)
+	help
+;;
+esac
