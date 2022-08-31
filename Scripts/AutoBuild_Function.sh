@@ -8,17 +8,17 @@ Firmware_Diy_Before() {
 	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${WORK}
 	Firmware_Diy_Core
-	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(echo ${Compile_Date} | cut -c1-8)"
+	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
 	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
-	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(echo "${Github}" | cut -d "/" -f4)"
-	OP_AUTHOR="$(echo "${REPO_URL}" | cut -d "/" -f4)"
-	OP_REPO="$(echo "${REPO_URL}" | cut -d "/" -f5)"
+	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(cut -d "/" -f4 <<< ${Github})"
+	OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
+	OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
 	OP_BRANCH="$(Get_Branch)"
 	if [[ ${OP_BRANCH} =~ (master|main) ]]
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
 	else
-		OP_BRANCH="$(echo ${OP_BRANCH} | egrep -o "[0-9]+.[0-9]+" | awk 'NR==1')"
+		OP_BRANCH="$(egrep -o "[0-9]+.[0-9]+" <<< ${OP_BRANCH} | awk 'NR==1')"
 		OP_VERSION_HEAD="R${OP_BRANCH}-"
 	fi
 	case "${OP_AUTHOR}/${OP_REPO}" in
@@ -332,12 +332,12 @@ List_Fw() {
 	if [[ -z $* ]]
 	then
 		for X in $(List_sha256);do
-			echo ${X} | cut -d "*" -f2
+			cut -d "*" -f2 <<< "${X}"
 		done
 	else
 		while [[ $1 ]];do
 			for X in $(List_sha256);do
-				[[ ${X} == *$1 ]] && echo "${X}" | cut -d "*" -f2
+				[[ ${X} == *$1 ]] && cut -d "*" -f2 <<< "${X}"
 			done
 			shift
 		done
@@ -353,7 +353,7 @@ List_sha256() {
 }
 
 List_MFormat() {
-	echo "$(List_sha256 | cut -d "*" -f2 | cut -d "." -f2-3)" | sort | uniq
+	List_sha256 | cut -d "*" -f2 | cut -d "." -f2-3 | sort | uniq
 }
 
 Get_sha256() {
