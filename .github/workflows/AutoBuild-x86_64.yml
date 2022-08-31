@@ -76,7 +76,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Load Pre-Variables
+    - name: Load Custom Variables
       run: |
         echo "Free space:"
         df -h
@@ -149,9 +149,9 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: $GITHUB_WORKSPACE/openwrt
+        prefix: ${{ github.workspace }}/openwrt
 
-    - name: Run Diy-Scripts
+    - name: Run Diy Scripts
       run: |
         chmod +x Scripts/AutoBuild_*.sh
         cd openwrt
@@ -165,7 +165,7 @@ jobs:
         Firmware_Diy
         Firmware_Diy_Other
 
-    - name: Make Download
+    - name: Pre-download Libraries
       run: |
         cd openwrt
         ./scripts/feeds install -a
