@@ -178,7 +178,7 @@ jobs:
     - name: Build OpenWrt
       run: |
         cd openwrt
-        make -j$(nproc) || make -j1 V=s
+        make -j4 || make -j1 V=s
         [ "$?" == 0 ] && echo "Compile_Result=true" >> $GITHUB_ENV || echo "Compile_Result=false" >> $GITHUB_ENV
 
     - name: Checkout Firmware
