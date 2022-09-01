@@ -66,7 +66,6 @@ jobs:
       uses: easimon/maximize-build-space@master
       with:
         root-reserve-mb: 5120
-        swap-size-mb: 512
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
@@ -155,6 +154,10 @@ jobs:
       run: |
         chmod +x Scripts/AutoBuild_*.sh
         cd openwrt
+        if [ "${{ env.CACHE_ACCELERATE }}" == true ]
+        then
+            echo -e "\nCONFIG_DEVEL=y\nCONFIG_CCACHE=y\n" >> $GITHUB_WORKSPACE/Configs/$CONFIG_FILE
+        fi
         cp $GITHUB_WORKSPACE/Configs/$CONFIG_FILE .config
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_DiyScript.sh
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
