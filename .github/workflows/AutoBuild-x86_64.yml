@@ -77,8 +77,6 @@ jobs:
 
     - name: Load Custom Variables
       run: |
-        echo "Free space:"
-        df -h
         if [ -n "${{ github.event.inputs.Tempoary_CONFIG }}" ]
         then
             if [ -f "$GITHUB_WORKSPACE/Configs/${{ github.event.inputs.Tempoary_CONFIG }}" ]
@@ -147,11 +145,13 @@ jobs:
         ccache: false
         toolchain: true
         skip: true
-        clean: false
+        clean: true
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Run Diy Scripts
       run: |
+        echo "Free space:"
+        df -h
         chmod +x Scripts/AutoBuild_*.sh
         cd openwrt
         if [ "${{ env.CACHE_ACCELERATE }}" == true ]

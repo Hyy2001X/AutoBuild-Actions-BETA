@@ -13,7 +13,7 @@ Firmware_Diy_Core() {
 	Short_Fw_Date=true
 	x86_Full_Images=false
 	Fw_Format=false
-	Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4"
+	Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4|json"
 
 	AutoBuild_Features=true
 }
@@ -88,7 +88,7 @@ EOF
 			patch < ${CustomFiles}/Patches/luci-app-shadowsocksr/${x} -p1 -d ${WORK}
 		done ; unset x
 		
-		patch < ${CustomFiles}/Patches/fix_coremark_on_x64.patch -p1 -d ${WORK}
+		patch < ${CustomFiles}/Patches/fix_coremark.patch -p1 -d ${WORK}
 		patch < ${CustomFiles}/Patches/fix_aria2_auto_create_download_path.patch -p1 -d ${WORK}
 
 		case "${TARGET_BOARD}" in
