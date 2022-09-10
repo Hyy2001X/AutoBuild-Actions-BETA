@@ -1,0 +1,55 @@
+diff --git a/feeds/luci/applications/luci-app-autoreboot/Makefile b/feeds/luci/applications/luci-app-autoreboot/Makefile
+index 5e2288f..0a0470d 100644
+--- a/feeds/luci/applications/luci-app-autoreboot/Makefile
++++ b/feeds/luci/applications/luci-app-autoreboot/Makefile
+@@ -11,7 +11,7 @@ LUCI_PKGARCH:=all
+ 
+ PKG_NAME:=luci-app-autoreboot
+ PKG_VERSION:=1.0
+-PKG_RELEASE:=8
++PKG_RELEASE:=9
+ 
+ include ../../luci.mk
+ 
+diff --git a/feeds/luci/applications/luci-app-autoreboot/root/etc/init.d/autoreboot b/feeds/luci/applications/luci-app-autoreboot/root/etc/init.d/autoreboot
+index aba2fce..9bfc702 100755
+--- a/feeds/luci/applications/luci-app-autoreboot/root/etc/init.d/autoreboot
++++ b/feeds/luci/applications/luci-app-autoreboot/root/etc/init.d/autoreboot
+@@ -5,25 +5,28 @@ run_reboot()
+ {
+ 	local enable
+ 	config_get_bool enable $1 enable
+-
+-	if [ $enable = 1 ]; then
++	
++	if [ "$enable" = 1 ]
++	then
+ 		local minute
+ 		local hour
+ 		config_get week $1 week
+ 		config_get minute $1 minute
+ 		config_get hour $1 hour
+-    if [ $minute = 0 ] ; then
+-        minute="00"
++		if [ $minute = 0 ]
++		then
++			minute="00"
+ 		fi
+-    if [ $week = 7 ] ; then
+-        week="*"
++		if [ "$week" = 7 ]
++		then
++			week="*"
+ 		fi
+-		sed -i '/reboot/d' /etc/crontabs/root >/dev/null 2>&1
++		sed -i '/reboot #luci-app-autoreboot/d' /etc/crontabs/root >/dev/null 2>&1
+ 		/etc/init.d/cron restart
+-		echo "$minute $hour * * $week sleep 5 && touch /etc/banner && reboot" >> /etc/crontabs/root
++		echo "$minute $hour * * $week sleep 5 && sync && reboot #luci-app-autoreboot" >> /etc/crontabs/root
+ 		echo "Auto REBOOT has started."
+ 	else
+-		sed -i '/reboot/d' /etc/crontabs/root >/dev/null 2>&1
++		sed -i '/reboot #luci-app-autoreboot/d' /etc/crontabs/root >/dev/null 2>&1
+ 		/etc/init.d/cron restart
+ 		echo "Auto REBOOT has started."
+ 	fi

@@ -126,6 +126,25 @@ Firmware_Diy_Main() {
 	chmod 777 -R ${Scripts} ${CustomFiles}
 	if [[ ${AutoBuild_Features} == true ]]
 	then
+		for i in $(du -ah ${CustomFiles}/Patches | awk '{print $2}' | sort | uniq)
+		do
+			if [[ -f $i ]]
+			then
+				if [[ $i =~ "-common.patch" ]]
+				then
+					ECHO "Found common patch file: $i"
+					patch < $i -p1 -d ${WORK}
+				elif [[ $i =~ "-${TARGET_BOARD}.patch" ]]
+				then
+					ECHO "Found board ${TARGET_BOARD} patch file: $i"
+					patch < $i -p1 -d ${WORK}
+				elif [[ $i =~ "-${TARGET_PROFILE}.patch" ]]
+				then
+					ECHO "Found profile ${TARGET_PROFILE} patch file: $i"
+					patch < $i -p1 -d ${WORK}
+				fi
+			fi
+		done ; unset i
 		AddPackage git other AutoBuild-Packages Hyy2001X master
 		echo -e "\nCONFIG_PACKAGE_luci-app-autoupdate=y" >> ${CONFIG_FILE}
 		for i in ${GITHUB_ENV} $(PKG_Finder d package AutoBuild-Packages)/autoupdate/files/etc/autoupdate/default
@@ -209,57 +228,58 @@ EOF
 Firmware_Diy_Other() {
 	ECHO "[Firmware_Diy_Other] Starting ..."
 	CD ${WORK}
-	if [[ -n ${Author_URL} ]]
+	if [[ ${AutoBuild_Features} == true ]]
 	then
+		if [[ -n ${Author_URL} ]]
+		then
 			cat >> ${CONFIG_TEMP} <<EOF
 
 CONFIG_KERNEL_BUILD_USER="${Author}"
 CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
-	fi
-
-	Kconfig_Path=${CustomFiles}/Kconfig
-	Tree=${WORK}/target/linux
-
-	cd ${Kconfig_Path}
-	for i in $(du -a | awk '{print $2}' | busybox sed -r 's/.\//\1/' | grep -wv '^.' | sort | uniq)
-	do
-		if [[ -d $i && $(ls -1 $i 2> /dev/null) ]]
-		then
-			:
-		elif [[ -e $i ]]
-		then
-			_Kconfig=$(dirname $i)
-			__Kconfig=$(basename $i)
-			ECHO " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
-			if [[ -e ${Tree}/$i && ${__Kconfig} != config-generic ]]
+		fi
+		Kconfig_Path=${CustomFiles}/Kconfig
+		Tree=${WORK}/target/linux
+		cd ${Kconfig_Path}
+		for i in $(du -a | awk '{print $2}' | busybox sed -r 's/.\//\1/' | grep -wv '^.' | sort | uniq)
+		do
+			if [[ -d $i && $(ls -1 $i 2> /dev/null) ]]
 			then
-				ECHO " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
-				echo >> ${Tree}/$i
-				if [[ $? == 0 ]]
+				:
+			elif [[ -e $i ]]
+			then
+				_Kconfig=$(dirname $i)
+				__Kconfig=$(basename $i)
+				ECHO " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
+				if [[ -e ${Tree}/$i && ${__Kconfig} != config-generic ]]
 				then
-					cat $i >> ${Tree}/$i
-					ECHO " --- Done"
-				else
-					ECHO " --- Failed to write new content ..."
-				fi
-			elif [[ ${__Kconfig} == config-generic ]]
-			then
-				for j in $(ls -1 ${Tree}/${_Kconfig} | egrep "config-[0-9]+")
-				do
-					ECHO " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
-					echo >> ${Tree}/${_Kconfig}/$j
+					ECHO " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
+					echo >> ${Tree}/$i
 					if [[ $? == 0 ]]
 					then
-						cat $i >> ${Tree}/${_Kconfig}/$j
+						cat $i >> ${Tree}/$i
 						ECHO " --- Done"
 					else
 						ECHO " --- Failed to write new content ..."
 					fi
-				done
+				elif [[ ${__Kconfig} == config-generic ]]
+				then
+					for j in $(ls -1 ${Tree}/${_Kconfig} | egrep "config-[0-9]+")
+					do
+						ECHO " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
+						echo >> ${Tree}/${_Kconfig}/$j
+						if [[ $? == 0 ]]
+						then
+							cat $i >> ${Tree}/${_Kconfig}/$j
+							ECHO " --- Done"
+						else
+							ECHO " --- Failed to write new content ..."
+						fi
+					done
+				fi
 			fi
-		fi
-	done
+		done
+	fi
 	CD ${WORK}
 	ECHO "[Firmware_Diy_Other] Done"
 }
