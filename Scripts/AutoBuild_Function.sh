@@ -130,9 +130,9 @@ Firmware_Diy_Main() {
 		do
 			if [[ -f $i ]]
 			then
-				if [[ $i =~ "-common.patch" ]]
+				if [[ $i =~ "-generic.patch" ]]
 				then
-					ECHO "Found common patch file: $i"
+					ECHO "Found generic patch file: $i"
 					patch < $i -p1 -d ${WORK}
 				elif [[ $i =~ "-${TARGET_BOARD}.patch" ]]
 				then
