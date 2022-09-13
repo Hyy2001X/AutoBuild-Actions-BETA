@@ -126,25 +126,6 @@ Firmware_Diy_Main() {
 	chmod 777 -R ${Scripts} ${CustomFiles}
 	if [[ ${AutoBuild_Features} == true ]]
 	then
-		for i in $(du -ah ${CustomFiles}/Patches | awk '{print $2}' | sort | uniq)
-		do
-			if [[ -f $i ]]
-			then
-				if [[ $i =~ "-generic.patch" ]]
-				then
-					ECHO "Found generic patch file: $i"
-					patch < $i -p1 -d ${WORK}
-				elif [[ $i =~ "-${TARGET_BOARD}.patch" ]]
-				then
-					ECHO "Found board ${TARGET_BOARD} patch file: $i"
-					patch < $i -p1 -d ${WORK}
-				elif [[ $i =~ "-${TARGET_PROFILE}.patch" ]]
-				then
-					ECHO "Found profile ${TARGET_PROFILE} patch file: $i"
-					patch < $i -p1 -d ${WORK}
-				fi
-			fi
-		done ; unset i
 		AddPackage git other AutoBuild-Packages Hyy2001X master
 		echo -e "\nCONFIG_PACKAGE_luci-app-autoupdate=y" >> ${CONFIG_FILE}
 		for i in ${GITHUB_ENV} $(PKG_Finder d package AutoBuild-Packages)/autoupdate/files/etc/autoupdate/default
@@ -238,6 +219,25 @@ CONFIG_KERNEL_BUILD_USER="${Author}"
 CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
 		fi
+		for i in $(du -ah ${CustomFiles}/Patches | awk '{print $2}' | sort | uniq)
+		do
+			if [[ -f $i ]]
+			then
+				if [[ $i =~ "-generic.patch" ]]
+				then
+					ECHO "Found generic patch file: $i"
+					patch < $i -p1 -d ${WORK}
+				elif [[ $i =~ "-${TARGET_BOARD}.patch" ]]
+				then
+					ECHO "Found board ${TARGET_BOARD} patch file: $i"
+					patch < $i -p1 -d ${WORK}
+				elif [[ $i =~ "-${TARGET_PROFILE}.patch" ]]
+				then
+					ECHO "Found profile ${TARGET_PROFILE} patch file: $i"
+					patch < $i -p1 -d ${WORK}
+				fi
+			fi
+		done ; unset i
 		Kconfig_Path=${CustomFiles}/Kconfig
 		Tree=${WORK}/target/linux
 		cd ${Kconfig_Path}
@@ -278,7 +278,7 @@ EOF
 					done
 				fi
 			fi
-		done
+		done ; unset i
 	fi
 	CD ${WORK}
 	ECHO "[Firmware_Diy_Other] Done"
