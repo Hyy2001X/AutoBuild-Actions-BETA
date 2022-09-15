@@ -164,7 +164,6 @@ CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Libev_Server=y
 # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan is not set
 CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray=y
 CONFIG_PACKAGE_luci-app-serverchan=y
-CONFIG_PACKAGE_luci-app-samba=y
 # CONFIG_PACKAGE_luci-app-sqm is not set
 CONFIG_PACKAGE_luci-app-shutdown=y
 CONFIG_PACKAGE_luci-app-ssrserver-python=y
