@@ -49,7 +49,7 @@ env:
 # 删除早期的 workflow 任务
   DELETE_OLD_WORKFLOW: false
 # Cache 加速编译
-  CACHE_ACCELERATE: true
+  CACHE_ACCELERATE: false
 ### 结束
 
 jobs:
