@@ -65,8 +65,8 @@ EOF
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
 		AddPackage git themes luci-theme-argon jerrykuku 18.06
 		AddPackage svn apps minieap immortalwrt/packages/branches/openwrt-18.06/net
+		AddPackage svn other luci-app-openclash vernesong/OpenClash/branches/dev
 		AddPackage git lean luci-app-argon-config jerrykuku master
-		AddPackage git other OpenClash vernesong master
 		AddPackage git other luci-app-ikoolproxy iwrt main
 		AddPackage git other helloworld fw876 master
 		AddPackage git themes luci-theme-neobird thinktip main
