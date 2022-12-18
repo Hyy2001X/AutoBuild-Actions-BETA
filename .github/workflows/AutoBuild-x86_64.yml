@@ -6,22 +6,8 @@
 
 name: x86_64
 
-### 以下内容请保持不变 ( 请修改下方的 [环境变量设置] )
 on:
   repository_dispatch:
-  workflow_dispatch:
-    inputs:
-      Tempoary_IP:
-        description: '固件 IP 地址 [可选]'
-        default: ''
-      Tempoary_CONFIG:
-        description: '配置文件 [可选]'
-        default: ''
-      Tempoary_FLAG:
-        description: '固件标签 [可选]'
-        default: ''
-### 控制部分结束 ( 以上内容请保持不变 )
-
   #push:
   #  branches: 
   #    - master
@@ -31,6 +17,43 @@ on:
 
   #watch:
   #  types: [started]
+
+  workflow_dispatch:
+    inputs:
+      Tempoary_IP:
+        description: '固件 IP 地址 [可选]'
+        default: ''
+      Tempoary_CONFIG:
+        description: '配置文件'
+        required: true
+        default: 'x86_64'
+        type: choice
+        options:
+          - 'x86_64'
+          - 'x86_64-AP'
+      Tempoary_FLAG:
+        description: '固件标签'
+        default: 'AUTO'
+        type: choice
+        options:
+          - 'AUTO'
+          - 'Full'
+          - 'AP'
+      UPLOAD_RELEASES:
+        description: '上传固件到 Releases'
+        required: true
+        default: 'true'
+        type: boolean
+      UPLOAD_ARTIFACTS:
+        description: '上传固件到 Artifacts'
+        required: true
+        default: 'false'
+        type: boolean
+      UPLOAD_BIN_ARTIFACTS:
+        description: '上传 bin 文件夹到 Artifacts'
+        required: true
+        default: 'false'
+        type: boolean
 
 ### 环境变量设置
 env:
@@ -61,15 +84,6 @@ jobs:
       contents: write
 
     steps:
-    - name: Maximize Build Space
-      if: env.DELETE_USELESS_FILES == 'true' && !cancelled()
-      uses: easimon/maximize-build-space@master
-      with:
-        root-reserve-mb: 5120
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-
     - name: Checkout
       uses: actions/checkout@main
       with:
@@ -128,6 +142,7 @@ jobs:
             sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php
             sudo -E apt-get -y autoremove --purge
             sudo -E apt-get clean
+            sudo rm -rf /etc/apt/sources.list.d/* /usr/local/lib/android /usr/lib/jvm /opt/ghc /swapfile
         fi
 
     - name: Clone Openwrt Source Code
@@ -176,13 +191,14 @@ jobs:
         make download -j8
 
     - name: Build OpenWrt
+      id: compile
       run: |
         cd openwrt
         make -j4 || make -j1 V=s
         [ "$?" == 0 ] && echo "Compile_Result=true" >> $GITHUB_ENV || echo "Compile_Result=false" >> $GITHUB_ENV
 
     - name: Checkout Firmware
-      if: env.Compile_Result == 'true' && !cancelled()
+      if: steps.compile.outcome == 'success' && !cancelled()
       run: |
         cd openwrt
         source $GITHUB_WORKSPACE/Scripts/AutoBuild_Function.sh
@@ -190,21 +206,21 @@ jobs:
 
     - name: Upload Firmware to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_ARTIFACTS == 'true' && steps.compile.outcome == 'success' && !cancelled()
       with:
         name: ${{ env.CONFIG_FILE }}_firmware_${{ env.Compile_Date }}
         path: openwrt/bin/Firmware
 
     - name: Upload bin to Artifacts
       uses: actions/upload-artifact@main
-      if: env.UPLOAD_BIN_ARTIFACTS == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_BIN_ARTIFACTS == 'true' && steps.compile.outcome == 'success' && !cancelled()
       with:
         name: ${{ env.CONFIG_FILE }}_bin_${{ env.Compile_Date }}
         path: openwrt/bin
 
     - name: Upload Firmware to Release
       uses: svenstaro/upload-release-action@v2
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASES == 'true' && steps.compile.outcome == 'success' && !cancelled()
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: openwrt/bin/Firmware/*
@@ -212,13 +228,13 @@ jobs:
         tag: AutoUpdate
         overwrite: true
         
-    - name: Download Github API
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+    - name: Refresh API (1/2)
+      if: env.UPLOAD_RELEASES == 'true' && steps.compile.outcome == 'success' && !cancelled()
       run: |
         wget https://api.github.com/repos/${{github.repository}}/releases/tags/AutoUpdate -O API
         
-    - name: Upload Github API to Release
-      if: env.UPLOAD_RELEASES == 'true' && env.Compile_Result == 'true' && !cancelled()
+    - name: Refresh API (2/2)
+      if: env.UPLOAD_RELEASES == 'true' && steps.compile.outcome == 'success' && !cancelled()
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -228,8 +244,11 @@ jobs:
         overwrite: true
 
     - name: Delete old Workflow Runs
-      uses: GitRML/delete-workflow-runs@main
+      continue-on-error: true
       if: env.DELETE_OLD_WORKFLOW == 'true' && !cancelled()
+      uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 1
-        keep_minimum_runs: 3
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 3
+          keep_minimum_runs: 0
