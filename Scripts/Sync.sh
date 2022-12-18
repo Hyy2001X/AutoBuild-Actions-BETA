@@ -1,9 +1,9 @@
 #!/bin/bash
-# AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
+# AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions-BETA>
 # Thanks to 281677160 and TobKed
 
 # 上游仓库与分支, 按需修改
-INPUT_UPSTREAM_REPOSITORY=Hyy2001X/AutoBuild-Actions
+INPUT_UPSTREAM_REPOSITORY=Hyy2001X/AutoBuild-Actions-BETA
 INPUT_UPSTREAM_BRANCH=master
 
 # 需要文件的同步列表, 按需修改
@@ -13,7 +13,6 @@ Sync_List=(
 	CustomFiles/Depends/*
 	CustomFiles/Patches/*
 	CustomFiles/Kconfig/*
-	CustomFiles/d-team_newifi-d2_system
 	# Scripts/AutoBuild_DiyScript.sh
 	Scripts/Sync.sh
 	Scripts/AutoBuild_Function.sh
