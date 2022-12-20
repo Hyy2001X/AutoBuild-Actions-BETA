@@ -83,7 +83,7 @@ Firmware_Diy_Before() {
 			TARGET_FLAG="${Default_Flag}"
 		fi
 	fi
-	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] ]]
+	if [[ ! ${Tempoary_FLAG} =~ (\"|=|-|_|\.|\#|\|) && ${Tempoary_FLAG} =~ [a-zA-Z0-9] && ${Tempoary_FLAG} != AUTO ]]
 	then
 		TARGET_FLAG="${Tempoary_FLAG}"
 	fi
