@@ -92,6 +92,10 @@ EOF
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			# sed -i "s?6.0?5.19?g" ${WORK}/target/linux/x86/Makefile
 		;;
+		xiaomi_redmi-router-ax6s)
+			AddPackage git passwall-depends openwrt-passwall xiaorouji packages
+			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
+		;;
 		esac
 	;;
 	immortalwrt/immortalwrt*)
