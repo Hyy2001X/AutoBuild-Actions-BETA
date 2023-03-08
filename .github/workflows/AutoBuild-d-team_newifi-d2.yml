@@ -35,7 +35,7 @@ on:
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
-  CONFIG_FILE: d-team_newifi-d2
+  CONFIG_FILE: d-team_newifi-d2-Clash
 # 源码仓库:分支
   DEFAULT_SOURCE: coolsnowwolf/lede:master
 # 上传固件到 Github Releases
