@@ -27,6 +27,7 @@ on:
         options:
           - 'x86_64'
           - 'x86_64-AP'
+          - 'x86_64-Default'
       Tempoary_FLAG:
         description: '固件标签'
         default: 'AUTO'
@@ -35,6 +36,7 @@ on:
           - 'AUTO'
           - 'Full'
           - 'AP'
+          - 'Default'
       Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
