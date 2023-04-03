@@ -88,7 +88,7 @@ CONFIG_PACKAGE_luci-app-sqm=y
 CONFIG_PACKAGE_luci-app-smartdns=y
 # CONFIG_PACKAGE_luci-app-nfs is not set
 CONFIG_PACKAGE_luci-app-easymesh=y
-CONFIG_PACKAGE_luci-app-jd-dailybonus=y
+# CONFIG_PACKAGE_luci-app-jd-dailybonus is not set
 
 # Other Appliciations
 CONFIG_PACKAGE_wpad-openssl=y
