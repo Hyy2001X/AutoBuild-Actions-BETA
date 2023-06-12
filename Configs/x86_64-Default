@@ -18,5 +18,8 @@ CONFIG_TARGET_IMAGES_GZIP=y
 # CONFIG_SIGNATURE_CHECK is not set
 # CONFIG_SIGNED_PACKAGES is not set
 
+CONFIG_PACKAGE_adb=y
+CONFIG_PACKAGE_bash=y
+
 CONFIG_PACKAGE_kmod-usb-net-rndis=y
 CONFIG_PACKAGE_luci-app-autoupdate=y
