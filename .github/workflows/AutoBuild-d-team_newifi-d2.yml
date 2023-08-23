@@ -13,7 +13,7 @@ on:
     inputs:
       Tempoary_IP:
         description: '固件 IP 地址 [可选]'
-        default: ''
+        default: '192.168.123.1'
       Tempoary_CONFIG:
         description: '配置文件 [可选]'
         default: ''
