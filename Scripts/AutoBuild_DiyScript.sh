@@ -85,7 +85,7 @@ EOF
 		;;
 		x86_64)
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
-			AddPackage git passwall-depends openwrt-passwall xiaorouji packages
+			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji packages
 			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
@@ -93,7 +93,7 @@ EOF
 			# sed -i "s?6.0?5.19?g" ${WORK}/target/linux/x86/Makefile
 		;;
 		xiaomi_redmi-router-ax6s)
-			AddPackage git passwall-depends openwrt-passwall xiaorouji packages
+			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji packages
 			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
 		;;
 		esac
