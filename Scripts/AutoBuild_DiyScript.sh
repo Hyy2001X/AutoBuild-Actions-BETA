@@ -26,18 +26,18 @@ Firmware_Diy() {
 	# ${OP_AUTHOR}			OpenWrt 源码作者
 	# ${OP_REPO}			OpenWrt 仓库名称
 	# ${OP_BRANCH}			OpenWrt 源码分支
-	# ${TARGET_PROFILE}		设备名称
+	# ${TARGET_PROFILE}	设备名称
 	# ${TARGET_BOARD}		设备架构
 	# ${TARGET_FLAG}		固件名称后缀
 
-	# ${WORK}			OpenWrt 源码位置
+	# ${WORK}				OpenWrt 源码位置
 	# ${CONFIG_FILE}		使用的配置文件名称
-	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
+	# ${FEEDS_CONF}		OpenWrt 源码目录下的 feeds.conf.default 文件
 	# ${CustomFiles}		仓库中的 /CustomFiles 绝对路径
 	# ${Scripts}			仓库中的 /Scripts 绝对路径
-	# ${FEEDS_LUCI}			OpenWrt 源码目录下的 package/feeds/luci 目录
+	# ${FEEDS_LUCI}		OpenWrt 源码目录下的 package/feeds/luci 目录
 	# ${FEEDS_PKG}			OpenWrt 源码目录下的 package/feeds/packages 目录
-	# ${BASE_FILES}			OpenWrt 源码目录下的 package/base-files/files 目录
+	# ${BASE_FILES}		OpenWrt 源码目录下的 package/base-files/files 目录
 
 	case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)
@@ -85,16 +85,16 @@ EOF
 		;;
 		x86_64)
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
-			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji packages
-			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
+			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
+			AddPackage git passwall-luci openwrt-passwall xiaorouji main
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			# sed -i "s?6.0?5.19?g" ${WORK}/target/linux/x86/Makefile
 		;;
 		xiaomi_redmi-router-ax6s)
-			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji packages
-			AddPackage git passwall-luci openwrt-passwall xiaorouji luci
+			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
+			AddPackage git passwall-luci openwrt-passwall xiaorouji main
 		;;
 		esac
 	;;
