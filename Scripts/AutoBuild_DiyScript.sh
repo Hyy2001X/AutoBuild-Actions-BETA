@@ -68,7 +68,7 @@ EOF
 		AddPackage svn other luci-app-openclash vernesong/OpenClash/branches/dev
 		AddPackage git lean luci-app-argon-config jerrykuku master
 		AddPackage git other luci-app-ikoolproxy iwrt main
-		AddPackage git other helloworld fw876 master
+		AddPackage git other helloworld fw876 main
 		AddPackage git themes luci-theme-neobird thinktip main
 		AddPackage git other luci-app-smartdns pymumu lede
 
