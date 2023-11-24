@@ -1,5 +1,6 @@
 CONFIG_TARGET_ipq40xx=y
-CONFIG_TARGET_ipq40xx_DEVICE_asus_rt-acrh17=y
+CONFIG_TARGET_ipq40xx_generic=y
+CONFIG_TARGET_ipq40xx_generic_DEVICE_asus_rt-ac42u=y
 
 # CONFIG_SIGNATURE_CHECK is not set
 # CONFIG_SIGNED_PACKAGES is not set
