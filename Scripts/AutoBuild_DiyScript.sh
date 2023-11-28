@@ -55,22 +55,13 @@ EOF
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 		# sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
 		# sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon-mod"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
-		
-		for i in eqos mentohust minieap unblockneteasemusic
-		do
-			AddPackage svn apps luci-app-${i} immortalwrt/luci/branches/openwrt-18.06/applications
-			sed -i 's/..\/..\//\$\(TOPDIR\)\/feeds\/luci\//g' ${WORK}/package/apps/luci-app-${i}/Makefile
-		done ; unset i
 
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
 		AddPackage git themes luci-theme-argon jerrykuku 18.06
-		AddPackage svn apps minieap immortalwrt/packages/branches/openwrt-18.06/net
 		AddPackage svn other luci-app-openclash vernesong/OpenClash/branches/dev
 		AddPackage git lean luci-app-argon-config jerrykuku master
-		AddPackage git other luci-app-ikoolproxy iwrt main
 		AddPackage git other helloworld fw876 main
 		AddPackage git themes luci-theme-neobird thinktip main
-		AddPackage git other luci-app-smartdns pymumu lede
 
 		case "${TARGET_BOARD}" in
 		ramips)
