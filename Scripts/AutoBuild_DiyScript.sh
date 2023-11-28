@@ -12,7 +12,7 @@ Firmware_Diy_Core() {
 
 	Short_Fw_Date=true
 	x86_Full_Images=false
-	Fw_Format=false
+	Fw_MFormat=false
 	Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4|json"
 
 	AutoBuild_Features=true
