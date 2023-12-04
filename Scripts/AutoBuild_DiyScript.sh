@@ -111,6 +111,8 @@ EOF
 			
 			tar -xvzf /tmp/clash-dev.tar.gz -C /tmp
 			Copy /tmp/clash ${BASE_FILES}/etc/openclash/core
+			
+			chmod 777 ${BASE_FILES}/usr/bin/sing-box ${BASE_FILES}/usr/bin/hysteria ${BASE_FILES}/usr/bin/naive ${BASE_FILES}/etc/openclash/core
 		;;
 		xiaomi_redmi-router-ax6s)
 			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
