@@ -98,7 +98,7 @@ EOF
 			
 			wget https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz -P /tmp
 			wget https://github.com/apernet/hysteria/releases/download/app%2Fv${hysteria_version}/hysteria-linux-amd64 -P /tmp
-			wget https://github.com/klzgrad/naiveproxy/releases/download/v${naiveproxy_version}/naiveproxy-${naiveproxy_version}-openwrt-x86_64.tar.xz -P /tmp
+			wget https://github.com/klzgrad/naiveproxy/releases/download/v${naiveproxy_version}/naiveproxy-v${naiveproxy_version}-openwrt-x86_64.tar.xz -P /tmp
 			wget https://raw.githubusercontent.com/vernesong/OpenClash/core/master/dev/clash-linux-amd64.tar.gz -O /tmp/clash-dev.tar.gz
 			
 			tar -xvzf /tmp/sing-box-${singbox_version}-linux-amd64.tar.gz -C /tmp
@@ -106,8 +106,8 @@ EOF
 			
 			Copy /tmp/hysteria-linux-amd64 ${BASE_FILES}/usr/bin hysteria
 			
-			tar -xvf /tmp/naiveproxy-${naiveproxy_version}-openwrt-x86_64.tar.xz -C /tmp
-			Copy /tmp/naiveproxy-${naiveproxy_version}-openwrt-x86_64/naive ${BASE_FILES}/usr/bin
+			tar -xvf /tmp/naiveproxy-v${naiveproxy_version}-openwrt-x86_64.tar.xz -C /tmp
+			Copy /tmp/naiveproxy-v${naiveproxy_version}-openwrt-x86_64/naive ${BASE_FILES}/usr/bin
 			
 			tar -xvzf /tmp/clash-dev.tar.gz -C /tmp
 			Copy /tmp/clash ${BASE_FILES}/etc/openclash/core
