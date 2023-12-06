@@ -467,7 +467,7 @@ AddPackage() {
 			REPO_BRANCH=master
 		fi
 		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
-		git clone -b ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} > /dev/null 2>&1
+		git clone -b --depth 1 ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} > /dev/null 2>&1
 	;;
 	svn)
 		svn checkout ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
