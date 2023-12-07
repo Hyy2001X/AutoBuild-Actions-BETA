@@ -458,16 +458,16 @@ AddPackage() {
 		ECHO "Removing old package: [${PKG_NAME}] ..."
 		rm -rf ${PKG_DIR}/${PKG_NAME}
 	fi
-	ECHO "Checking out package [${PKG_NAME}] to ${PKG_DIR} ..."
+	ECHO "Downloading package [${PKG_NAME}] to ${PKG_DIR} ..."
 	case "${PKG_PROTO}" in
 	git)
 		if [[ -z ${REPO_BRANCH} ]]
 		then
-			ECHO "WARNING: Syntax missing <branch> ,using default branch: [master]"
+			ECHO "WARNING: Missing <branch> ,using default branch: [master]"
 			REPO_BRANCH=master
 		fi
 		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
-		git clone -b --depth 1 ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} > /dev/null 2>&1
+		git clone -b ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} --depth 1  > /dev/null 2>&1
 	;;
 	svn)
 		svn checkout ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
