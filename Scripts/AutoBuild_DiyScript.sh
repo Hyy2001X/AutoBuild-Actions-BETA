@@ -90,7 +90,7 @@ EOF
 			AddPackage git passwall-luci2 openwrt-passwall2 xiaorouji main
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
-			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
+			#sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			
 			singbox_version="1.7.2"
 			hysteria_version="2.2.2"
