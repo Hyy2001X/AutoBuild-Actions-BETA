@@ -181,9 +181,6 @@ EOF
 			fi
 		fi
 		case "${OP_AUTHOR}/${OP_REPO}" in
-		immortalwrt/immortalwrt)
-			Copy ${CustomFiles}/Depends/banner $(PKG_Finder d package default-settings)/files openwrt_banner
-		;;
 		*)
 			Copy ${CustomFiles}/Depends/banner ${BASE_FILES}/etc
 		;;
