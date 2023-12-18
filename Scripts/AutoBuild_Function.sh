@@ -219,9 +219,24 @@ CONFIG_KERNEL_BUILD_USER="${Author}"
 CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
 		fi
-		if [[ -d ${CustomFiles}/Patches ]]
+		
+		case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
+		coolsnowwolf/lede:master)
+			Patch_Path=${CustomFiles}/Patches/coolsnowwolf-lede
+		;;
+		immortalwrt/immortalwrt*)
+			Patch_Path=${CustomFiles}/Patches/immortalwrt-immortalwrt
+		;;
+		lienol/openwrt*)
+			Patch_Path=${CustomFiles}/Patches/lienol-openwrt
+		;;
+		openwrt/openwrt*)
+			Patch_Path=${CustomFiles}/Patches/openwrt-openwrt
+		;;
+		esac
+		if [[ -d ${Patch_Path} ]]
 		then
-			for i in $(du -ah ${CustomFiles}/Patches | awk '{print $2}' | sort | uniq)
+			for i in $(du -ah ${Patch_Path} | awk '{print $2}' | sort | uniq)
 			do
 				if [[ -f $i ]]
 				then
