@@ -220,6 +220,7 @@ CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
 		fi
 		if [[ ${AutoBuild_Features_Patch} == true ]]
+		then
 			case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 			coolsnowwolf/lede:master)
 				Patch_Path=${CustomFiles}/Patches/coolsnowwolf-lede
@@ -258,6 +259,7 @@ EOF
 			fi
 		fi
 		if [[ ${AutoBuild_Features_Kconfig} == true ]]
+		then
 			Kconfig_Path=${CustomFiles}/Kconfig
 			Tree=${WORK}/target/linux
 			if [[ -d ${Kconfig_Path} ]]
