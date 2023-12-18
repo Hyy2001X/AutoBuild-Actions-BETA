@@ -302,8 +302,8 @@ EOF
 							done
 						fi
 					fi
-				fi
-			done ; unset i
+				done ; unset i
+			fi
 		fi
 	fi
 	CD ${WORK}
