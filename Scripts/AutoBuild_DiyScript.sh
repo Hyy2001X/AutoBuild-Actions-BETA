@@ -24,7 +24,10 @@ Firmware_Diy_Core() {
 	Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4|json"
 	# 输出固件时丢弃包含该内容的固件/文件
 	AutoBuild_Features=true
-	# 自动添加 AutoBuild 固件特性, true: [开启]; false: [关闭]
+	# 添加 AutoBuild 固件特性, true: [开启]; false: [关闭]
+	
+	AutoBuild_Features_Patch=false
+	AutoBuild_Features_Kconfig=false
 }
 
 Firmware_Diy() {
@@ -121,11 +124,11 @@ EOF
 		esac
 	;;
 	immortalwrt/immortalwrt*)
- 		case "${TARGET_PROFILE}" in
+		case "${TARGET_PROFILE}" in
 		x86_64)
-    		  	AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
-  		;;
-  		esac
+			AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
+		;;
+		esac
 		# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 	;;
 	esac

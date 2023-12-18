@@ -219,83 +219,86 @@ CONFIG_KERNEL_BUILD_USER="${Author}"
 CONFIG_KERNEL_BUILD_DOMAIN="${Author_URL}"
 EOF
 		fi
-		
-		case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
-		coolsnowwolf/lede:master)
-			Patch_Path=${CustomFiles}/Patches/coolsnowwolf-lede
-		;;
-		immortalwrt/immortalwrt*)
-			Patch_Path=${CustomFiles}/Patches/immortalwrt-immortalwrt
-		;;
-		lienol/openwrt*)
-			Patch_Path=${CustomFiles}/Patches/lienol-openwrt
-		;;
-		openwrt/openwrt*)
-			Patch_Path=${CustomFiles}/Patches/openwrt-openwrt
-		;;
-		esac
-		if [[ -d ${Patch_Path} ]]
-		then
-			for i in $(du -ah ${Patch_Path} | awk '{print $2}' | sort | uniq)
-			do
-				if [[ -f $i ]]
-				then
-					if [[ $i =~ "-generic.patch" ]]
+		if [[ ${AutoBuild_Features_Patch} == true ]]
+			case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
+			coolsnowwolf/lede:master)
+				Patch_Path=${CustomFiles}/Patches/coolsnowwolf-lede
+			;;
+			immortalwrt/immortalwrt*)
+				Patch_Path=${CustomFiles}/Patches/immortalwrt-immortalwrt
+			;;
+			lienol/openwrt*)
+				Patch_Path=${CustomFiles}/Patches/lienol-openwrt
+			;;
+			openwrt/openwrt*)
+				Patch_Path=${CustomFiles}/Patches/openwrt-openwrt
+			;;
+			esac
+			if [[ -d ${Patch_Path} ]]
+			then
+				for i in $(du -ah ${Patch_Path} | awk '{print $2}' | sort | uniq)
+				do
+					if [[ -f $i ]]
 					then
-						ECHO "Found generic patch file: $i"
-						patch < $i -p1 -d ${WORK}
-					elif [[ $i =~ "-${TARGET_BOARD}.patch" ]]
-					then
-						ECHO "Found board ${TARGET_BOARD} patch file: $i"
-						patch < $i -p1 -d ${WORK}
-					elif [[ $i =~ "-${TARGET_PROFILE}.patch" ]]
-					then
-						ECHO "Found profile ${TARGET_PROFILE} patch file: $i"
-						patch < $i -p1 -d ${WORK}
-					fi
-				fi
-			done ; unset i
-		fi
-		Kconfig_Path=${CustomFiles}/Kconfig
-		Tree=${WORK}/target/linux
-		if [[ -d ${Kconfig_Path} ]]
-		then
-			cd ${Kconfig_Path}
-			for i in $(du -a | awk '{print $2}' | busybox sed -r 's/.\//\1/' | grep -wv '^.' | sort | uniq)
-			do
-				if [[ -d $i && $(ls -1 $i 2> /dev/null) ]]
-				then
-					:
-				elif [[ -e $i ]]
-				then
-					_Kconfig=$(dirname $i)
-					__Kconfig=$(basename $i)
-					ECHO " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
-					if [[ -e ${Tree}/$i && ${__Kconfig} != config-generic ]]
-					then
-						ECHO " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
-						echo >> ${Tree}/$i
-						if [[ $? == 0 ]]
+						if [[ $i =~ "-generic.patch" ]]
 						then
-							cat $i >> ${Tree}/$i
-							ECHO " --- Done"
-						else
-							ECHO " --- Failed to write new content ..."
+							ECHO "Found generic patch file: $i"
+							patch < $i -p1 -d ${WORK}
+						elif [[ $i =~ "-${TARGET_BOARD}.patch" ]]
+						then
+							ECHO "Found board ${TARGET_BOARD} patch file: $i"
+							patch < $i -p1 -d ${WORK}
+						elif [[ $i =~ "-${TARGET_PROFILE}.patch" ]]
+						then
+							ECHO "Found profile ${TARGET_PROFILE} patch file: $i"
+							patch < $i -p1 -d ${WORK}
 						fi
-					elif [[ ${__Kconfig} == config-generic ]]
+					fi
+				done ; unset i
+			fi
+		fi
+		if [[ ${AutoBuild_Features_Kconfig} == true ]]
+			Kconfig_Path=${CustomFiles}/Kconfig
+			Tree=${WORK}/target/linux
+			if [[ -d ${Kconfig_Path} ]]
+			then
+				cd ${Kconfig_Path}
+				for i in $(du -a | awk '{print $2}' | busybox sed -r 's/.\//\1/' | grep -wv '^.' | sort | uniq)
+				do
+					if [[ -d $i && $(ls -1 $i 2> /dev/null) ]]
 					then
-						for j in $(ls -1 ${Tree}/${_Kconfig} | egrep "config-[0-9]+")
-						do
-							ECHO " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
-							echo >> ${Tree}/${_Kconfig}/$j
+						:
+					elif [[ -e $i ]]
+					then
+						_Kconfig=$(dirname $i)
+						__Kconfig=$(basename $i)
+						ECHO " - Found Kconfig_file: ${__Kconfig} at ${_Kconfig}"
+						if [[ -e ${Tree}/$i && ${__Kconfig} != config-generic ]]
+						then
+							ECHO " -- Found Tree: ${Tree}/$i, refreshing ${Tree}/$i ..."
+							echo >> ${Tree}/$i
 							if [[ $? == 0 ]]
 							then
-								cat $i >> ${Tree}/${_Kconfig}/$j
+								cat $i >> ${Tree}/$i
 								ECHO " --- Done"
 							else
 								ECHO " --- Failed to write new content ..."
 							fi
-						done
+						elif [[ ${__Kconfig} == config-generic ]]
+						then
+							for j in $(ls -1 ${Tree}/${_Kconfig} | egrep "config-[0-9]+")
+							do
+								ECHO " -- Generic Kconfig_file, refreshing ${Tree}/${_Kconfig}/$j ..."
+								echo >> ${Tree}/${_Kconfig}/$j
+								if [[ $? == 0 ]]
+								then
+									cat $i >> ${Tree}/${_Kconfig}/$j
+									ECHO " --- Done"
+								else
+									ECHO " --- Failed to write new content ..."
+								fi
+							done
+						fi
 					fi
 				fi
 			done ; unset i
