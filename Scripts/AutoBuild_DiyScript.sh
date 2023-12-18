@@ -87,7 +87,7 @@ EOF
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
 			AddPackage git passwall-luci openwrt-passwall xiaorouji main
-			AddPackage git passwall-luci2 openwrt-passwall2 xiaorouji main
+			AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
 			rm -rf packages/lean/autocore
 			AddPackage git lean autocore-modify Hyy2001X master
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
@@ -121,7 +121,11 @@ EOF
 		esac
 	;;
 	immortalwrt/immortalwrt*)
-		:
+ 		case "${TARGET_PROFILE}" in
+		x86_64)
+    		  	AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
+  		;;
+  		esac
 		# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 	;;
 	esac
