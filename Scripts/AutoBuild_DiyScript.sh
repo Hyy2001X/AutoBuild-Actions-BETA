@@ -71,10 +71,11 @@ EOF
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
 		AddPackage git themes luci-theme-argon jerrykuku 18.06
 		AddPackage git other OpenClash vernesong dev
-		AddPackage git lean luci-app-argon-config jerrykuku master
+		AddPackage git other luci-app-argon-config jerrykuku master
 		AddPackage git other helloworld fw876 main
 		AddPackage git themes luci-theme-neobird thinktip main
-
+		svn co https://github.com/immortalwrt/luci/branches/openwrt-18.06-k5.4/themes/luci-theme-bootstrap-mod ${FEEDS_LUCI}/luci-theme-bootstrap-mod
+		
 		case "${TARGET_BOARD}" in
 		ramips)
 			sed -i "/DEVICE_COMPAT_VERSION := 1.1/d" target/linux/ramips/image/mt7621.mk
@@ -91,8 +92,8 @@ EOF
 			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
 			AddPackage git passwall-luci openwrt-passwall xiaorouji main
 			AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
-			rm -rf packages/lean/autocore
-			AddPackage git lean autocore-modify Hyy2001X master
+			#rm -rf packages/lean/autocore
+			#AddPackage git lean autocore-modify Hyy2001X master
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			
 			singbox_version="1.7.2"
