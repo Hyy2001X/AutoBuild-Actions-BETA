@@ -2,8 +2,8 @@
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions-BETA>
 # AutoBuild Functions
 
-Firmware_Diy_Before() {
-	ECHO "[Firmware_Diy_Before] Starting ..."
+Firmware_Diy_Start() {
+	ECHO "[Firmware_Diy_Start] Starting ..."
 	WORK="${GITHUB_WORKSPACE}/openwrt"
 	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${WORK}
@@ -117,7 +117,7 @@ ENV_FILE=${GITHUB_ENV}
 EOF
 	source ${GITHUB_ENV}
 	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
-	ECHO "[Firmware_Diy_Before] Done"
+	ECHO "[Firmware_Diy_Start] Done"
 }
 
 Firmware_Diy_Main() {
@@ -531,7 +531,7 @@ Copy() {
 }
 
 ReleaseDL() {
-	if [[ $# != 3 ]]
+	if [[ $# -lt 3 ]]
 	then
 		ECHO "Syntax error: [$#] [$*]"
 		return 0
@@ -540,6 +540,7 @@ ReleaseDL() {
 	API_URL=$1
 	FILE_NAME=$2
 	TARGET_FILE_PATH=$3
+	TARGET_FILE_RENAME=$4
 	API_FILE=/tmp/API.json
 	
 	if [[ ! -d ${TARGET_FILE_PATH} ]]
@@ -562,17 +563,18 @@ ReleaseDL() {
 			eval browser_download_url=$(cat ${API_FILE} | jq ".assets[${i}].browser_download_url" 2> /dev/null)
 			if [[ ${browser_download_url} || ${browser_download_url} != null ]]
 			then
-				echo $browser_download_url
+				# echo $browser_download_url
+				[[ ${TARGET_FILE_RENAME} ]] && _FILE=${TARGET_FILE_RENAME} || _FILE=${FILE_NAME}
 				wget --quiet --no-check-certificate \
 					--tries 5 --timeout 20 \
 					${browser_download_url} \
-					-O ${TARGET_FILE_PATH}/${FILE_NAME}
-				if [[ $? != 0 || ! -f ${TARGET_FILE_PATH}/${FILE_NAME} ]]
+					-O ${TARGET_FILE_PATH}/${_FILE}
+				if [[ $? != 0 || ! -f ${TARGET_FILE_PATH}/${_FILE} ]]
 				then
 					ECHO "Failed to download ${PKG_NAME} ..."
 				else
-					ECHO "API: ${API_URL} ; ${FILE_NAME}"
-					chmod 777 ${TARGET_FILE_PATH}/${FILE_NAME}
+					ECHO "API: ${API_URL} ; ${FILE_NAME} ; Rename as ${_FILE}"
+					chmod 777 ${TARGET_FILE_PATH}/${_FILE}
 				fi
 			fi
 		;;
