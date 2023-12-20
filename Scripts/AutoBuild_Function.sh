@@ -424,7 +424,7 @@ PKG_Finder() {
 	local Result
 	if [[ $# -ne 3 ]]
 	then
-		ECHO "Usage: PKG_Finder <f | d> Search_Path Target_Name/Target_Path"
+		ECHO "Syntax error: [$#] [$*]"
 		return 0
 	fi
 	Result=$(find $2 -name $3 -type $1 -exec echo {} \; 2> /dev/null)
@@ -437,10 +437,20 @@ CD() {
 }
 
 MKDIR() {
-	while [[ $1 ]];do
+	while [[ $1 ]]
+	do
+		if [[ ! -d $(dirname $1)]]
+		then
+			mkdir -p $(dirname $1)
+			if [[ $? != 0 ]]
+			then
+				ECHO "Failed to create parent directory: [$(dirname $1)] ..."
+				return 0
+			fi
+		fi
 		if [[ ! -d $1 ]]
 		then
-			mkdir -p $1 || ECHO "Failed to create target directory: [$1] ..."
+			mkdir -p $1 || ECHO "Failed to create sub directory: [$1] ..."
 		fi
 		shift
 	done
@@ -458,7 +468,6 @@ AddPackage() {
 		:
 	;;
 	*)
-		ECHO "Unknown content: ${PKG_PROTO}"
 		return 0
 	;;
 	esac
@@ -480,7 +489,6 @@ AddPackage() {
 	git)
 		if [[ -z ${REPO_BRANCH} ]]
 		then
-			ECHO "WARNING: Missing <branch> ,using default branch: [master]"
 			REPO_BRANCH=master
 		fi
 		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
@@ -494,8 +502,6 @@ AddPackage() {
 	then
 		mv -f "${PKG_NAME}" "${PKG_DIR}"
 		[[ $? == 0 ]] && ECHO "Done"
-	else
-		ECHO "Failed to download package ${PKG_NAME} ..."
 	fi
 }
 
@@ -513,11 +519,63 @@ Copy() {
 	MKDIR $2
 	if [[ -z $3 ]]
 	then
-		ECHO "[C] Copying $1 to $2 ..."
+		ECHO "[C] Copying $(basename $1) to $2 ..."
 		cp -a $1 $2
 	else
-		ECHO "[R] Copying $1 to $2/$3 ..."
+		ECHO "[R] Copying $(basename $1) to $2/$3 ..."
 		cp -a $1 $2/$3
 	fi
 	[[ $? == 0 ]] && ECHO "Done"
+}
+
+ReleaseDL() {
+	if [[ $# != 3 ]]
+	then
+		ECHO "Syntax error: [$#] [$*]"
+		return 0
+	fi
+	
+	API_URL=$1
+	FILE_NAME=$2
+	TARGET_FILE_PATH=$3
+	API_FILE=/tmp/API.json
+	
+	if [[ ! -d ${TARGET_FILE_PATH} ]]
+	then
+		ECHO "${TARGET_FILE_PATH} Not found ..."
+		MKDIR "${TARGET_FILE_PATH}"
+	fi
+	
+	rm -f ${API_FILE}
+	wget --quiet --no-check-certificate --tries 5 --timeout 20 $1 -O ${API_FILE}
+	if [[ $? != 0 || ! -f ${API_FILE} ]]
+	then
+		ECHO "Failed to download API ${PKG_NAME} ..."
+	fi
+	for i in $(seq 0 $(cat ${API_FILE} | jq ".assets | length" 2> /dev/null))
+	do
+		eval name=$(cat ${API_FILE} | jq ".assets[${i}].name" 2> /dev/null)
+		[[ ${name} == null ]] && continue
+		case "$name" in
+		"${FILE_NAME}")
+			eval browser_download_url=$(cat ${API_FILE} | jq ".assets[${i}].browser_download_url" 2> /dev/null)
+			if [[ ${browser_download_url} || ${browser_download_url} != null ]]
+			then
+				echo $browser_download_url
+				wget --quiet --no-check-certificate \
+					--tries 5 --timeout 20 \
+					${browser_download_url} \
+					-O ${TARGET_FILE_PATH}/${FILE_NAME}
+				if [[ $? != 0 || ! -f ${TARGET_FILE_PATH}/${FILE_NAME} ]]
+				then
+					ECHO "Failed to download ${PKG_NAME} ..."
+				else
+					ECHO "API: ${API_URL} ; ${FILE_NAME}"
+					chmod 777 ${TARGET_FILE_PATH}/${FILE_NAME}
+				fi
+			fi
+		;;
+		esac
+	done
+	rm -f ${API_FILE}
 }
