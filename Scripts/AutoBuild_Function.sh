@@ -439,7 +439,7 @@ CD() {
 MKDIR() {
 	while [[ $1 ]]
 	do
-		if [[ ! -d $(dirname $1)]]
+		if [[ ! -d $(dirname $1) ]]
 		then
 			mkdir -p $(dirname $1)
 			if [[ $? != 0 ]]
