@@ -451,6 +451,8 @@ MKDIR() {
 		if [[ ! -d $1 ]]
 		then
 			mkdir -p $1 || ECHO "Failed to create sub directory: [$1] ..."
+		else
+			ECHO "Create directory: [$(dirname $1)] ..."
 		fi
 		shift
 	done
@@ -522,7 +524,7 @@ Copy() {
 		ECHO "[C] Copying $(basename $1) to $2 ..."
 		cp -a $1 $2
 	else
-		ECHO "[R] Copying $(basename $1) to $2/$3 ..."
+		ECHO "[R] Copying $(basename $1) to $2 [$3] ..."
 		cp -a $1 $2/$3
 	fi
 	[[ $? == 0 ]] && ECHO "Done"
@@ -542,7 +544,6 @@ ReleaseDL() {
 	
 	if [[ ! -d ${TARGET_FILE_PATH} ]]
 	then
-		ECHO "${TARGET_FILE_PATH} Not found ..."
 		MKDIR "${TARGET_FILE_PATH}"
 	fi
 	
