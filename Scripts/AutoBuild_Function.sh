@@ -565,6 +565,7 @@ ReleaseDL() {
 			then
 				# echo $browser_download_url
 				[[ ${TARGET_FILE_RENAME} ]] && _FILE=${TARGET_FILE_RENAME} || _FILE=${FILE_NAME}
+    				ECHO "Downloading link ${browser_download_url} ..."
 				wget --quiet --no-check-certificate \
 					--tries 5 --timeout 20 \
 					${browser_download_url} \
@@ -573,7 +574,7 @@ ReleaseDL() {
 				then
 					ECHO "Failed to download ${PKG_NAME} ..."
 				else
-					ECHO "API: ${API_URL} ; ${FILE_NAME} ; Rename as ${_FILE}"
+					ECHO "API: ${API_URL} ; ${FILE_NAME} ; ${_FILE}"
 					chmod 777 ${TARGET_FILE_PATH}/${_FILE}
 				fi
 			fi
