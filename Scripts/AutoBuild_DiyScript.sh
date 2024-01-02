@@ -95,11 +95,11 @@ EOF
 			#rm -rf packages/lean/autocore
 			#AddPackage git lean autocore-modify Hyy2001X master
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
-			
+
 			singbox_version="1.7.2"
-			hysteria_version="2.2.2"
+			hysteria_version="2.2.3"
 			naiveproxy_version="119.0.6045.66-1"
-			
+
 			wget --quiet --no-check-certificate -P /tmp \
 				https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz
 			wget --quiet --no-check-certificate -P /tmp \
@@ -108,20 +108,20 @@ EOF
 				https://github.com/klzgrad/naiveproxy/releases/download/v${naiveproxy_version}/naiveproxy-v${naiveproxy_version}-openwrt-x86_64.tar.xz
 			wget --quiet --no-check-certificate -P /tmp \
 				https://raw.githubusercontent.com/vernesong/OpenClash/core/master/dev/clash-linux-amd64.tar.gz
-			
+
 			tar -xvzf /tmp/sing-box-${singbox_version}-linux-amd64.tar.gz -C /tmp
 			Copy /tmp/sing-box-${singbox_version}-linux-amd64/sing-box ${BASE_FILES}/usr/bin
-			
+
 			Copy /tmp/hysteria-linux-amd64 ${BASE_FILES}/usr/bin hysteria
-			
+
 			tar -xvf /tmp/naiveproxy-v${naiveproxy_version}-openwrt-x86_64.tar.xz -C /tmp
 			Copy /tmp/naiveproxy-v${naiveproxy_version}-openwrt-x86_64/naive ${BASE_FILES}/usr/bin
-			
+
 			tar -xvzf /tmp/clash-linux-amd64.tar.gz -C /tmp
 			Copy /tmp/clash ${BASE_FILES}/etc/openclash/core
-			
+
 			chmod 777 ${BASE_FILES}/usr/bin/sing-box ${BASE_FILES}/usr/bin/hysteria ${BASE_FILES}/usr/bin/naive ${BASE_FILES}/etc/openclash/core
-			
+
 			ReleaseDL https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest geosite.dat ${BASE_FILES}/usr/v2ray
 			ReleaseDL https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest geoip.dat ${BASE_FILES}/usr/v2ray
 		;;
