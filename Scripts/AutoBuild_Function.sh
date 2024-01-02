@@ -574,7 +574,7 @@ ReleaseDL() {
 				then
 					ECHO "Failed to download ${PKG_NAME} ..."
 				else
-					ECHO "API: ${API_URL} ; ${FILE_NAME} ; ${_FILE}"
+					ECHO "API: ${API_URL} ; ${FILE_NAME} ; ${_FILE} ; $(du -h ${TARGET_FILE_PATH}/${_FILE})"
 					chmod 777 ${TARGET_FILE_PATH}/${_FILE}
 				fi
 			fi
