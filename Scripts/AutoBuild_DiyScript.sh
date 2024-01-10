@@ -74,7 +74,6 @@ EOF
 		AddPackage git other luci-app-argon-config jerrykuku master
 		AddPackage git other helloworld fw876 main
 		AddPackage git themes luci-theme-neobird thinktip main
-		svn co https://github.com/immortalwrt/luci/branches/openwrt-18.06-k5.4/themes/luci-theme-bootstrap-mod ${FEEDS_LUCI}/luci-theme-bootstrap-mod
 		
 		case "${TARGET_BOARD}" in
 		ramips)
