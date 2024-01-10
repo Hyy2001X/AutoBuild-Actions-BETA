@@ -211,6 +211,7 @@ EOF
 			sed -i "s/${Old_IP}/${Default_IP}/g" ${BASE_FILES}/bin/config_generate
 		fi
 	fi
+ 	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
 	ECHO "[Firmware_Diy_Main] Done"
 }
 
@@ -322,6 +323,7 @@ Firmware_Diy_End() {
 	ECHO "[Firmware_Diy_End] Starting ..."
 	ECHO "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 	cd ${WORK}
+	du -ah bin/targets | grep -v "ipk"
 	MKDIR ${WORK}/bin/Firmware
 	cd ${Fw_Path}
 	echo -e "### FIRMWARE OUTPUT ###\n${Fw_Path}\n$(ls -1)\n"
