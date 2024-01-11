@@ -110,7 +110,6 @@ Default_Title="${Default_Title}"
 Regex_Skip="${Regex_Skip}"
 Version_File=${Version_File}
 Fw_MFormat=${Fw_MFormat}
-Fw_Path="${WORK}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
 FEEDS_CONF=${WORK}/feeds.conf.default
 Author_URL=${Author_URL}
 ENV_FILE=${GITHUB_ENV}
@@ -321,12 +320,14 @@ EOF
 
 Firmware_Diy_End() {
 	ECHO "[Firmware_Diy_End] Starting ..."
+	source ${GITHUB_ENV}
 	ECHO "[$(date "+%H:%M:%S")] Actions Avaliable: $(df -h | grep "/dev/root" | awk '{printf $4}')"
 	cd ${WORK}
-	du -ah bin/targets | grep -v "ipk"
+	echo -e "### FIRMWARE OUTPUT ###"
+	du -ah bin/targets | egrep -v "${Regex_Skip}"
 	MKDIR ${WORK}/bin/Firmware
-	cd ${Fw_Path}
-	echo -e "### FIRMWARE OUTPUT ###\n${Fw_Path}\n$(ls -1)\n"
+	Fw_Path="${WORK}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
+	cd "${Fw_Path}"
 	case "${TARGET_BOARD}" in
 	x86)
 		if [[ ${x86_Full_Images} == true ]]
