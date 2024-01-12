@@ -27,7 +27,7 @@ Firmware_Diy_Start() {
 		zzz_Default_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
 		OP_VERSION="${zzz_Default_Version}-${Compile_Date}"
 	;;
-	immortalwrt/immortalwrt)
+	immortalwrt/immortalwrt | padavanonly/immortalwrtARM)
 		Version_File=package/base-files/files/etc/openwrt_release
 		OP_VERSION="${OP_VERSION_HEAD}${Compile_Date}"
 	;;
