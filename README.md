@@ -8,15 +8,17 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 
 ## 维护设备列表
 
-| 机型 | 配置文件(TARGET_PROFILE) | 维护 |
-| :----: | :----: | :----: |
-| [x86_64](./.github/workflows/AutoBuild-x86_64.yml) | [x86_64](./Configs/x86_64) | ✅ |
-| [新路由3](./.github/workflows/AutoBuild-d-team_newifi-d2.yml) | [d-team_newifi-d2](./Configs/d-team_newifi-d2) | ❎ |
-| [华硕 acrh17](./.github/workflows/AutoBuild-asus_rt-acrh17.yml) | [asus_rt-acrh17](./Configs/asus_rt-acrh17) | ❎ |
-| [竞斗云 2.0](./.github/workflows/AutoBuild-p2w_r619ac-128m.yml) | [p2w_r619ac-128m](./Configs/p2w_r619ac-128m) | ❎ |
-| [红米 AC2100](./.github/workflows/AutoBuild-xiaomi_redmi-router-ac2100.yml) | [xiaomi_redmi-router-ac2100](./Configs/xiaomi_redmi-router-ac2100) | ❎ |
-| [小娱C1/3/5](./.github/workflows/AutoBuild-xiaoyu_xy-c5.yml) | [xiaoyu_xy-c5](./Configs/xiaoyu_xy-c5) | ❎ |
-| [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | ✅ |
+| 维护 | 型号 | 配置文件(TARGET_PROFILE) | 源 | 备注 |
+| :----: | :----: | :----: | :----: | :----: |
+| ✅ | [x86_64](./.github/workflows/x86_64.yml) | [x86_64](./Configs/x86_64) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ✅ | [x86_64](./.github/workflows/AutoBuild-x86_64-ImmortalWrt.yml) | [x86_64-AP](./Configs/x86_64-AP) | [immortalwrt](https://github.com/immortalwrt/immortalwrt) | AP 固件 |
+| ❎ | [新路由3](./.github/workflows/d-team_newifi-d2.yml) | [d-team_newifi-d2](./Configs/d-team_newifi-d2) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [华硕 acrh17](./.github/workflows/asus_rt-acrh17.yml) | [asus_rt-acrh17](./Configs/asus_rt-acrh17) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [竞斗云 2.0](./.github/workflows/p2w_r619ac-128m.yml) | [p2w_r619ac-128m](./Configs/p2w_r619ac-128m) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [红米 AC2100](./.github/workflows/xiaomi_redmi-router-ac2100.yml) | [xiaomi_redmi-router-ac2100](./Configs/xiaomi_redmi-router-ac2100) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [小娱C5](./.github/workflows/xiaoyu_xy-c5.yml) | [xiaoyu_xy-c5](./Configs/xiaoyu_xy-c5) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ✅ | [红米 AX6S](./.github/workflows/xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ✅ | [红米 AX6S](./.github/workflows/xiaomi_redmi-router-ax6s-ImmortalwrtARM.yml) | [xiaomi_redmi-router-ax6s-ImmortalwrtARM](./Configs/xiaomi_redmi-router-ax6s-ImmortalwrtARM) | [immortalwrtARM](https://github.com/padavanonly/immortalwrtARM) | Testing |
 
 🔔 **为了你的账号安全, 请不要使用 SSH 连接 Github Action**, `.config`配置以及固件定制等操作请务必在本地完成 🔔
 
@@ -105,7 +107,7 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 
    首先需要打开`TTYD 终端`或者使用`SSH`, 按需输入下方指令:
 
-   常规更新固件: `autoupdate`
+   更新固件: `autoupdate`
 
    使用镜像加速更新固件: `autoupdate -P`
 
@@ -119,28 +121,7 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
    
    打印运行日志:  `autoupdate --log`
 
-   列出相关信息: `autoupdate --list`
-
-   检查运行环境: `autoupdate --chk`
-
    查看脚本帮助: `autoupdate --help`
-
-   **注意:** 部分参数可一起使用, 例如 `autoupdate -n -P -F --path /mnt/sda1`
-
-## 使用 tools 固件工具箱(可选)
-
-   打开`TTYD 终端`或者使用`SSH`, 执行指令`tools`即可启动固件工具箱
-
-   当前支持以下功能:
-
-   - USB 扩展内部空间
-   - Samba 相关设置
-   - 打印端口占用详细列表
-   - 打印所有硬盘信息
-   - 网络检查 (基础网络 | Google 连接检测)
-   - AutoBuild 固件环境修复
-   - 系统信息监控
-   - 打印在线设备列表
 
 ## 鸣谢
 
