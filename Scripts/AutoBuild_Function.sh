@@ -169,7 +169,7 @@ EOF
 				sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 			fi
 		;;
-		immortalwrt/immortalwrt)
+		immortalwrt/immortalwrt | padavanonly/immortalwrtARM)
 			Copy ${CustomFiles}/Depends/openwrt_release_${OP_AUTHOR} ${BASE_FILES}/etc openwrt_release
 			if [[ -n ${TARGET_FLAG} ]]
 			then
@@ -241,6 +241,9 @@ EOF
 			;;
 			openwrt/openwrt*)
 				Patch_Path=${CustomFiles}/Patches/openwrt-openwrt
+			;;
+			padavanonly/immortalwrtARM*)
+				Patch_Path=${CustomFiles}/Patches/padavanonly-immortalwrtARM
 			;;
 			esac
 			if [[ -d ${Patch_Path} ]]

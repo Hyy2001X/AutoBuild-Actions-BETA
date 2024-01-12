@@ -138,5 +138,12 @@ EOF
 		esac
 		# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 	;;
+	padavanonly/immortalwrtARM*)
+		case "${TARGET_PROFILE}" in
+		xiaomi_redmi-router-ax6s)
+			:
+		;;
+		esac
+	;;
 	esac
 }
