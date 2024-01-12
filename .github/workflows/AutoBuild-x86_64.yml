@@ -8,16 +8,20 @@ name: x86_64
 
 on:
   repository_dispatch:
+  ## Git Push 时触发编译(不要删除此行注释)
   #push:
   #  branches: 
   #    - master
-
+  
+  ## 定时触发编译(不要删除此行注释)
   #schedule:
   #  - cron: 0 8 * * 5
-
+  
+  ## 重新点亮 Star 时触发编译(不要删除此行注释)
   #watch:
   #  types: [started]
-
+  
+  ### 界面控制部分 ( 以下内容请保持不变, 如有需要仅修改 options 选项 )
   workflow_dispatch:
     inputs:
       Tempoary_CONFIG:
@@ -52,7 +56,9 @@ on:
         description: '上传 bin 文件夹到 Artifacts'
         default: 'false'
         type: boolean
+      ### 界面控制部分结束 ( 以上内容请保持不变 )
 
+### 请按需求修改以下内容
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
@@ -66,6 +72,7 @@ env:
 # Cache 加速编译
   CACHE_ACCELERATE: false
 ### 结束
+### 请按需求修改以上内容
 
 jobs:
   Compile:

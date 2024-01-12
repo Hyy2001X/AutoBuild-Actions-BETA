@@ -6,7 +6,7 @@
 
 name: Redmi AX6S-ImmortalwrtARM
 
-### 以下内容请保持不变 ( 请修改下方的 [环境变量设置] )
+### 界面控制部分 ( 以下内容请保持不变 )
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -20,18 +20,22 @@ on:
       Tempoary_FLAG:
         description: '固件标签 [可选]'
         default: ''
-### 控制部分结束 ( 以上内容请保持不变 )
+### 界面控制部分结束 ( 以上内容请保持不变 )
 
+  ## Git Push 时触发编译(不要删除此行注释)
   #push:
   #  branches: 
   #    - master
-
+  
+  ## 定时触发编译(不要删除此行注释)
   #schedule:
   #  - cron: 0 8 * * 5
-
+  
+  ## 重新点亮 Star 时触发编译(不要删除此行注释)
   #watch:
   #  types: [started]
 
+### 请按需求修改以下内容
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
@@ -51,6 +55,7 @@ env:
 # Cache 加速编译
   CACHE_ACCELERATE: false
 ### 结束
+### 请按需求修改以上内容
 
 jobs:
   Compile:
