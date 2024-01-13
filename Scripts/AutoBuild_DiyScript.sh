@@ -134,6 +134,7 @@ EOF
 		case "${TARGET_PROFILE}" in
 		x86_64)
 			AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
+			AddPackage git other luci-app-mosdns sbwml v5
 		;;
 		esac
 		# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
