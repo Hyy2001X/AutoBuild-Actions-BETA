@@ -10,15 +10,14 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 
 | 维护 | 型号 | 配置文件(TARGET_PROFILE) | 源 | 备注 |
 | :----: | :----: | :----: | :----: | :----: |
-| ✅ | [x86_64](./.github/workflows/x86_64.yml) | [x86_64](./Configs/x86_64) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ✅ | [x86_64](./.github/workflows/AutoBuild-x86_64-ImmortalWrt.yml) | [x86_64-AP](./Configs/x86_64-AP) | [immortalwrt](https://github.com/immortalwrt/immortalwrt) | AP 固件 |
-| ❎ | [新路由3](./.github/workflows/d-team_newifi-d2.yml) | [d-team_newifi-d2](./Configs/d-team_newifi-d2) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ❎ | [华硕 acrh17](./.github/workflows/asus_rt-ac42u.yml) | [asus_rt-ac42u](./Configs/asus_rt-ac42u) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ❎ | [竞斗云 2.0](./.github/workflows/p2w_r619ac-128m.yml) | [p2w_r619ac-128m](./Configs/p2w_r619ac-128m) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ❎ | [红米 AC2100](./.github/workflows/xiaomi_redmi-router-ac2100.yml) | [xiaomi_redmi-router-ac2100](./Configs/xiaomi_redmi-router-ac2100) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ❎ | [小娱C5](./.github/workflows/xiaoyu_xy-c5.yml) | [xiaoyu_xy-c5](./Configs/xiaoyu_xy-c5) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ✅ | [红米 AX6S](./.github/workflows/xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ✅ | [红米 AX6S](./.github/workflows/xiaomi_redmi-router-ax6s-ImmortalwrtARM.yml) | [xiaomi_redmi-router-ax6s-ImmortalwrtARM](./Configs/xiaomi_redmi-router-ax6s-ImmortalwrtARM) | [immortalwrtARM](https://github.com/padavanonly/immortalwrtARM) | Testing |
+| ✅ | [x86_64](./.github/workflows/AutoBuild-x86_64.yml) | [x86_64](./Configs/x86_64) | [immortalwrt](https://github.com/immortalwrt/immortalwrt) |  |
+| ❎ | [新路由3](./.github/workflows/AutoBuild-d-team_newifi-d2.yml) | [d-team_newifi-d2](./Configs/d-team_newifi-d2) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [华硕 acrh17](./.github/workflows/AutoBuild-asus_rt-ac42u.yml) | [asus_rt-ac42u](./Configs/asus_rt-ac42u) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [竞斗云 2.0](./.github/workflows/AutoBuild-p2w_r619ac-128m.yml) | [p2w_r619ac-128m](./Configs/p2w_r619ac-128m) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [红米 AC2100](./.github/workflows/AutoBuild-xiaomi_redmi-router-ac2100.yml) | [xiaomi_redmi-router-ac2100](./Configs/xiaomi_redmi-router-ac2100) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ❎ | [小娱C5](./.github/workflows/AutoBuild-xiaoyu_xy-c5.yml) | [xiaoyu_xy-c5](./Configs/xiaoyu_xy-c5) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ✅ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ✅ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s-ImmortalwrtARM.yml) | [xiaomi_redmi-router-ax6s-ImmortalwrtARM](./Configs/xiaomi_redmi-router-ax6s-ImmortalwrtARM) | [immortalwrtARM](https://github.com/padavanonly/immortalwrtARM) | Testing |
 
 🔔 **为了你的账号安全, 请不要使用 SSH 连接 Github Action**, `.config`配置以及固件定制等操作请务必在本地完成 🔔
 
