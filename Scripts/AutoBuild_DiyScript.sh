@@ -41,12 +41,13 @@ Firmware_Diy() {
 	# ${TARGET_PROFILE}		设备名称
 	# ${TARGET_BOARD}			设备架构
 	# ${TARGET_FLAG}			固件名称后缀
+	# ${CONFIG_FILE}			配置文件
 
-	# ${WORK}				OpenWrt 源码位置
-	# ${CONFIG_FILE}			使用的配置文件名称
-	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
 	# ${CustomFiles}			仓库中的 /CustomFiles 绝对路径
 	# ${Scripts}				仓库中的 /Scripts 绝对路径
+
+	# ${WORK}				OpenWrt 源码目录
+	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
 	# ${FEEDS_LUCI}			OpenWrt 源码目录下的 package/feeds/luci 目录
 	# ${FEEDS_PKG}			OpenWrt 源码目录下的 package/feeds/packages 目录
 	# ${BASE_FILES}			OpenWrt 源码目录下的 package/base-files/files 目录
@@ -134,13 +135,15 @@ EOF
 		case "${TARGET_PROFILE}" in
 		x86_64)
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
+			sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
 			AddPackage other fw876 helloworld main
+			rm -r ${WORK}/package/other/helloworld/mosdns
+			rm -r ${FEEDS_PKG}/mosdns
 			AddPackage other sbwml luci-app-mosdns v5
 		;;
 		esac
-		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 	;;
 	padavanonly/immortalwrtARM*)
 		case "${TARGET_PROFILE}" in
