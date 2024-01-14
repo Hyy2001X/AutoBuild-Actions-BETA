@@ -480,47 +480,25 @@ AddPackage() {
 		ECHO "Syntax error: [$#] [$*]"
 		return 0
 	fi
-	PKG_PROTO=$1
-	case "${PKG_PROTO}" in
-	git | svn)
-		:
-	;;
-	*)
-		return 0
-	;;
-	esac
-	PKG_DIR=$2
+	PKG_DIR=$1
 	[[ ! ${PKG_DIR} =~ ${GITHUB_WORKSPACE} ]] && PKG_DIR=package/${PKG_DIR}
+	REPO_URL="https://github.com/$2/$3"
 	PKG_NAME=$3
-	REPO_URL="https://github.com/$4"
-	REPO_BRANCH=$5
-	[[ ${REPO_URL} =~ "${OP_AUTHOR}/${OP_REPO}" ]] && return 0
+	REPO_BRANCH=$4
 
 	MKDIR ${PKG_DIR}
 	if [[ -d ${PKG_DIR}/${PKG_NAME} ]]
 	then
 		ECHO "Removing old package: [${PKG_NAME}] ..."
-		rm -rf ${PKG_DIR}/${PKG_NAME}
+		rm -rf "${PKG_DIR}/${PKG_NAME}"
+	fi
+
+	if [[ -z ${REPO_BRANCH} ]]
+	then
+		REPO_BRANCH=main
 	fi
 	ECHO "Downloading package [${PKG_NAME}] to ${PKG_DIR} ..."
-	case "${PKG_PROTO}" in
-	git)
-		if [[ -z ${REPO_BRANCH} ]]
-		then
-			REPO_BRANCH=master
-		fi
-		PKG_URL="$(echo ${REPO_URL}/${PKG_NAME} | sed s/[[:space:]]//g)"
-		git clone -b ${REPO_BRANCH} ${PKG_URL} ${PKG_NAME} --depth 1  > /dev/null 2>&1
-	;;
-	svn)
-		svn checkout ${REPO_URL}/${PKG_NAME} ${PKG_NAME} > /dev/null 2>&1
-	;;
-	esac
-	if [[ -f ${PKG_NAME}/Makefile || -n $(ls -A ${PKG_NAME}) ]]
-	then
-		mv -f "${PKG_NAME}" "${PKG_DIR}"
-		[[ $? == 0 ]] && ECHO "Done"
-	fi
+	git clone --depth 1 -b ${REPO_BRANCH} ${REPO_URL} ${PKG_DIR}/${PKG_NAME}/ > /dev/null 2>&1
 }
 
 Copy() {

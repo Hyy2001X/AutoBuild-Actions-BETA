@@ -69,11 +69,11 @@ EOF
 		# sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon-mod"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
 
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
-		AddPackage git themes luci-theme-argon jerrykuku 18.06
-		AddPackage git other OpenClash vernesong dev
-		AddPackage git other luci-app-argon-config jerrykuku master
-		AddPackage git other helloworld fw876 main
-		AddPackage git themes luci-theme-neobird thinktip main
+		AddPackage themes jerrykuku luci-theme-argon  18.06
+		AddPackage other vernesong OpenClash  dev
+		AddPackage other jerrykuku luci-app-argon-config  master
+		AddPackage other fw876 helloworld  main
+		AddPackage themes thinktip luci-theme-neobird  main
 		
 		case "${TARGET_BOARD}" in
 		ramips)
@@ -88,11 +88,11 @@ EOF
 		;;
 		x86_64)
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
-			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
-			AddPackage git passwall-luci openwrt-passwall xiaorouji main
-			AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
+			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
+			AddPackage passwall-luci xiaorouji openwrt-passwall main
+			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
 			#rm -rf packages/lean/autocore
-			#AddPackage git lean autocore-modify Hyy2001X master
+			#AddPackage lean Hyy2001X autocore-modify master
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 
 			singbox_version="1.7.2"
@@ -125,8 +125,8 @@ EOF
 			# ReleaseDL https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest geoip.dat ${BASE_FILES}/usr/v2ray
 		;;
 		xiaomi_redmi-router-ax6s)
-			AddPackage git passwall-depends openwrt-passwall-packages xiaorouji main
-			AddPackage git passwall-luci openwrt-passwall xiaorouji main
+			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
+			AddPackage passwall-luci xiaorouji openwrt-passwall main
 		;;
 		esac
 	;;
@@ -135,8 +135,9 @@ EOF
 		x86_64)
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
-			AddPackage git passwall2-luci openwrt-passwall2 xiaorouji main
-			AddPackage git other luci-app-mosdns sbwml v5
+			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
+			AddPackage other fw876 helloworld main
+			AddPackage other sbwml luci-app-mosdns v5
 		;;
 		esac
 		sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
