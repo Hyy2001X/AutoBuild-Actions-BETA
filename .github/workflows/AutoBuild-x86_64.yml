@@ -31,7 +31,6 @@ on:
         options:
           - 'x86_64'
           - 'x86_64-AP'
-          - 'x86_64-Default'
       Tempoary_FLAG:
         description: '固件标签'
         default: 'AUTO'
@@ -40,7 +39,6 @@ on:
           - 'AUTO'
           - 'Full'
           - 'AP'
-          - 'Default'
       Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
@@ -64,7 +62,7 @@ env:
 # 编译时调用的 [.config] 文件名称
   CONFIG_FILE: x86_64
 # 源码仓库:分支
-  DEFAULT_SOURCE: coolsnowwolf/lede:master
+  DEFAULT_SOURCE: immortalwrt/immortalwrt:openwrt-23.05
 # 删除无用文件以增加编译空间
   DELETE_USELESS_FILES: true
 # 删除早期的 workflow 任务
