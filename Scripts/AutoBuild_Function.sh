@@ -577,3 +577,83 @@ ReleaseDL() {
 	done
 	rm -f ${API_FILE}
 }
+
+ClashDL() {
+	TMP_PATH=/opt/OpenClash
+	
+	PLATFORM=$1
+	CORE_TYPE=$2
+	
+	if [[ ! $(ls -1 $TMP_PATH) ]]
+	then
+		git clone -b core --depth=1 https://github.com/vernesong/OpenClash $TMP_PATH
+	fi
+	
+	case $CORE_TYPE in
+	dev | meta)
+		CORE_PATH=$TMP_PATH/dev/$CORE_TYPE
+	;;
+	premium | tun)
+		CORE_PATH=$TMP_PATH/dev/premium
+	;;
+	esac
+	
+	CORE=(
+		$(ls -1 $CORE_PATH | grep "clash-linux-$PLATFORM" | tr '\n' ' ')
+	)
+	
+	case $CORE_TYPE in
+	dev | meta)
+		IS_CORE="clash-linux-${PLATFORM}.tar.gz"
+		if [[ -f ${CORE_PATH}/${IS_CORE} ]]
+		then
+			TARGET_CORE=${IS_CORE}
+		fi
+	;;
+	*)
+		IS_CORE=$(ls -1 $CORE_PATH | egrep -o "clash-linux-${PLATFORM}-[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]{2}-[A-Za-z0-9]+\.gz")
+		if [[ ${IS_CORE} && -f ${CORE_PATH}/${IS_CORE} ]]
+		then
+			TARGET_CORE=${IS_CORE}
+		fi
+	esac
+	
+	if [[ ! $TARGET_CORE ]]
+	then
+		echo "$PLATFORM $CORE_TYPE Not found"
+		for i in meta
+		do
+			cd $TMP_PATH/dev/$i
+			SUP_PLATDORM=$(ls -1 2> /dev/null | sed -r 's/clash-linux-(.*).tar.gz/\1/')
+			echo -e "CORE Supported platform: \n$SUP_PLATDORM"
+			cd - > /dev/null
+		done
+		return
+	else
+		echo "TARGET_CORE: $TARGET_CORE"
+	fi
+	
+	case $CORE_TYPE in
+	dev | meta)
+		tar -xvzf $CORE_PATH/$TARGET_CORE -C ${TMP_PATH}
+		if [[ $CORE_TYPE == dev ]]
+		then
+			chmod 777 ${TMP_PATH}/clash
+			mv -f ${TMP_PATH}/clash ${BASE_FILES}/etc/openclash/core/clash
+			echo "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash)"
+		fi
+		if [[ $CORE_TYPE == meta ]]
+		then
+			chmod 777 ${TMP_PATH}/clash
+			mv -f ${TMP_PATH}/clash ${BASE_FILES}/etc/openclash/core/clash_meta
+			echo "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash_meta)"
+		fi
+	;;
+	premium | tun)
+		gzip -dk -c $CORE_PATH/$TARGET_CORE > ${TMP_PATH}/clash_tun
+		chmod 777 ${TMP_PATH}/clash_tun
+		mv -f ${TMP_PATH}/clash_tun ${BASE_FILES}/etc/openclash/core/clash_tun
+		echo "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash_tun)"
+	;;
+	esac
+}

@@ -142,6 +142,9 @@ EOF
 			rm -r ${WORK}/package/other/helloworld/mosdns
 			rm -r ${FEEDS_PKG}/mosdns
 			AddPackage other sbwml luci-app-mosdns v5
+			ClashDL amd64 dev
+			ClashDL amd64 tun
+			ClashDL amd64 meta
 		;;
 		esac
 	;;
