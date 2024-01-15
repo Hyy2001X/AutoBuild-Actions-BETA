@@ -86,6 +86,11 @@ EOF
 		case "${TARGET_PROFILE}" in
 		d-team_newifi-d2)
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
+			case "${CONFIG_FILE}" in
+			d-team_newifi-d2-Clash)
+				ClashDL mipsle-hardfloat dev
+			;;
+			esac
 		;;
 		x86_64)
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin

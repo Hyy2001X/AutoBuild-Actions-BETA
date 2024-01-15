@@ -98,6 +98,7 @@ Firmware_Diy_Start() {
 	cat >> ${GITHUB_ENV} <<EOF
 WORK=${WORK}
 CONFIG_TEMP=${CONFIG_TEMP}
+CONFIG_FILE=${CONFIG_FILE}
 AutoBuild_Features=${AutoBuild_Features}
 x86_Full_Images=${x86_Full_Images}
 AutoBuild_Fw=${AutoBuild_Fw}
@@ -620,19 +621,19 @@ ClashDL() {
 	
 	if [[ ! $TARGET_CORE ]]
 	then
-		echo "$PLATFORM $CORE_TYPE Not found"
+		ECHO "$PLATFORM $CORE_TYPE Not found"
 		for i in meta
 		do
 			cd $TMP_PATH/dev/$i
 			SUP_PLATDORM=$(ls -1 2> /dev/null | sed -r 's/clash-linux-(.*).tar.gz/\1/')
-			echo -e "CORE Supported platform: \n$SUP_PLATDORM"
+			ECHO "CORE Supported platform: \n$SUP_PLATDORM"
 			cd - > /dev/null
 		done
 		return
 	else
-		echo "TARGET_CORE: $TARGET_CORE"
+		ECHO "TARGET_CORE: $TARGET_CORE"
 	fi
-	
+	MKDIR ${BASE_FILES}/etc/openclash/core
 	case $CORE_TYPE in
 	dev | meta)
 		tar -xvzf $CORE_PATH/$TARGET_CORE -C ${TMP_PATH}
@@ -640,20 +641,20 @@ ClashDL() {
 		then
 			chmod 777 ${TMP_PATH}/clash
 			mv -f ${TMP_PATH}/clash ${BASE_FILES}/etc/openclash/core/clash
-			echo "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash)"
+			ECHO "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash)"
 		fi
 		if [[ $CORE_TYPE == meta ]]
 		then
 			chmod 777 ${TMP_PATH}/clash
 			mv -f ${TMP_PATH}/clash ${BASE_FILES}/etc/openclash/core/clash_meta
-			echo "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash_meta)"
+			ECHO "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash_meta)"
 		fi
 	;;
 	premium | tun)
 		gzip -dk -c $CORE_PATH/$TARGET_CORE > ${TMP_PATH}/clash_tun
 		chmod 777 ${TMP_PATH}/clash_tun
 		mv -f ${TMP_PATH}/clash_tun ${BASE_FILES}/etc/openclash/core/clash_tun
-		echo "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash_tun)"
+		ECHO "CORE Size: $(du -h ${BASE_FILES}/etc/openclash/core/clash_tun)"
 	;;
 	esac
 }
