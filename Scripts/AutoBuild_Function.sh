@@ -125,8 +125,8 @@ Author_URL=${Author_URL}
 ENV_FILE=${GITHUB_ENV}
 
 EOF
-	source ${GITHUB_ENV}
 	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
+	source ${GITHUB_ENV}
 	ECHO "[Firmware_Diy_Start] Done"
 }
 
