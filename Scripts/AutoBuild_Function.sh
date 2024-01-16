@@ -5,14 +5,14 @@
 Firmware_Diy_Start() {
 	ECHO "[Firmware_Diy_Start] Starting ..."
 	WORK="${GITHUB_WORKSPACE}/openwrt"
-	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
+	CONFIG_TEMP="${WORK}/.config"
 	CD ${WORK}
-	Github="$(egrep -o 'https://github.com/.+' ${GITHUB_WORKSPACE}/.git/config)"
+	Github="$(egrep -o 'https://github.com/.+' ${WORK}/.git/config | awk '{print $1}')"
 	[[ -z ${Github} ]] && Github=${REPO_URL}
 	OP_REPO="$(cut -d ':' -f1 <<< ${DEFAULT_SOURCE})"
 	while :
 	do
-		OP_BRANCH="$(grep branch ${GITHUB_WORKSPACE}/.git/config | sed -r 's/\[branch \"(.*)\"\]/\1/')"
+		OP_BRANCH="$(grep branch ${WORK}/.git/config | sed -r 's/\[branch \"(.*)\"\]/\1/')"
 		[[ ${OP_BRANCH} ]] && break
 		OP_BRANCH="$(cut -d ':' -f2 <<< ${DEFAULT_SOURCE})"
 		[[ ${OP_BRANCH} ]] && break
@@ -123,17 +123,6 @@ Fw_MFormat=${Fw_MFormat}
 FEEDS_CONF=${WORK}/feeds.conf.default
 Author_URL=${Author_URL}
 ENV_FILE=${GITHUB_ENV}
-
-EOF
-	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
-	source ${GITHUB_ENV}
-	ECHO "[Firmware_Diy_Start] Done"
-}
-
-Firmware_Diy_Main() {
-	ECHO "[Firmware_Diy_Main] Starting ..."
-	CD ${WORK}
-	cat >> ${GITHUB_ENV} <<EOF
 Author=${Author}
 Github=${Github}
 TARGET_PROFILE=${TARGET_PROFILE}
@@ -146,6 +135,14 @@ OP_REPO=${OP_REPO}
 OP_BRANCH=${OP_BRANCH}
 
 EOF
+	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
+	source ${GITHUB_ENV}
+	ECHO "[Firmware_Diy_Start] Done"
+}
+
+Firmware_Diy_Main() {
+	ECHO "[Firmware_Diy_Main] Starting ..."
+	CD ${WORK}
 	chmod 777 -R ${Scripts} ${CustomFiles}
 	if [[ ${AutoBuild_Features} == true ]]
 	then
