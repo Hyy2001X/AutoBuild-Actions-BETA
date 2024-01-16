@@ -7,14 +7,10 @@ Firmware_Diy_Start() {
 	WORK="${GITHUB_WORKSPACE}/openwrt"
 	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${WORK}
-	Github="$(egrep -o "https://github.com/.+" ${GITHUB_WORKSPACE}/.git/config)"
-	[[ -z ${Github} ]] && Github="${REPO_URL}"
-	OP_REPO="$(cut -d ':' -f1 <<< ${DEFAULT_SOURCE})"
-	OP_BRANCH="$(cut -d ':' -f2 <<< ${DEFAULT_SOURCE})"
-	OP_AUTHOR="$(dirname ${OP_REPO})"
-	[[ -z ${OP_REPO} ]] && OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
-	[[ -z ${OP_BRANCH} ]] && OP_BRANCH="$(Get_Branch)"
-	[[ -z ${OP_AUTHOR} ]] && OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
+	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
+	OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
+	OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
+	OP_BRANCH="$(Get_Branch)"
 	Firmware_Diy_Core
 	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
 	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(cut -d "/" -f4 <<< ${Github})"
