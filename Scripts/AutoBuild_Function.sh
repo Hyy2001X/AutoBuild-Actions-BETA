@@ -27,7 +27,7 @@ Firmware_Diy_Start() {
 		zzz_Default_Version="$(egrep -o "R[0-9]+\.[0-9]+\.[0-9]+" ${Version_File})"
 		OP_VERSION="${zzz_Default_Version}-${Compile_Date}"
 	;;
-	immortalwrt/immortalwrt | padavanonly/immortalwrtARM)
+	immortalwrt/immortalwrt | padavanonly/immortalwrtARM | hanwckf/immortalwrt-mt798x)
 		Version_File=package/base-files/files/etc/openwrt_release
 		OP_VERSION="${OP_VERSION_HEAD}${Compile_Date}"
 	;;
@@ -170,8 +170,8 @@ EOF
 				sed -i "s?${zzz_Default_Version}?${zzz_Default_Version} @ ${Author} [${Display_Date}]?g" ${Version_File}
 			fi
 		;;
-		immortalwrt/immortalwrt | padavanonly/immortalwrtARM)
-			Copy ${CustomFiles}/Depends/openwrt_release_${OP_AUTHOR} ${BASE_FILES}/etc openwrt_release
+		immortalwrt/immortalwrt | padavanonly/immortalwrtARM | hanwckf/immortalwrt-mt798x)
+			Copy ${CustomFiles}/Depends/openwrt_release_immortalwrt ${BASE_FILES}/etc openwrt_release
 			if [[ -n ${TARGET_FLAG} ]]
 			then
 				sed -i "s?ImmortalWrt?ImmortalWrt ${TARGET_FLAG} @ ${Author} [${Display_Date}]?g" ${Version_File}
@@ -245,6 +245,9 @@ EOF
 			;;
 			padavanonly/immortalwrtARM*)
 				Patch_Path=${CustomFiles}/Patches/padavanonly-immortalwrtARM
+			;;
+			hanwckf/immortalwrt-mt798x*)
+				Patch_Path=${CustomFiles}/Patches/immortalwrt-mt798x
 			;;
 			esac
 			if [[ -d ${Patch_Path} ]]
