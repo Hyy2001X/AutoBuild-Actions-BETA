@@ -5,21 +5,20 @@
 Firmware_Diy_Start() {
 	ECHO "[Firmware_Diy_Start] Starting ..."
 	WORK="${GITHUB_WORKSPACE}/openwrt"
-	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
+	CONFIG_TEMP="${WORK}/.config"
 	CD ${WORK}
-	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
-	OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
-	OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
-	OP_BRANCH="$(Get_Branch)"
+	OP_REPO="$(basename $(cut -d ':' -f1 <<< ${DEFAULT_SOURCE}))"
+	OP_AUTHOR="$(cut -d '/' -f1 <<< ${DEFAULT_SOURCE})"
+	OP_BRANCH="$(cut -d ':' -f2 <<< ${DEFAULT_SOURCE})"
 	Firmware_Diy_Core
 	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
+	Github="$(egrep -o 'https://github.com/.+' ${GITHUB_WORKSPACE}/.git/config)"
 	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(cut -d "/" -f4 <<< ${Github})"
 	if [[ ${OP_BRANCH} =~ (master|main) ]]
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
 	else
-		OP_BRANCH="$(egrep -o "[0-9]+.[0-9]+" <<< ${OP_BRANCH} | awk 'NR==1')"
-		OP_VERSION_HEAD="R${OP_BRANCH}-"
+		OP_VERSION_HEAD="R${OP_BRANCH}-$(egrep -o "[0-9]+.[0-9]+" <<< ${OP_BRANCH} | awk 'NR==1')"
 	fi
 	case "${OP_AUTHOR}/${OP_REPO}" in
 	coolsnowwolf/lede)
@@ -48,7 +47,6 @@ Firmware_Diy_Start() {
 	else
 		TARGET_PROFILE="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG_TEMP} | sed -r 's/.*DEVICE_(.*)=y/\1/')"
 	fi
-	[[ -z ${TARGET_PROFILE} ]] && ECHO "Unable to get [TARGET_PROFILE] !"
 	TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${CONFIG_TEMP})"
 	TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${CONFIG_TEMP})"
 	if [[ -z ${Fw_MFormat} || ${Fw_MFormat} == AUTO ]]
@@ -116,16 +114,6 @@ FEEDS_CONF=${WORK}/feeds.conf.default
 Author_URL=${Author_URL}
 ENV_FILE=${GITHUB_ENV}
 
-EOF
-	source ${GITHUB_ENV}
-	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
-	ECHO "[Firmware_Diy_Start] Done"
-}
-
-Firmware_Diy_Main() {
-	ECHO "[Firmware_Diy_Main] Starting ..."
-	CD ${WORK}
-	cat >> ${GITHUB_ENV} <<EOF
 Author=${Author}
 Github=${Github}
 TARGET_PROFILE=${TARGET_PROFILE}
@@ -136,8 +124,15 @@ OP_VERSION=${OP_VERSION}
 OP_AUTHOR=${OP_AUTHOR}
 OP_REPO=${OP_REPO}
 OP_BRANCH=${OP_BRANCH}
-
 EOF
+	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
+	source ${GITHUB_ENV}
+	ECHO "[Firmware_Diy_Start] Done"
+}
+
+Firmware_Diy_Main() {
+	ECHO "[Firmware_Diy_Main] Starting ..."
+	CD ${WORK}
 	chmod 777 -R ${Scripts} ${CustomFiles}
 	if [[ ${AutoBuild_Features} == true ]]
 	then
@@ -423,12 +418,6 @@ List_MFormat() {
 
 Get_sha256() {
 	List_sha256 | grep $1 | awk '{print $1}' | cut -c1-5
-}
-
-Get_Branch() {
-    git -C $(pwd) rev-parse --abbrev-ref HEAD | grep -v HEAD || \
-    git -C $(pwd) describe --exact-match HEAD || \
-    git -C $(pwd) rev-parse HEAD
 }
 
 gz_Check() {
