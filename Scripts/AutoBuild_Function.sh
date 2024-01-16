@@ -7,14 +7,13 @@ Firmware_Diy_Start() {
 	WORK="${GITHUB_WORKSPACE}/openwrt"
 	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${WORK}
-	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
+	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
+	OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
+	OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
+	OP_BRANCH="$(Get_Branch)"
 	Firmware_Diy_Core
 	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
-	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
 	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(cut -d "/" -f4 <<< ${Github})"
-	OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
-	OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
-	OP_BRANCH="$(Get_Branch)"
 	if [[ ${OP_BRANCH} =~ (master|main) ]]
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
@@ -36,7 +35,8 @@ Firmware_Diy_Start() {
 		OP_VERSION="${OP_VERSION_HEAD}${Compile_Date}"
 	;;
 	esac
-	while [[ -z ${x86_Test} ]];do
+	while [[ -z ${x86_Test} ]]
+	do
 		x86_Test="$(egrep -o "CONFIG_TARGET.*DEVICE.*=y" ${CONFIG_TEMP} | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1/')"
 		[[ -n ${x86_Test} ]] && break
 		x86_Test="$(egrep -o "CONFIG_TARGET.*Generic=y" ${CONFIG_TEMP} | sed -r 's/CONFIG_TARGET_(.*)_Generic=y/\1/')"
