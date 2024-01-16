@@ -12,7 +12,7 @@ Firmware_Diy_Start() {
 	OP_BRANCH="$(cut -d ':' -f2 <<< ${DEFAULT_SOURCE})"
 	Firmware_Diy_Core
 	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
-	Github="$(egrep -o 'https://github.com/.+' ${GITHUB_WORKSPACE}/.git/config)"
+	Github="$(egrep -o 'https://github.com/.+' ${GITHUB_WORKSPACE}/.git/config | awk '{print $1}')"
 	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(cut -d "/" -f4 <<< ${Github})"
 	if [[ ${OP_BRANCH} =~ (master|main) ]]
 	then
