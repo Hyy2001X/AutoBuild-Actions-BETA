@@ -18,7 +18,7 @@ Firmware_Diy_Start() {
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
 	else
-		OP_VERSION_HEAD="R${OP_BRANCH}-$(egrep -o "[0-9]+.[0-9]+" <<< ${OP_BRANCH} | awk 'NR==1')"
+		OP_VERSION_HEAD="R$(egrep -o "[0-9]+.[0-9]+" <<< ${OP_BRANCH} | awk 'NR==1')-"
 	fi
 	case "${OP_AUTHOR}/${OP_REPO}" in
 	coolsnowwolf/lede)
@@ -113,6 +113,7 @@ Fw_MFormat=${Fw_MFormat}
 FEEDS_CONF=${WORK}/feeds.conf.default
 Author_URL=${Author_URL}
 ENV_FILE=${GITHUB_ENV}
+Compile_Date=${Compile_Date}
 
 Author=${Author}
 Github=${Github}
