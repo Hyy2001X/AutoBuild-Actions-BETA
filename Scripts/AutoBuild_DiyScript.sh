@@ -180,8 +180,7 @@ EOF
 	hanwckf/immortalwrt-mt798x*)
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m)
-			AddPackage other sbwml luci-app-mosdns v5
-			rm -r ${FEEDS_PKG}/mosdns
+			:
 		;;
 		esac
 	;;
