@@ -8,7 +8,7 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 
 ## 维护设备列表
 
-| 维护 | 型号 | 配置文件(TARGET_PROFILE) | 源 | 备注 |
+| 维护 | 型号 | 配置文件 (TARGET_PROFILE) | 源 | 备注 |
 | :----: | :----: | :----: | :----: | :----: |
 | ✅ | [x86_64](./.github/workflows/AutoBuild-x86_64.yml) | [x86_64](./Configs/x86_64) | [immortalwrt](https://github.com/immortalwrt/immortalwrt) |  |
 | ❎ | [新路由3](./.github/workflows/AutoBuild-d-team_newifi-d2.yml) | [d-team_newifi-d2](./Configs/d-team_newifi-d2) | [lede](https://github.com/coolsnowwolf/lede) |  |
@@ -18,8 +18,9 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 | ❎ | [小娱C5](./.github/workflows/AutoBuild-xiaoyu_xy-c5.yml) | [xiaoyu_xy-c5](./Configs/xiaoyu_xy-c5) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ✅ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ✅ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s-ImmortalwrtARM.yml) | [xiaomi_redmi-router-ax6s-ImmortalwrtARM](./Configs/xiaomi_redmi-router-ax6s-ImmortalwrtARM) | [immortalwrtARM](https://github.com/padavanonly/immortalwrtARM) | Testing |
+| ✅ | [中国移动 RAX3000M](./.github/workflows/AutoBuild-cmcc_rax3000m.yml) | [cmcc_rax3000m](./Configs/cmcc_rax3000m) | [immortalwrt-mt798x](https://github.com/hanwckf/immortalwrt-mt798x) | Testing |
 
-🔔 **为了你的账号安全, 请不要使用 SSH 连接 Github Action**, `.config`配置以及固件定制等操作请务必在本地完成 🔔
+🔔 **为了你的账号安全, 请不要使用 SSH 连接 Github Actions**, `.config` 配置以及固件定制等操作请务必在本地完成 🔔
 
 🎈 **提示**: 文档中的 **TARGET_PROFILE** 为编译的设备名称(代号), 例如: `d-team_newifi-d2`、`asus_rt-acrh17`、`x86_64`
    
