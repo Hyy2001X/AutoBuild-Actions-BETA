@@ -7,27 +7,22 @@ Firmware_Diy_Start() {
 	WORK="${GITHUB_WORKSPACE}/openwrt"
 	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${WORK}
-	Github="$(egrep -o 'https://github.com/.+' ${GITHUB_WORKSPACE}/.git/config)"
-	[[ -z ${Github} ]] && Github=${REPO_URL}
+	Github="$(egrep -o "https://github.com/.+" ${GITHUB_WORKSPACE}/.git/config)"
+	[[ -z ${Github} ]] && Github="${REPO_URL}"
 	OP_REPO="$(cut -d ':' -f1 <<< ${DEFAULT_SOURCE})"
-	while :
-	do
-		OP_BRANCH="$(grep branch ${GITHUB_WORKSPACE}/.git/config | sed -r 's/\[branch \"(.*)\"\]/\1/')"
-		[[ ${OP_BRANCH} ]] && break
-		OP_BRANCH="$(cut -d ':' -f2 <<< ${DEFAULT_SOURCE})"
-		[[ ${OP_BRANCH} ]] && break
-		OP_BRANCH="$(Get_Branch)"
-		[[ ${OP_BRANCH} ]] && break
-	done
-	OP_AUTHOR="$(cut -d '/' -f1 <<< ${OP_REPO})"
+	OP_BRANCH="$(cut -d ':' -f2 <<< ${DEFAULT_SOURCE})"
+	OP_AUTHOR="$(dirname ${OP_REPO})"
+	[[ -z ${OP_REPO} ]] && OP_REPO="$(cut -d "/" -f5 <<< ${REPO_URL})"
+	[[ -z ${OP_BRANCH} ]] && OP_BRANCH="$(Get_Branch)"
+	[[ -z ${OP_AUTHOR} ]] && OP_AUTHOR="$(cut -d "/" -f4 <<< ${REPO_URL})"
 	Firmware_Diy_Core
 	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
-	[[ -z ${Author} || ${Author} == AUTO ]] && Author="${OP_AUTHOR})"
+	[[ -z ${Author} || ${Author} == AUTO ]] && Author="$(cut -d "/" -f4 <<< ${Github})"
 	if [[ ${OP_BRANCH} =~ (master|main) ]]
 	then
 		OP_VERSION_HEAD="R$(date +%y.%m)-"
 	else
-		OP_VERSION_HEAD="R${OP_BRANCH}-$(egrep -o '[0-9]+.[0-9]+' <<< ${OP_BRANCH} | awk 'NR==1')"
+		OP_VERSION_HEAD="R${OP_BRANCH}-$(egrep -o "[0-9]+.[0-9]+" <<< ${OP_BRANCH} | awk 'NR==1')"
 	fi
 	case "${OP_AUTHOR}/${OP_REPO}" in
 	coolsnowwolf/lede)
