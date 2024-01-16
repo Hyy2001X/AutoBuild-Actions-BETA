@@ -7,6 +7,7 @@ Firmware_Diy_Start() {
 	WORK="${GITHUB_WORKSPACE}/openwrt"
 	CONFIG_TEMP="${GITHUB_WORKSPACE}/openwrt/.config"
 	CD ${WORK}
+	echo -e "### VARIABLE LIST ###\n$(cat ${GITHUB_ENV})\n"
 	Firmware_Diy_Core
 	[[ ${Short_Fw_Date} == true ]] && Compile_Date="$(cut -c1-8 <<< ${Compile_Date})"
 	Github="$(grep "https://github.com/[a-zA-Z0-9]" ${GITHUB_WORKSPACE}/.git/config | cut -c8-100 | sed 's/^[ \t]*//g')"
