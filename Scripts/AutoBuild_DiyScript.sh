@@ -72,6 +72,7 @@ Firmware_Diy() {
 	# ClashDL <platform> <core_type> [dev/tun/meta]
 	# ReleaseDL <release_url> <file> <target_path>
 	# Copy <cp_from> <cp_to > <rename>
+	# merge_package <git_branch> <git_repo_url> <package_path> <target_path>..
 	
 	case "${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH}" in
 	coolsnowwolf/lede:master)

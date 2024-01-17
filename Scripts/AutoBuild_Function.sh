@@ -652,3 +652,34 @@ ClashDL() {
 	;;
 	esac
 }
+
+function merge_package(){
+	# Third-party function
+	# From https://github.com/coolsnowwolf/lede/issues/11757#issuecomment-1892195201
+
+    # 参数1是分支名,参数2是库地址,参数3是所有文件下载到指定路径
+    # 同一个仓库下载多个文件夹直接在后面跟文件名或路径,空格分开
+	# eg: merge_package master https://github.com/WYC-2020/openwrt-packages package/openwrt-packages luci-app-eqos luci-app-openclash luci-app-ddnsto ddnsto 
+	# eg: merge_package master https://github.com/lisaac/luci-app-dockerman package/lean applications/luci-app-dockerman
+	
+	if [[ $# -lt 3 ]]
+	then
+		ECHO "Syntax error: [$#] [$*]"
+		return 0
+	fi
+	
+    trap 'rm -rf "$tmpdir"' EXIT
+    branch="$1" curl="$2" target_dir="$3" && shift 3
+    rootdir="${WORK}"
+    localdir="$target_dir"
+    [ -d "$localdir" ] || mkdir -p "$localdir"
+    tmpdir="$(mktemp -d)" || exit 1
+    git clone -b "$branch" --depth 1 --filter=blob:none --sparse "$curl" "$tmpdir"
+    cd "$tmpdir"
+    git sparse-checkout init --cone
+    git sparse-checkout set "$@"
+    for folder in "$@"; do
+        mv -f "$folder" "$rootdir/$localdir"
+    done
+	cd - > /dev/null
+}
