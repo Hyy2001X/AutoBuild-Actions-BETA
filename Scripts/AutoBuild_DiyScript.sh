@@ -106,7 +106,7 @@ EOF
 
 		case "${CONFIG_FILE}" in
 		d-team_newifi-d2-Clash | xiaoyu_xy-c5-Clash)
-			ClashDL mipsle-hardfloat dev
+			ClashDL mipsle-hardfloat tun
 		;;
 		esac
 			
@@ -124,7 +124,6 @@ EOF
 			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
 			#rm -rf packages/lean/autocore
 			#AddPackage lean Hyy2001X autocore-modify master
-			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 
 			singbox_version="1.8.1"
 			hysteria_version="2.2.3"
