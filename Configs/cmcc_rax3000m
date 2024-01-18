@@ -364,7 +364,6 @@ CONFIG_PACKAGE_lua-cjson=y
 CONFIG_PACKAGE_lua-neturl=y
 CONFIG_PACKAGE_luci-app-accesscontrol=y
 CONFIG_PACKAGE_luci-app-autoreboot=y
-CONFIG_PACKAGE_luci-app-cpufreq=y
 CONFIG_PACKAGE_luci-app-diskman=y
 CONFIG_PACKAGE_luci-app-eqos-mtk=y
 CONFIG_PACKAGE_luci-app-hd-idle=y
@@ -385,7 +384,6 @@ CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=y
 # CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-webui is not set
 CONFIG_PACKAGE_luci-app-samba4=y
 CONFIG_PACKAGE_luci-app-socat=y
-CONFIG_PACKAGE_luci-app-softethervpn=y
 CONFIG_PACKAGE_luci-app-ssr-plus=y
 # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client is not set
 CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Client=y
@@ -529,3 +527,13 @@ CONFIG_PACKAGE_luci-app-autoupdate=y
 CONFIG_PACKAGE_luci-app-natter2=y
 CONFIG_PACKAGE_luci-app-iperf3-server=y
 CONFIG_PACKAGE_luci-app-onliner=y
+CONFIG_PACKAGE_luci-app-passwall2=y
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy is not set
+CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_ShadowsocksR_Libev_Server=y
+# CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_Shadowsocks_Libev_Client is not set
+# CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_SingBox is not set
+# CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_Trojan_Plus is not set
+# CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_V2ray_Plugin is not set
+CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_Xray_Plugin=y
+CONFIG_PACKAGE_luci-app-passwall2_Iptables_Transparent_Proxy=y
+CONFIG_PACKAGE_luci-app-passwall2_Nftables_Transparent_Proxy=y
