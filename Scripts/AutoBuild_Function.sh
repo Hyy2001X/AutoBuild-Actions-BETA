@@ -380,8 +380,8 @@ Process_Fw_Core() {
 		Fw=${Fw/FORMAT/${Fw_Format}}
 		if [[ -f $1 ]]
 		then
-			ECHO "Moving [$1] to [${Fw}] ..."
-			mv -f $1 ${Fw}
+			ECHO "Copy [$1] to [${Fw}] ..."
+			cp -a $1 ${Fw}
 		else
 			ECHO "Failed to copy [${Fw}] ..."
 		fi
