@@ -180,7 +180,7 @@ EOF
 	hanwckf/immortalwrt-mt798x*)
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m)
-			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
+			:
 		;;
 		esac
 	;;
