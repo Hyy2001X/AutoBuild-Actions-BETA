@@ -16,8 +16,7 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 | ❎ | [竞斗云 2.0](./.github/workflows/AutoBuild-p2w_r619ac-128m.yml) | [p2w_r619ac-128m](./Configs/p2w_r619ac-128m) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ❎ | [红米 AC2100](./.github/workflows/AutoBuild-xiaomi_redmi-router-ac2100.yml) | [xiaomi_redmi-router-ac2100](./Configs/xiaomi_redmi-router-ac2100) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ❎ | [小娱C5](./.github/workflows/AutoBuild-xiaoyu_xy-c5.yml) | [xiaoyu_xy-c5](./Configs/xiaoyu_xy-c5) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ✅ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | [lede](https://github.com/coolsnowwolf/lede) |  |
-| ✅ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s-ImmortalwrtARM.yml) | [xiaomi_redmi-router-ax6s-ImmortalwrtARM](./Configs/xiaomi_redmi-router-ax6s-ImmortalwrtARM) | [immortalwrtARM](https://github.com/padavanonly/immortalwrtARM) | Testing |
+| ❎ | [红米 AX6S](./.github/workflows/AutoBuild-xiaomi_redmi-router-ax6s.yml) | [xiaomi_redmi-router-ax6s](./Configs/xiaomi_redmi-router-ax6s) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ✅ | [中国移动 RAX3000M](./.github/workflows/AutoBuild-cmcc_rax3000m.yml) | [cmcc_rax3000m](./Configs/cmcc_rax3000m) | [immortalwrt-mt798x](https://github.com/hanwckf/immortalwrt-mt798x) | Testing |
 
 🔔 **为了你的账号安全, 请不要使用 SSH 连接 Github Actions**, `.config` 配置以及固件定制等操作请务必在本地完成 🔔
