@@ -182,7 +182,10 @@ EOF
 	hanwckf/immortalwrt-mt798x*)
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m)
-			:
+			AddPackage passwall-luci xiaorouji openwrt-passwall main
+			rm -r ${FEEDS_LUCI}/luci-app-passwall
+			rm -r ${FEEDS_PKG}/xray-core
+			merge_package main https://github.com/xiaorouji/openwrt-passwall-packages ${FEEDS_PKG} xray-core
 		;;
 		esac
 	;;

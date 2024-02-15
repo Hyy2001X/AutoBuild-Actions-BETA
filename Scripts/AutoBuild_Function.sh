@@ -674,7 +674,7 @@ function merge_package(){
     localdir="$target_dir"
     [ -d "$localdir" ] || mkdir -p "$localdir"
     tmpdir="$(mktemp -d)" || exit 1
-    git clone -b "$branch" --depth 1 --filter=blob:none --sparse "$curl" "$tmpdir"
+    git clone -b "$branch" --depth=1 --filter=blob:none --sparse "$curl" "$tmpdir"
     cd "$tmpdir"
     git sparse-checkout init --cone
     git sparse-checkout set "$@"
