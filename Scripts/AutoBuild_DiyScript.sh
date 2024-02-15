@@ -183,9 +183,7 @@ EOF
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m)
 			AddPackage passwall-luci xiaorouji openwrt-passwall main
-			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
-			rm -r ${FEEDS_PKG}/xray-core
 		;;
 		esac
 	;;
