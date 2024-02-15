@@ -185,7 +185,7 @@ EOF
 			AddPackage passwall-luci xiaorouji openwrt-passwall main
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
 			rm -r ${FEEDS_PKG}/xray-core
-			merge_package main https://github.com/xiaorouji/openwrt-passwall-packages ${FEEDS_PKG} xray-core
+			merge_package main https://github.com/xiaorouji/openwrt-passwall-packages ${WORK}/package xray-core
 		;;
 		esac
 	;;
