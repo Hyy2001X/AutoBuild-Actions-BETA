@@ -124,7 +124,6 @@ EOF
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			rm -r ${WORK}/package/other/helloworld/mosdns
 			rm -r ${FEEDS_PKG}/mosdns
-			rm -r ${WORK}/package/other/helloworld/mosdns
 			rm -r ${FEEDS_LUCI}/luci-app-mosdns
 			AddPackage other sbwml luci-app-mosdns v5
 			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
