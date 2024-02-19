@@ -97,6 +97,7 @@ EOF
 		AddPackage other jerrykuku luci-app-argon-config master
 		AddPackage other fw876 helloworld main
 		AddPackage themes thinktip luci-theme-neobird main
+		AddPackage other ximiTech luci-app-msd_lite main
 		rm -r ${FEEDS_PKG}/curl
 		Copy ${CustomFiles}/curl ${FEEDS_PKG}
 		
