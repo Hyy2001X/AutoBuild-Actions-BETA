@@ -97,8 +97,14 @@ EOF
 		AddPackage other jerrykuku luci-app-argon-config master
 		AddPackage other fw876 helloworld main
 		AddPackage themes thinktip luci-theme-neobird main
-		AddPackage other ximiTech luci-app-msd_lite main
+		AddPackage msd_lite ximiTech luci-app-msd_lite main
+		AddPackage msd_lite ximiTech msd_lite main
+		AddPackage mosdns sbwml luci-app-mosdns v5
+		rm -r ${WORK}/package/other/helloworld/mosdns
+		rm -r ${FEEDS_PKG}/mosdns
+		rm -r ${FEEDS_LUCI}/luci-app-mosdns
 		rm -r ${FEEDS_PKG}/curl
+		rm -r ${FEEDS_PKG}/msd_lite
 		Copy ${CustomFiles}/curl ${FEEDS_PKG}
 		
 		case "${TARGET_BOARD}" in
@@ -123,10 +129,6 @@ EOF
 			ClashDL amd64 tun
 			ClashDL amd64 meta
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
-			rm -r ${WORK}/package/other/helloworld/mosdns
-			rm -r ${FEEDS_PKG}/mosdns
-			rm -r ${FEEDS_LUCI}/luci-app-mosdns
-			AddPackage other sbwml luci-app-mosdns v5
 			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
 			AddPackage passwall-luci xiaorouji openwrt-passwall main
 			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
