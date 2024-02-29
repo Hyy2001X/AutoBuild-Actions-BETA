@@ -133,6 +133,7 @@ EOF
 			AddPackage passwall xiaorouji openwrt-passwall main
 			AddPackage passwall xiaorouji openwrt-passwall2 main
 			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-core
+			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-plugin
 			#rm -rf packages/lean/autocore
 			#AddPackage lean Hyy2001X autocore-modify master
 
