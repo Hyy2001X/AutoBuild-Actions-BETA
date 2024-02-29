@@ -132,6 +132,7 @@ EOF
 			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
 			AddPackage passwall-luci xiaorouji openwrt-passwall main
 			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
+			rm -r ${WORK}/package/other/passwall-depends/xray-core
 			#rm -rf packages/lean/autocore
 			#AddPackage lean Hyy2001X autocore-modify master
 
