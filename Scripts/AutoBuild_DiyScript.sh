@@ -92,14 +92,14 @@ EOF
 		# sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon-mod"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
 
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
-		AddPackage themes jerrykuku luci-theme-argon 18.06
 		AddPackage other vernesong OpenClash dev
 		AddPackage other jerrykuku luci-app-argon-config master
 		AddPackage other fw876 helloworld main
+		AddPackage other sbwml luci-app-mosdns v5
+		AddPackage themes jerrykuku luci-theme-argon 18.06
 		AddPackage themes thinktip luci-theme-neobird main
 		AddPackage msd_lite ximiTech luci-app-msd_lite main
 		AddPackage msd_lite ximiTech msd_lite main
-		AddPackage mosdns sbwml luci-app-mosdns v5
 		rm -r ${WORK}/package/other/helloworld/mosdns
 		rm -r ${FEEDS_PKG}/mosdns
 		rm -r ${FEEDS_LUCI}/luci-app-mosdns
@@ -129,10 +129,10 @@ EOF
 			ClashDL amd64 tun
 			ClashDL amd64 meta
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
-			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
-			AddPackage passwall-luci xiaorouji openwrt-passwall main
-			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
-			rm -r ${WORK}/package/other/passwall-depends/xray-core
+			AddPackage passwall xiaorouji openwrt-passwall-packages main
+			AddPackage passwall xiaorouji openwrt-passwall main
+			AddPackage passwall xiaorouji openwrt-passwall2 main
+			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-core
 			#rm -rf packages/lean/autocore
 			#AddPackage lean Hyy2001X autocore-modify master
 
