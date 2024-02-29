@@ -30,7 +30,7 @@ on:
         type: choice
         options:
           - 'd-team_newifi-d2'
-          - 'd-team_newifi-d2-Clash'
+          - 'd-team_newifi-d2-Clash_B'
           - 'd-team_newifi-d2-Lite'
       Tempoary_FLAG:
         description: '固件标签'
