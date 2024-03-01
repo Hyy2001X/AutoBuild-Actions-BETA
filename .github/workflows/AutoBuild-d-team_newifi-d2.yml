@@ -14,8 +14,8 @@ on:
   #    - master
   
   ## 定时触发编译(不要删除此行注释)
-  #schedule:
-  #  - cron: 0 8 * * 5
+  schedule:
+    - cron: 0 8 * * 5
   
   ## 重新点亮 Star 时触发编译(不要删除此行注释)
   #watch:
