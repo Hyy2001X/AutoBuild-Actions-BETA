@@ -131,8 +131,6 @@ EOF
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 		;;
 		x86_64)
-			rm -r ${WORK}/feeds/packages/lang/golang
-			git clone https://github.com/sbwml/packages_lang_golang -b 22.x ${WORK}/feeds/packages/lang/golang
 			ClashDL amd64 dev
 			ClashDL amd64 tun
 			ClashDL amd64 meta
@@ -140,8 +138,8 @@ EOF
 			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			AddPackage passwall xiaorouji openwrt-passwall main
 			AddPackage passwall xiaorouji openwrt-passwall2 main
-			rm -r ${WORK}/package/other/helloworld/xray-core
-			rm -r ${WORK}/package/other/helloworld/xray-plugin
+			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-core
+			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-plugin
 			# rm -rf packages/lean/autocore
 			# AddPackage lean Hyy2001X autocore-modify master
 
