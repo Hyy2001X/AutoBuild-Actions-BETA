@@ -143,8 +143,8 @@ EOF
 			# rm -rf packages/lean/autocore
 			# AddPackage lean Hyy2001X autocore-modify master
 
-			singbox_version="1.8.7"
-			hysteria_version="2.2.4"
+			singbox_version="1.8.9"
+			hysteria_version="2.3.0"
 			wget --quiet --no-check-certificate -P /tmp \
 				https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz
 			wget --quiet --no-check-certificate -P /tmp \
