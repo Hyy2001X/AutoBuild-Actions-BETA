@@ -131,6 +131,7 @@ EOF
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 		;;
 		x86_64)
+			sed -i "s?6.1?5.15?g" ${WORK}/target/linux/x86/Makefile
 			ClashDL amd64 dev
 			ClashDL amd64 tun
 			ClashDL amd64 meta
