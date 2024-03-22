@@ -52,15 +52,15 @@ Firmware_Diy() {
 
 	# 可用预设变量, 其他可用变量请参考运行日志
 	# ${OP_AUTHOR}			OpenWrt 源码作者
-	# ${OP_REPO}				OpenWrt 仓库名称
+	# ${OP_REPO}			OpenWrt 仓库名称
 	# ${OP_BRANCH}			OpenWrt 源码分支
 	# ${TARGET_PROFILE}		设备名称
-	# ${TARGET_BOARD}			设备架构
-	# ${TARGET_FLAG}			固件名称后缀
-	# ${CONFIG_FILE}			配置文件
+	# ${TARGET_BOARD}		设备架构
+	# ${TARGET_FLAG}		固件名称后缀
+	# ${CONFIG_FILE}		配置文件
 
-	# ${CustomFiles}			仓库中的 /CustomFiles 绝对路径
-	# ${Scripts}				仓库中的 /Scripts 绝对路径
+	# ${CustomFiles}		仓库中的 /CustomFiles 绝对路径
+	# ${Scripts}			仓库中的 /Scripts 绝对路径
 
 	# ${WORK}				OpenWrt 源码目录
 	# ${FEEDS_CONF}			OpenWrt 源码目录下的 feeds.conf.default 文件
@@ -84,6 +84,12 @@ then
 	echo '# iptables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
 	echo '# [ -n "\$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
 	echo '# [ -n "\$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+	echo 'iptables -t mangle -A PREROUTING -i pppoe -p icmp --icmp-type destination-unreachable -j DROP' >> /etc/firewall.user
+	echo 'iptables -t mangle -A PREROUTING -i pppoe -p tcp -m tcp --tcp-flags ACK,RST RST -j DROP' >> /etc/firewall.user
+	echo 'iptables -t mangle -A PREROUTING -i pppoe -p tcp -m tcp --tcp-flags PSH,FIN PSH,FIN -j DROP' >> /etc/firewall.user
+	echo '[ -n "\$(command -v ip6tables)" ] && ip6tables -t mangle -A PREROUTING -i pppoe -p tcp -m tcp --tcp-flags PSH,FIN PSH,FIN -j DROP' >> /etc/firewall.user
+	echo '[ -n "\$(command -v ip6tables)" ] && ip6tables -t mangle -A PREROUTING -i pppoe -p ipv6-icmp --icmpv6-type destination-unreachable -j DROP' >> /etc/firewall.user
+	echo '[ -n "\$(command -v ip6tables)" ] && ip6tables -t mangle -A PREROUTING -i pppoe -p tcp -m tcp --tcp-flags ACK,RST RST -j DROP' >> /etc/firewall.user
 fi
 exit 0
 EOF
@@ -134,11 +140,11 @@ EOF
 			AddPackage passwall xiaorouji openwrt-passwall2 main
 			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-core
 			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-plugin
-			#rm -rf packages/lean/autocore
-			#AddPackage lean Hyy2001X autocore-modify master
+			# rm -rf packages/lean/autocore
+			# AddPackage lean Hyy2001X autocore-modify master
 
-			singbox_version="1.8.5"
-			hysteria_version="2.2.4"
+			singbox_version="1.8.9"
+			hysteria_version="2.3.0"
 			wget --quiet --no-check-certificate -P /tmp \
 				https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz
 			wget --quiet --no-check-certificate -P /tmp \
@@ -165,7 +171,9 @@ EOF
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
-			AddPackage passwall2-luci xiaorouji openwrt-passwall2 main
+			AddPackage passwall xiaorouji openwrt-passwall2 main
+			AddPackage passwall xiaorouji openwrt-passwall main
+			rm -r ${FEEDS_LUCI}/luci-app-passwall
 			AddPackage other fw876 helloworld main
 			rm -r ${WORK}/package/other/helloworld/mosdns
 			rm -r ${FEEDS_PKG}/mosdns
@@ -187,7 +195,7 @@ EOF
 	hanwckf/immortalwrt-mt798x*)
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m)
-			AddPackage passwall-luci xiaorouji openwrt-passwall main
+			AddPackage passwall xiaorouji openwrt-passwall main
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
 		;;
 		esac
