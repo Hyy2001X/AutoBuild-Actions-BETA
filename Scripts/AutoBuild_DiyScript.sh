@@ -198,6 +198,7 @@ EOF
 		cmcc_rax3000m)
 			AddPackage passwall xiaorouji openwrt-passwall main
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
+			Copy ${CustomFiles}/020-wapp-btm--steering.patch ${WORK}/package/mtk/drivers/mt_wifi/patches
 		;;
 		esac
 	;;
