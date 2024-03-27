@@ -135,6 +135,7 @@ EOF
 			ClashDL amd64 dev
 			ClashDL amd64 tun
 			ClashDL amd64 meta
+			ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			AddPackage passwall xiaorouji openwrt-passwall main
