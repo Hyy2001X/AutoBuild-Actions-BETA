@@ -5,7 +5,7 @@
 #   Thanks to: https://github.com/281677160                #
 ############################################################
 
-name: Synchronise Forks
+name: zzz_Synchronise Forks
 
 on:
   repository_dispatch:

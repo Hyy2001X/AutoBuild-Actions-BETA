@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: x86_64 WiFi
+name: x86_64 AP
 
 on:
   repository_dispatch:
