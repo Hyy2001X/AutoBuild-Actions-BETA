@@ -202,9 +202,12 @@ EOF
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m)
 			AddPackage passwall xiaorouji openwrt-passwall main
+			rm -r ${FEEDS_PKG}/mosdns
+			AddPackage other sbwml luci-app-mosdns v5
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
-			Copy ${CustomFiles}/MT7981_iPAiLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
-			Copy ${CustomFiles}/MT7981_ePAeLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
+			Copy ${CustomFiles}/mt7981/MT7981_iPAiLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
+			Copy ${CustomFiles}/mt7981/MT7981_ePAeLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
+			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
 		;;
 		esac
 	;;
