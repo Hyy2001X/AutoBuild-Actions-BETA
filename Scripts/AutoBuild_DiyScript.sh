@@ -200,10 +200,10 @@ EOF
 	;;
 	hanwckf/immortalwrt-mt798x*)
 		case "${TARGET_PROFILE}" in
-		cmcc_rax3000m)
+		cmcc_rax3000m | jcg_q30)
 			AddPackage passwall xiaorouji openwrt-passwall main
-			rm -r ${FEEDS_PKG}/mosdns
 			AddPackage other sbwml luci-app-mosdns v5
+   			rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
 			Copy ${CustomFiles}/mt7981/MT7981_iPAiLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
 			Copy ${CustomFiles}/mt7981/MT7981_ePAeLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
