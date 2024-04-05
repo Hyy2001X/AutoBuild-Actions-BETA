@@ -160,8 +160,6 @@ EOF
 			x86_64-Next)
 				# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 				AddPackage passwall xiaorouji openwrt-passwall2 main
-				AddPackage passwall xiaorouji openwrt-passwall main
-				rm -r ${FEEDS_LUCI}/luci-app-passwall
 				rm -r ${FEEDS_PKG}/mosdns
 				rm -r ${FEEDS_PKG}/xray-core
 				rm -r ${FEEDS_PKG}/xray-plugin
