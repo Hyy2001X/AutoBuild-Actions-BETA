@@ -8,9 +8,9 @@ Firmware_Diy_Core() {
 	
 	# 可用预设变量
 	# ${OP_AUTHOR}			OpenWrt 源码作者
-	# ${OP_REPO}				OpenWrt 仓库名称
+	# ${OP_REPO}			OpenWrt 仓库名称
 	# ${OP_BRANCH}			OpenWrt 源码分支
-	# ${CONFIG_FILE}			配置文件
+	# ${CONFIG_FILE}		配置文件
 	
 	Author=AUTO
 	# 作者名称, AUTO: [自动识别]
@@ -136,8 +136,6 @@ EOF
 			ClashDL amd64 dev
 			ClashDL amd64 tun
 			ClashDL amd64 meta
-			ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
-			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			AddPackage passwall xiaorouji openwrt-passwall main
 			AddPackage passwall xiaorouji openwrt-passwall2 main
@@ -155,9 +153,8 @@ EOF
 	immortalwrt/immortalwrt*)
 		case "${TARGET_PROFILE}" in
 		x86_64)
-			Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
-			Copy ${CustomFiles}/curl ${FEEDS_PKG}
+			
 			
 			case "${CONFIG_FILE}" in
 			x86_64-Next)
@@ -169,6 +166,8 @@ EOF
 				rm -r ${FEEDS_PKG}/xray-core
 				rm -r ${FEEDS_PKG}/xray-plugin
 				AddPackage other sbwml luci-app-mosdns v5
+				rm -r ${FEEDS_PKG}/curl
+				Copy ${CustomFiles}/curl ${FEEDS_PKG}
 			;;
 			esac
 		;;
@@ -197,6 +196,9 @@ EOF
 	esac
 	case "${TARGET_PROFILE}" in
 	x86_64)
+		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
+		Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
+		
 		singbox_version="1.8.10"
 		hysteria_version="2.4.0"
 		wstunnel_version="9.2.5"
