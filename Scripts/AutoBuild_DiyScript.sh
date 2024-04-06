@@ -169,10 +169,11 @@ EOF
 				# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 				AddPackage passwall xiaorouji openwrt-passwall2 main
 				AddPackage passwall xiaorouji openwrt-passwall main
-				rm -r ${FEEDS_PKG}/mosdns
+				rm -r ${FEEDS_LUCI}/luci-app-passwall
 				rm -r ${FEEDS_PKG}/xray-core
 				rm -r ${FEEDS_PKG}/xray-plugin
 				AddPackage other sbwml luci-app-mosdns v5
+				rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 			;;
 			esac
 		;;
@@ -192,8 +193,6 @@ EOF
 			AddPackage other sbwml luci-app-mosdns v5
    			rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
-			Copy ${CustomFiles}/mt7981/MT7981_iPAiLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
-			Copy ${CustomFiles}/mt7981/MT7981_ePAeLNA_EEPROM.bin ${WORK}/package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
 		;;
 		esac
