@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: x86_64 Next
+name: x86_64 NextV21
 
 on:
   repository_dispatch:
