@@ -579,7 +579,7 @@ ClashDL() {
 	PLATFORM=$1
 	CORE_TYPE=$2
 	
-	if [[ ! $(ls -1 $TMP_PATH) ]]
+	if [[ ! -n $(ls -1 $TMP_PATH 2> /dev/null) ]]
 	then
 		git clone -b core --depth=1 https://github.com/vernesong/OpenClash $TMP_PATH
 	fi
