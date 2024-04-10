@@ -26,11 +26,10 @@ on:
     inputs:
       Tempoary_CONFIG:
         description: '配置文件'
-        default: 'x86_64-Next'
+        default: 'x86_64-NextAP'
         type: choice
         options:
           - 'x86_64-NextAP'
-          - 'x86_64-Next'
       Tempoary_FLAG:
         description: '固件标签'
         default: 'AUTO'
@@ -38,7 +37,6 @@ on:
         options:
           - 'AUTO'
           - 'NextAP'
-          - 'Next'
       Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
