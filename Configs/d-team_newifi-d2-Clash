@@ -30,6 +30,7 @@ CONFIG_PACKAGE_luci-app-hd-idle=y
 CONFIG_PACKAGE_luci-app-usb-printer=y
 # 添加usb移动硬盘支持
 CONFIG_PACKAGE_kmod-ata-core=y
+CONFIG_PACKAGE_kmod-usb-ohci=y
 
 ## USB 网络共享
 CONFIG_PACKAGE_kmod-usb-net=y
