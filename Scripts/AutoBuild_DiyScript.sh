@@ -174,6 +174,7 @@ EOF
 				rm -r ${FEEDS_PKG}/xray-plugin
 				AddPackage other sbwml luci-app-mosdns v5
 				rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
+				patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
 			;;
 			esac
 		;;
