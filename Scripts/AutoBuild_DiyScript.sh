@@ -204,9 +204,9 @@ EOF
 		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 		Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 		
-		singbox_version="1.8.10"
-		hysteria_version="2.4.0"
-		wstunnel_version="9.2.5"
+		singbox_version="1.8.11"
+		hysteria_version="2.4.1"
+		wstunnel_version="9.3.0"
 		wget --quiet --no-check-certificate -P /tmp \
 			https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz
 		wget --quiet --no-check-certificate -P /tmp \
