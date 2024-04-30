@@ -198,6 +198,7 @@ CONFIG_PACKAGE_ntfs3-mount=y
 # CONFIG_PACKAGE_msmtp is not set
 CONFIG_PACKAGE_ppp-mod-pptp=y
 CONFIG_PACKAGE_ppp-mod-pppol2tp=y
+CONFIG_PACKAGE_pppoe-discovery=y
 CONFIG_PACKAGE_pciutils=y
 CONFIG_PACKAGE_qrencode=y
 CONFIG_PACKAGE_smartmontools=y
