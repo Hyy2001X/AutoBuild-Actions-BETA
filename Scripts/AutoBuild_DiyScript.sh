@@ -167,7 +167,7 @@ EOF
 				AddPackage other sbwml luci-app-mosdns v5
 				rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 				patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
-				Copy ${CustomFiles}/Depends/speedtest ${BASE_FILES}/usr/bin
+				Copy ${CustomFiles}/speedtest ${BASE_FILES}/usr/bin
 				chmod +x ${BASE_FILES}/usr/bin/speedtest
 			;;
 			esac
