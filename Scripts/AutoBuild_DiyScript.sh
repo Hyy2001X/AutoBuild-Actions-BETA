@@ -143,7 +143,7 @@ EOF
 			rm -r ${WORK}/package/passwall/openwrt-passwall-packages/xray-plugin
 			# rm -rf packages/lean/autocore
 			# AddPackage lean Hyy2001X autocore-modify master
-			Copy ${CustomFiles}/Depends/speedtest ${BASE_FILES}/usr/bin
+			Copy ${CustomFiles}/speedtest ${BASE_FILES}/usr/bin
 			chmod +x ${BASE_FILES}/usr/bin/speedtest
 		;;
 		xiaomi_redmi-router-ax6s)
