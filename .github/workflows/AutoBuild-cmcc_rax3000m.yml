@@ -65,6 +65,7 @@ jobs:
       pull-requests: write
       contents: write
 
+    steps:
     - name: "Optimize disk space"
       if: env.DELETE_USELESS_FILES == 'true' && !cancelled()
       uses: "hugoalh/disk-space-optimizer-ghaction@v0.8.0"
