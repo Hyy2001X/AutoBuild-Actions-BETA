@@ -155,16 +155,6 @@ EOF
 		x86_64)
 			sed -i -- 's:/bin/ash:'/bin/bash':g' ${BASE_FILES}/etc/passwd
 			case "${CONFIG_FILE}" in
-			x86_64-Next)
-				# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
-				AddPackage passwall xiaorouji openwrt-passwall2 main
-				rm -r ${FEEDS_PKG}/mosdns
-				rm -r ${FEEDS_PKG}/xray-core
-				rm -r ${FEEDS_PKG}/xray-plugin
-				AddPackage other sbwml luci-app-mosdns v5
-				rm -r ${FEEDS_PKG}/curl
-				Copy ${CustomFiles}/curl ${FEEDS_PKG}
-			;;
 			x86_64-NextV21)
 				# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 				AddPackage passwall xiaorouji openwrt-passwall2 main
