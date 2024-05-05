@@ -20,9 +20,6 @@ CONFIG_TARGET_IMAGES_GZIP=y
 # CONFIG_SIGNED_PACKAGES is not set
 CONFIG_LUCI_LANG_zh_Hans=y
 
-# 固件
-CONFIG_PACKAGE_i915-firmware=y
-
 # IPv6 支持
 CONFIG_IPV6=y
 CONFIG_KERNEL_IPV6=y
@@ -39,7 +36,6 @@ CONFIG_PACKAGE_kmod-fs-nfs-v4=y
 CONFIG_PACKAGE_kmod-gre=y
 CONFIG_PACKAGE_kmod-gre6=y
 CONFIG_PACKAGE_kmod-atlantic=y
-CONFIG_PACKAGE_kmod-drm-i915=y
 
 # USB 驱动程序
 CONFIG_PACKAGE_kmod-usb-net=y
@@ -60,7 +56,6 @@ CONFIG_PACKAGE_luci-ssl-openssl=y
 CONFIG_PACKAGE_luci-app-argon-config=y
 CONFIG_PACKAGE_luci-app-accesscontrol=y
 # CONFIG_PACKAGE_luci-app-adbyby-plus is not set
-CONFIG_PACKAGE_luci-app-arpbind=y
 CONFIG_PACKAGE_luci-app-adguardhome=y
 CONFIG_PACKAGE_luci-app-autoupdate=y
 CONFIG_PACKAGE_luci-app-autoreboot=y
@@ -169,12 +164,12 @@ CONFIG_PACKAGE_adb=y
 CONFIG_PACKAGE_bash=y
 CONFIG_PACKAGE_curl=y
 CONFIG_PACKAGE_cfdisk=y
+CONFIG_PACKAGE_cloudflared=y
 CONFIG_PACKAGE_dmidecode=y
 CONFIG_PACKAGE_docker=y
 CONFIG_DOCKER_CGROUP_OPTIONS=y
 CONFIG_DOCKER_OPTIONAL_FEATURES=y
 CONFIG_DOCKER_STO_EXT4=y
-CONFIG_DOCKER_STO_BTRFS=y
 CONFIG_PACKAGE_docker-compose=y
 CONFIG_PACKAGE_dnsmasq-full=y
 CONFIG_PACKAGE_dnsmasq_full_dhcp=y
@@ -213,6 +208,7 @@ CONFIG_PACKAGE_iperf3=y
 # CONFIG_PACKAGE_iperf3-ssl is not set
 CONFIG_PACKAGE_ipv6helper=y
 CONFIG_PACKAGE_iptables-mod-fullconenat=y
+CONFIG_PACKAGE_irqbalance=y
 CONFIG_PACKAGE_jq=y
 CONFIG_PACKAGE_lsof=y
 CONFIG_PACKAGE_lsblk=y
@@ -231,4 +227,3 @@ CONFIG_PACKAGE_wget-ssl=y
 CONFIG_PACKAGE_tar=y
 CONFIG_PACKAGE_xz=y
 CONFIG_PACKAGE_xz-utils=y
-CONFIG_PACKAGE_zsh=y
