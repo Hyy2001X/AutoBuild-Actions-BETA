@@ -189,6 +189,14 @@ EOF
    			rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
+			
+			mosdns_version="5.3.1"
+			wget --quiet --no-check-certificate -P /tmp \
+				https://github.com/IrineSistiana/mosdns/releases/download/v${mosdns_version}/mosdns-linux-arm64.zip
+			unzip /tmp/mosdns-linux-arm64.zip -d /tmp
+			Copy /tmp/mosdns ${BASE_FILES}/usr/bin
+			chmod +x ${BASE_FILES}/usr/bin
+			sed -i "s?+mosdns ??g" ${WORK}/package/other/luci-app-mosdns/Makefile
 		;;
 		esac
 	;;
