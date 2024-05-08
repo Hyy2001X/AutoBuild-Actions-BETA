@@ -196,7 +196,7 @@ EOF
 			unzip /tmp/mosdns-linux-arm64.zip -d /tmp
 			Copy /tmp/mosdns ${BASE_FILES}/usr/bin
 			chmod +x ${BASE_FILES}/usr/bin
-			sed -i "s?+mosdns ??g" ${WORK}/package/other/luci-app-mosdns/Makefile
+			sed -i "s?+mosdns ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
 		;;
 		esac
 	;;
