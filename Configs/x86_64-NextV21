@@ -151,7 +151,6 @@ CONFIG_PACKAGE_bind-nslookup=y
 # CONFIG_BUSYBOX_CONFIG_NSLOOKUP is not set
 CONFIG_PACKAGE_curl=y
 CONFIG_PACKAGE_cfdisk=y
-CONFIG_PACKAGE_cloudflared=y
 CONFIG_PACKAGE_dnsmasq-full=y
 CONFIG_PACKAGE_dnsmasq_full_dhcp=y
 CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
