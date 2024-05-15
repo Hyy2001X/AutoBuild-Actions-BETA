@@ -189,7 +189,9 @@ EOF
    			rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
-			
+			rm -r ${WORK}/package/network/services/dnsmasq
+			Copy ${CustomFiles}/dnsmasq ${WORK}/package/network/services
+
 			mosdns_version="5.3.1"
 			wget --quiet --no-check-certificate -P /tmp \
 				https://github.com/IrineSistiana/mosdns/releases/download/v${mosdns_version}/mosdns-linux-arm64.zip
