@@ -210,8 +210,8 @@ EOF
 
 		singbox_version="1.8.13"
 		hysteria_version="2.4.3"
-		wstunnel_version="9.4.1"
-		cloudflared_version="2024.4.1"
+		wstunnel_version="9.4.2"
+		cloudflared_version="2024.5.0"
 		wget --quiet --no-check-certificate -P /tmp \
 			https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz
 		wget --quiet --no-check-certificate -P /tmp \
