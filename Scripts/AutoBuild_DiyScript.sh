@@ -21,7 +21,7 @@ Firmware_Diy_Core() {
 	Default_Flag=AUTO
 	# 固件标签 (名称后缀), 适用不同配置文件, AUTO: [自动识别]
 	
-	Default_IP="192.168.1.1"
+	Default_IP="192.168.123.1"
 	# 固件 IP 地址
 	
 	Default_Title="Powered by AutoBuild-Actions"
@@ -138,7 +138,7 @@ EOF
 			ClashDL amd64 meta
 			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			AddPackage passwall xiaorouji openwrt-passwall main
-			# AddPackage passwall xiaorouji openwrt-passwall2 main
+			AddPackage passwall xiaorouji openwrt-passwall2 main
 			rm -r ${WORK}/package/other/helloworld/xray-core
 			rm -r ${WORK}/package/other/helloworld/xray-plugin
 			# rm -rf packages/lean/autocore
