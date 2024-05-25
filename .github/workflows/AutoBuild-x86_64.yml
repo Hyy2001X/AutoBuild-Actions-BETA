@@ -30,6 +30,7 @@ on:
         type: choice
         options:
           - 'x86_64'
+          - 'x86_64_test'
       Tempoary_FLAG:
         description: '固件标签'
         default: 'AUTO'
