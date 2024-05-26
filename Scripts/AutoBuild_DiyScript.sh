@@ -37,7 +37,7 @@ Firmware_Diy_Core() {
 	# 自定义固件格式, AUTO: [自动识别]
 	
 	# 原来:Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4|json"
-	Regex_Skip="buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4|json"
+	Regex_Skip="packages|buildinfo|sha256sums|manifest|kernel|rootfs|factory|itb|profile|ext4|json"
 	# 输出固件时丢弃包含该内容的固件/文件
 	
 	AutoBuild_Features=true
@@ -98,6 +98,10 @@ EOF
 		# sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
 		# sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon-mod"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
 
+		AddPackage other xiaorouji openwrt-passwall2 main
+		AddPackage other pymumu luci-app-smartdns lede
+  		AddPackage other UnblockNeteaseMusic luci-app-unblockneteasemusic master
+
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
 		AddPackage other vernesong OpenClash dev
 		AddPackage other jerrykuku luci-app-argon-config master
@@ -139,7 +143,7 @@ EOF
 			ClashDL amd64 meta
 			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			AddPackage passwall xiaorouji openwrt-passwall main
-			AddPackage passwall xiaorouji openwrt-passwall2 main
+			# AddPackage passwall xiaorouji openwrt-passwall2 main
 			rm -r ${WORK}/package/other/helloworld/xray-core
 			rm -r ${WORK}/package/other/helloworld/xray-plugin
 			# rm -rf packages/lean/autocore
