@@ -213,10 +213,10 @@ EOF
 		Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 
-		singbox_version="1.8.14"
-		hysteria_version="2.4.4"
-		wstunnel_version="9.6.0"
-		cloudflared_version="2024.5.0"
+		singbox_version="1.10.0-alpha.7"
+		hysteria_version="2.4.3"
+		wstunnel_version="9.6.1"
+		cloudflared_version="2024.6.0"
 		wget --quiet --no-check-certificate -P /tmp \
 			https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz
 		wget --quiet --no-check-certificate -P /tmp \
