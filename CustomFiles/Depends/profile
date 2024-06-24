@@ -103,6 +103,14 @@ then
 "
 fi
 
+[ -x /bin/more ] || alias more='less'
+[ -x /usr/bin/vim ] && alias vi='vim' || alias vim='vi'
+
+[ -z "$KSH_VERSION" -o \! -s /etc/mkshrc ] || . /etc/mkshrc
+
+[ -x /usr/bin/arp -o -x /sbin/arp ] || arp() { cat /proc/net/arp; }
+[ -x /usr/bin/ldd ] || ldd() { LD_TRACE_LOADED_OBJECTS=1 $*; }
+
 alias reload='. /etc/profile'
 alias coremarkd='/etc/coremark.sh'
 alias shutdown='sync && poweroff'
@@ -111,7 +119,6 @@ alias l='ls -CF'
 alias ll='ls -alF'
 alias la='ls -A'
 alias cls='clear'
-alias dh='df -h'
 alias syslog='cat $(uci get system.@system[0].log_file) 2> /dev/null'
 alias ramfree='sync && echo 3 > /proc/sys/vm/drop_caches'
 alias top='top -d 1'

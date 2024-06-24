@@ -1,0 +1,174 @@
+From 4293fab62c02c0d38d1faa366111eef8478df6ac Mon Sep 17 00:00:00 2001
+From: Hyy2001X <1804430051@qq.com>
+Date: Sun, 31 Mar 2024 10:37:50 +0000
+Subject: [PATCH] Add iptables-socket
+
+---
+ include/netfilter.mk                      | 10 ++--
+ package/kernel/linux/modules/netfilter.mk | 68 +++++++++++++++++++++++
+ package/network/utils/iptables/Makefile   | 19 +++++--
+ 3 files changed, 89 insertions(+), 8 deletions(-)
+
+diff --git a/include/netfilter.mk b/include/netfilter.mk
+index 152f744..dfbbd82 100644
+--- a/include/netfilter.mk
++++ b/include/netfilter.mk
+@@ -237,15 +237,17 @@ $(eval $(call nf_add,IPT_NFQUEUE,CONFIG_NETFILTER_XT_TARGET_NFQUEUE, $(P_XT)xt_N
+ # debugging
+ 
+ $(eval $(call nf_add,IPT_DEBUG,CONFIG_NETFILTER_XT_TARGET_TRACE, $(P_XT)xt_TRACE))
++
++# socket
++$(eval $(call nf_add,NF_SOCKET,CONFIG_NF_SOCKET_IPV4, $(P_V4)nf_socket_ipv4))
++$(eval $(call nf_add,NF_SOCKET,CONFIG_NF_SOCKET_IPV6, $(P_V6)nf_socket_ipv6))
++$(eval $(call nf_add,IPT_SOCKET,CONFIG_NETFILTER_XT_MATCH_SOCKET, $(P_XT)xt_socket))
+ 
+ # tproxy
+ 
+-$(eval $(call nf_add,IPT_TPROXY,CONFIG_NETFILTER_XT_MATCH_SOCKET, $(P_XT)xt_socket))
+-$(eval $(call nf_add,IPT_TPROXY,CONFIG_NF_SOCKET_IPV4, $(P_V4)nf_socket_ipv4))
+-$(eval $(call nf_add,IPT_TPROXY,CONFIG_NF_SOCKET_IPV6, $(P_V6)nf_socket_ipv6))
+-$(eval $(call nf_add,IPT_TPROXY,CONFIG_NETFILTER_XT_TARGET_TPROXY, $(P_XT)xt_TPROXY))
+ $(eval $(call nf_add,IPT_TPROXY,CONFIG_NF_TPROXY_IPV4, $(P_V4)nf_tproxy_ipv4))
+ $(eval $(call nf_add,IPT_TPROXY,CONFIG_NF_TPROXY_IPV6, $(P_V6)nf_tproxy_ipv6))
++$(eval $(call nf_add,IPT_TPROXY,CONFIG_NETFILTER_XT_TARGET_TPROXY, $(P_XT)xt_TPROXY))
+ 
+ # led
+ $(eval $(call nf_add,IPT_LED,CONFIG_NETFILTER_XT_TARGET_LED, $(P_XT)xt_LED))
+diff --git a/package/kernel/linux/modules/netfilter.mk b/package/kernel/linux/modules/netfilter.mk
+index 57ed4b4..c187034 100644
+--- a/package/kernel/linux/modules/netfilter.mk
++++ b/package/kernel/linux/modules/netfilter.mk
+@@ -161,6 +161,25 @@ endef
+ 
+ $(eval $(call KernelPackage,nf-flow))
+ 
++define KernelPackage/nf-socket
++  SUBMENU:=$(NF_MENU)
++  TITLE:=Netfilter socket lookup support
++  KCONFIG:= $(KCONFIG_NF_SOCKET)
++  FILES:=$(foreach mod,$(NF_SOCKET-m),$(LINUX_DIR)/net/$(mod).ko)
++  AUTOLOAD:=$(call AutoProbe,$(notdir $(NF_SOCKET-m)))
++endef
++
++$(eval $(call KernelPackage,nf-socket))
++
++define KernelPackage/nf-tproxy
++  SUBMENU:=$(NF_MENU)
++  TITLE:=Netfilter tproxy support
++  KCONFIG:= $(KCONFIG_NF_TPROXY)
++  FILES:=$(foreach mod,$(NF_TPROXY-m),$(LINUX_DIR)/net/$(mod).ko)
++  AUTOLOAD:=$(call AutoProbe,$(notdir $(NF_TPROXY-m)))
++endef
++
++$(eval $(call KernelPackage,nf-tproxy))
+ 
+ define AddDepends/ipt
+   SUBMENU:=$(NF_MENU)
+@@ -626,6 +645,21 @@ define KernelPackage/ipt-led/description
+ endef
+ 
+ $(eval $(call KernelPackage,ipt-led))
++
++define KernelPackage/ipt-socket
++  TITLE:=Iptables socket matching support
++  DEPENDS+=+kmod-nf-socket +kmod-nf-conntrack +IPV6:kmod-nf-conntrack6
++  KCONFIG:=$(KCONFIG_IPT_SOCKET)
++  FILES:=$(foreach mod,$(IPT_SOCKET-m),$(LINUX_DIR)/net/$(mod).ko)
++  AUTOLOAD:=$(call AutoProbe,$(notdir $(IPT_SOCKET-m)))
++  $(call AddDepends/ipt)
++endef
++
++define KernelPackage/ipt-socket/description
++  Kernel modules for socket matching
++endef
++
++$(eval $(call KernelPackage,ipt-socket))
+ 
+ define KernelPackage/ipt-tproxy
+   TITLE:=Transparent proxying support
+@@ -1161,3 +1195,37 @@ define KernelPackage/nft-queue
+ endef
+ 
+ $(eval $(call KernelPackage,nft-queue))
++
++define KernelPackage/nft-socket
++  SUBMENU:=$(NF_MENU)
++  TITLE:=Netfilter nf_tables socket support
++  DEPENDS:=+kmod-nft-core +kmod-nf-socket
++  FILES:=$(foreach mod,$(NFT_SOCKET-m),$(LINUX_DIR)/net/$(mod).ko)
++  AUTOLOAD:=$(call AutoProbe,$(notdir $(NFT_SOCKET-m)))
++  KCONFIG:=$(KCONFIG_NFT_SOCKET)
++endef
++
++$(eval $(call KernelPackage,nft-socket))
++
++
++define KernelPackage/nft-tproxy
++  SUBMENU:=$(NF_MENU)
++  TITLE:=Netfilter nf_tables tproxy support
++  DEPENDS:=+kmod-nft-core +kmod-nf-tproxy +kmod-nf-conntrack
++  FILES:=$(foreach mod,$(NFT_TPROXY-m),$(LINUX_DIR)/net/$(mod).ko)
++  AUTOLOAD:=$(call AutoProbe,$(notdir $(NFT_TPROXY-m)))
++  KCONFIG:=$(KCONFIG_NFT_TPROXY)
++endef
++
++$(eval $(call KernelPackage,nft-tproxy))
++
++define KernelPackage/nft-compat
++  SUBMENU:=$(NF_MENU)
++  TITLE:=Netfilter nf_tables compat support
++  DEPENDS:=+kmod-nft-core +kmod-nf-ipt
++  FILES:=$(foreach mod,$(NFT_COMPAT-m),$(LINUX_DIR)/net/$(mod).ko)
++  AUTOLOAD:=$(call AutoProbe,$(notdir $(NFT_COMPAT-m)))
++  KCONFIG:=$(KCONFIG_NFT_COMPAT)
++endef
++
++$(eval $(call KernelPackage,nft-compat))
+diff --git a/package/network/utils/iptables/Makefile b/package/network/utils/iptables/Makefile
+index 64ec0e6..e7e4091 100644
+--- a/package/network/utils/iptables/Makefile
++++ b/package/network/utils/iptables/Makefile
+@@ -379,6 +379,19 @@ iptables extension for triggering a LED.
+   - LED
+ 
+ endef
++
++define Package/iptables-mod-socket
++$(call Package/iptables/Module, +kmod-ipt-socket)
++  TITLE:=Socket match iptables extensions
++endef
++
++define Package/iptables-mod-socket/description
++Socket match iptables extensions.
++
++ Matches:
++  - socket
++
++endef
+ 
+ define Package/iptables-mod-tproxy
+ $(call Package/iptables/Module, +kmod-ipt-tproxy)
+@@ -388,9 +401,6 @@ endef
+ define Package/iptables-mod-tproxy/description
+ Transparent proxy iptables extensions.
+ 
+- Matches:
+-  - socket
+-
+  Targets:
+   - TPROXY
+ 
+@@ -663,7 +673,8 @@ $(eval $(call BuildPlugin,iptables-mod-cluster,$(IPT_CLUSTER-m)))
+ $(eval $(call BuildPlugin,iptables-mod-clusterip,$(IPT_CLUSTERIP-m)))
+ $(eval $(call BuildPlugin,iptables-mod-hashlimit,$(IPT_HASHLIMIT-m)))
+ $(eval $(call BuildPlugin,iptables-mod-rpfilter,$(IPT_RPFILTER-m)))
+-$(eval $(call BuildPlugin,iptables-mod-led,$(IPT_LED-m)))
++$(eval $(call BuildPlugin,iptables-mod-led,$(IPT_LED-m)))
++$(eval $(call BuildPlugin,iptables-mod-socket,$(IPT_SOCKET-m)))
+ $(eval $(call BuildPlugin,iptables-mod-tproxy,$(IPT_TPROXY-m)))
+ $(eval $(call BuildPlugin,iptables-mod-tee,$(IPT_TEE-m)))
+ $(eval $(call BuildPlugin,iptables-mod-u32,$(IPT_U32-m)))
+-- 
+2.25.1
+

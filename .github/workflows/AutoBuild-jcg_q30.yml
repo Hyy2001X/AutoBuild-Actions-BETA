@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: P&W R619AC 128M
+name: JCG Q30
 
 ### 界面控制部分 ( 以下内容请保持不变 )
 on:
@@ -39,9 +39,9 @@ on:
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
-  CONFIG_FILE: p2w_r619ac-128m
+  CONFIG_FILE: jcg_q30
 # 源码仓库:分支
-  DEFAULT_SOURCE: coolsnowwolf/lede:master
+  DEFAULT_SOURCE: hanwckf/immortalwrt-mt798x:openwrt-21.02
 # 上传固件到 Github Releases
   UPLOAD_RELEASES: true
 # 上传固件到 Github Artifacts
