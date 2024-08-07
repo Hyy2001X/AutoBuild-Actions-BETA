@@ -101,7 +101,7 @@ EOF
 		AddPackage other vernesong OpenClash dev
 		AddPackage other jerrykuku luci-app-argon-config master
 		AddPackage other fw876 helloworld main
-		AddPackage other sbwml luci-app-mosdns v5
+		AddPackage other sbwml luci-app-mosdns v5-lua
 		AddPackage themes jerrykuku luci-theme-argon 18.06
 		AddPackage themes thinktip luci-theme-neobird main
 		AddPackage msd_lite ximiTech luci-app-msd_lite main
