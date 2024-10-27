@@ -3,7 +3,7 @@
 # AutoBuild_Tools for Openwrt
 # Dependences: bash wget curl block-mount e2fsprogs smartmontools
 
-Version=V1.8.8
+Version=V1.8.9
 
 ECHO() {
 	case $1 in
@@ -460,7 +460,7 @@ do
 	ECHO x "AutoBuild 固件更新\n
 ${Yellow}1. 更新固件 [保留配置]${White}
 2. 更新固件 (强制刷入固件) [保留配置]
-${Red}3. 更新固件 [保留配置]${White}
+${Red}3. 更新固件 [不保留配置]${White}
 4. 打印当前固件信息
 5. 清除固件下载缓存
 6. 更改 Github API 地址
@@ -729,5 +729,5 @@ Tools_File=$(command -v tools)
 AutoUpdate_File=$(command -v autoupdate)
 
 [[ ! -d ${Tools_Cache} ]] && mkdir -p ${Tools_Cache}
-Github_Raw="https://ghproxy.com/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
+Github_Raw="https://ghp.ci/https://raw.githubusercontent.com/Hyy2001X/AutoBuild-Actions/master"
 AutoBuild_Tools_UI
