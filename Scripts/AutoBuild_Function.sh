@@ -87,9 +87,6 @@ Firmware_Diy_Start() {
 		TARGET_FLAG="${Tempoary_FLAG}"
 	fi
 	case "${TARGET_BOARD}" in
-	x86)
-		AutoBuild_Fw="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-BOOT-${TARGET_FLAG}-SHA256.FORMAT"
-	;;
 	*)
 		AutoBuild_Fw="AutoBuild-${OP_REPO}-${TARGET_PROFILE}-${OP_VERSION}-${TARGET_FLAG}-SHA256.FORMAT"
 	;;
@@ -369,11 +366,17 @@ Process_Fw_Core() {
 	Fw_Format=$1
 	shift
 	while [[ $1 ]];do
-		Fw=${AutoBuild_Fw}
 		case "${TARGET_BOARD}" in
 		x86)
-			[[ $1 =~ efi ]] && Fw_Boot=UEFI || Fw_Boot=BIOS
-			Fw=${Fw/BOOT/${Fw_Boot}}
+			if [[ $1 =~ efi ]]
+			then
+				Fw=${AutoBuild_Fw}
+			else
+				continue
+			fi
+		;;
+		*)
+			Fw=${AutoBuild_Fw}
 		;;
 		esac
 		Fw=${Fw/SHA256/$(Get_sha256 $1)}
