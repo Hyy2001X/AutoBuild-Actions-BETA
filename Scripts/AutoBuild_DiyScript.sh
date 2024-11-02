@@ -186,22 +186,17 @@ EOF
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m | jcg_q30)
 			AddPackage passwall xiaorouji openwrt-passwall main
-			AddPackage other sbwml luci-app-mosdns v5
-   			rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 			rm -r ${FEEDS_LUCI}/luci-app-passwall
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
 			rm -r ${WORK}/package/network/services/dnsmasq
 			Copy ${CustomFiles}/dnsmasq ${WORK}/package/network/services
 
-			mosdns_version="5.3.3"
-			wget --quiet --no-check-certificate -P /tmp \
-				https://github.com/IrineSistiana/mosdns/releases/download/v${mosdns_version}/mosdns-linux-arm64.zip
-			unzip /tmp/mosdns-linux-arm64.zip -d /tmp
-			Copy /tmp/mosdns ${BASE_FILES}/usr/bin
-			chmod +x ${BASE_FILES}/usr/bin
-			sed -i "s?+mosdns ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
-			sed -i "s?+v2ray-geoip ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
-			sed -i "s?+v2ray-geosite ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
+
+			find ${WORK}/package/ | grep Makefile | grep v2ray-geodata | xargs rm -f
+			find ${WORK}/package/ | grep Makefile | grep mosdns | xargs rm -f
+			
+			AddPackage other sbwml luci-app-mosdns v5
+			AddPackage other sbwml v2ray-geodata master
 		;;
 		esac
 	;;
@@ -211,10 +206,10 @@ EOF
 		Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 
-		singbox_version="1.10.0-alpha.18"
-		hysteria_version="2.5.1"
-		wstunnel_version="10.1.1"
-		cloudflared_version="2024.9.1"
+		singbox_version="1.10.1"
+		hysteria_version="2.5.2"
+		wstunnel_version="10.1.5"
+		cloudflared_version="2024.10.1"
 		taierspeed_version="1.7.2"
 		
 		wget --quiet --no-check-certificate -P /tmp \
