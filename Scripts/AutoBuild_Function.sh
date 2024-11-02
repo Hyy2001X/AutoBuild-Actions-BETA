@@ -371,8 +371,6 @@ Process_Fw_Core() {
 			if [[ $1 =~ efi ]]
 			then
 				Fw=${AutoBuild_Fw}
-			else
-				continue
 			fi
 		;;
 		*)
