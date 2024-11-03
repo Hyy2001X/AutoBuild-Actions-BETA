@@ -8,7 +8,21 @@ name: NEWIFI D2
 
 on:
   repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      Tempoary_IP:
+        description: '固件 IP 地址 [可选]'
+        default: '192.168.123.1'
+      Tempoary_CONFIG:
+        description: '配置文件 [可选]'
+        default: ''
+      Tempoary_FLAG:
+        description: '固件标签 [可选]'
+        default: ''
+### 控制部分结束 ( 以上内容请保持不变 )
+
   ## Git Push 时触发编译(不要删除此行注释)
+
   #push:
   #  branches: 
   #    - master
