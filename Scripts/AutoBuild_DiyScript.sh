@@ -98,6 +98,7 @@ EOF
 		# sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase="/luci-static/argon-mod"' $(PKG_Finder d package default-settings)/files/zzz-default-settings
 		#sed -i "s?openwrt-23.05?master?g" ${FEEDS_CONF}
 		git reset --hard 1627fd2c745e496134834a8fb8145ba0aa458ae9
+		
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
 		AddPackage other vernesong OpenClash dev
 		AddPackage other jerrykuku luci-app-argon-config master
@@ -142,6 +143,8 @@ EOF
 			# AddPackage passwall xiaorouji openwrt-passwall2 main
 			rm -r ${WORK}/package/other/helloworld/xray-core
 			rm -r ${WORK}/package/other/helloworld/xray-plugin
+			rm -r ${FEEDS_PKG}/xray-core
+			rm -r ${FEEDS_PKG}/sing-box
 			# rm -rf packages/lean/autocore
 			# AddPackage lean Hyy2001X autocore-modify master
 			Copy ${CustomFiles}/speedtest ${BASE_FILES}/usr/bin
