@@ -149,6 +149,17 @@ EOF
 			# AddPackage lean Hyy2001X autocore-modify master
 			Copy ${CustomFiles}/speedtest ${BASE_FILES}/usr/bin
 			chmod +x ${BASE_FILES}/usr/bin/speedtest
+			
+			mosdns_version="5.3.3"
+			wget --quiet --no-check-certificate -P /tmp \
+				https://github.com/IrineSistiana/mosdns/releases/download/v${mosdns_version}/mosdns-linux-amd64.zip
+			unzip /tmp/mosdns-linux-amd64.zip -d /tmp
+			Copy /tmp/mosdns ${BASE_FILES}/usr/bin
+			chmod +x ${BASE_FILES}/usr/bin
+			sed -i "s?+mosdns ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
+			sed -i "s?+v2ray-geoip ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
+			sed -i "s?+v2ray-geosite ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
+			rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
 		;;
 		xiaomi_redmi-router-ax6s)
 			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
@@ -193,7 +204,6 @@ EOF
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
 			rm -r ${WORK}/package/network/services/dnsmasq
 			Copy ${CustomFiles}/dnsmasq ${WORK}/package/network/services
-
 
 			find ${WORK}/package/ | grep Makefile | grep v2ray-geodata | xargs rm -f
 			find ${WORK}/package/ | grep Makefile | grep mosdns | xargs rm -f
