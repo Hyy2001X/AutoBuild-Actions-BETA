@@ -102,14 +102,12 @@ EOF
 		rm -r ${FEEDS_LUCI}/luci-theme-argon*
 		AddPackage other vernesong OpenClash dev
 		AddPackage other jerrykuku luci-app-argon-config master
-		AddPackage other fw876 helloworld main
 		AddPackage other sbwml luci-app-mosdns v5-lua
 		AddPackage themes jerrykuku luci-theme-argon 18.06
 		AddPackage themes thinktip luci-theme-neobird main
 		AddPackage msd_lite ximiTech luci-app-msd_lite main
 		AddPackage msd_lite ximiTech msd_lite main
 		AddPackage iptvhelper riverscn openwrt-iptvhelper master
-		rm -r ${WORK}/package/other/helloworld/mosdns
 		rm -r ${FEEDS_PKG}/mosdns
 		rm -r ${FEEDS_LUCI}/luci-app-mosdns
 		rm -r ${FEEDS_PKG}/curl
@@ -141,8 +139,6 @@ EOF
 			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			AddPackage passwall xiaorouji openwrt-passwall main
 			# AddPackage passwall xiaorouji openwrt-passwall2 main
-			rm -r ${WORK}/package/other/helloworld/xray-core
-			rm -r ${WORK}/package/other/helloworld/xray-plugin
 			rm -r ${FEEDS_PKG}/xray-core
 			rm -r ${FEEDS_PKG}/sing-box
 			# rm -rf packages/lean/autocore
