@@ -326,10 +326,11 @@ Firmware_Diy_End() {
 	cd ${WORK}
 	echo -e "### FIRMWARE OUTPUT ###"
 	du -ah bin/targets | egrep -v "${Regex_Skip}" | grep -v 'ipk'
-	cat ${Fw_Path}/sha256sums
 	MKDIR ${WORK}/bin/Firmware
 	Fw_Path="${WORK}/bin/targets/${TARGET_BOARD}/${TARGET_SUBTARGET}"
 	cd "${Fw_Path}"
+	echo -e "### SHA256SUMS ###"
+	cat sha256sums
 	case "${TARGET_BOARD}" in
 	x86)
 		if [[ ${x86_Full_Images} == true ]]
