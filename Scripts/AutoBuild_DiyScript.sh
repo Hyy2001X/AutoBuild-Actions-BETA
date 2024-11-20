@@ -170,7 +170,6 @@ EOF
 			case "${CONFIG_FILE}" in
 			x86_64-Next)
 				# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
-				AddPackage passwall xiaorouji openwrt-passwall2 main
 				AddPackage passwall xiaorouji openwrt-passwall main
 				rm -r ${FEEDS_LUCI}/luci-app-passwall
 				AddPackage other sbwml luci-app-mosdns v5
@@ -184,6 +183,9 @@ EOF
 				sed -i "s?+v2ray-geoip ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
 				sed -i "s?+v2ray-geosite ??g" ${WORK}/package/other/luci-app-mosdns/luci-app-mosdns/Makefile
 				rm -r ${WORK}/package/other/luci-app-mosdns/mosdns
+				
+				Copy ${CustomFiles}/socat.Makefile ${FEEDS_PKG}/socat Makefile
+				rm -r ${FEEDS_PKG}/socat/files
 			;;
 			esac
 		;;
