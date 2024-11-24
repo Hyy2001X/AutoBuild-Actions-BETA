@@ -59,7 +59,7 @@ env:
 # 编译时调用的 [.config] 文件名称
   CONFIG_FILE: NextV21
 # 源码仓库:分支
-  DEFAULT_SOURCE: immortalwrt/immortalwrt:master
+  DEFAULT_SOURCE: immortalwrt/immortalwrt:openwrt-23.05
 # 删除无用文件以增加编译空间
   DELETE_USELESS_FILES: true
 # 删除早期的 workflow 任务
