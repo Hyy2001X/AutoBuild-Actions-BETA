@@ -4,7 +4,7 @@
 #   Author: Hyy2001X                                      #
 ###########################################################
 
-name: x86_64 Next 24.10
+name: x86_64 Next
 
 on:
   repository_dispatch:
@@ -57,7 +57,7 @@ on:
 ### 环境变量设置
 env:
 # 编译时调用的 [.config] 文件名称
-  CONFIG_FILE: NextV21
+  CONFIG_FILE: x86_64-Next
 # 源码仓库:分支
   DEFAULT_SOURCE: immortalwrt/immortalwrt:openwrt-23.05
 # 删除无用文件以增加编译空间
