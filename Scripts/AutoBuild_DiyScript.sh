@@ -171,6 +171,7 @@ EOF
 			x86_64-Next)
 				# sed -i "s?/bin/login?/usr/libexec/login.sh?g" ${FEEDS_PKG}/ttyd/files/ttyd.config
 				AddPackage passwall xiaorouji openwrt-passwall main
+				AddPackage passwall xiaorouji openwrt-passwall2 main
 				rm -r ${FEEDS_LUCI}/luci-app-passwall
 				AddPackage other sbwml luci-app-mosdns v5
 				mosdns_version="5.3.3"
