@@ -30,12 +30,15 @@ on:
         type: choice
         options:
           - 'x86_64-Next'
+          - 'x86_64-Next-AP'
       Tempoary_FLAG:
         description: '固件标签'
         default: 'AUTO'
         type: choice
         options:
           - 'AUTO'
+          - 'Next'
+          - 'Next-AP'
       Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
