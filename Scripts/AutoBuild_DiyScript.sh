@@ -165,6 +165,8 @@ EOF
 				rm -r ${FEEDS_PKG}/socat/files
 				Copy ${CustomFiles}/speedtest ${BASE_FILES}/usr/bin
 				chmod +x ${BASE_FILES}/usr/bin/speedtest
+				
+				sed -i '/PKG_FIXUP/d' ${WORK}/feeds/packages/libs/libffi/Makefile
 			;;
 			esac
 		;;
