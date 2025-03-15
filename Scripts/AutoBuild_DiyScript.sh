@@ -203,7 +203,7 @@ EOF
 		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 
 		hysteria_version="2.6.1"
-		wstunnel_version="10.1.9"
+		wstunnel_version="9.3.2"
 		taierspeed_version="1.7.2"
 		
 		wget --quiet --no-check-certificate -P /tmp \
