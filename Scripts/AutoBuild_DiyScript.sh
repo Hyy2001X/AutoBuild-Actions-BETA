@@ -203,11 +203,12 @@ EOF
 		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 
 		hysteria_version="2.6.1"
-		wstunnel_version="9.3.2"
+		wstunnel_version="9.2.3"
 		taierspeed_version="1.7.2"
 		
 		wget --quiet --no-check-certificate -P /tmp \
 			https://github.com/apernet/hysteria/releases/download/app%2Fv${hysteria_version}/hysteria-linux-amd64
+			
 		wget --quiet --no-check-certificate -P /tmp \
 			https://github.com/erebe/wstunnel/releases/download/v${wstunnel_version}/wstunnel_${wstunnel_version}_linux_amd64.tar.gz
 		wget --quiet --no-check-certificate -P /tmp \
