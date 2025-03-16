@@ -166,11 +166,14 @@ EOF
 		;;
 		immortalwrt/immortalwrt | padavanonly/immortalwrtARM | hanwckf/immortalwrt-mt798x)
 			Copy ${CustomFiles}/Depends/openwrt_release_immortalwrt ${BASE_FILES}/etc openwrt_release
+			Copy ${CustomFiles}/Depends/os-release_immortalwrt ${BASE_FILES}/usr/lib os-release
 			if [[ -n ${TARGET_FLAG} ]]
 			then
 				sed -i "s?ImmortalWrt?ImmortalWrt ${TARGET_FLAG} @ ${Author} [${Display_Date}]?g" ${Version_File}
+				sed -i "s?ImmortalWrt?ImmortalWrt ${TARGET_FLAG} @ ${Author} [${Display_Date}]?g" ${Version_File}/${BASE_FILES}/usr/lib/os-release
 			else
 				sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}
+				sed -i "s?ImmortalWrt?ImmortalWrt @ ${Author} [${Display_Date}]?g" ${Version_File}/${BASE_FILES}/usr/lib/os-release
 			fi
 		;;
 		esac
