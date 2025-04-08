@@ -10,7 +10,7 @@ AutoBuild-Actions 稳定版仓库地址: [AutoBuild-Actions-Template](https://gi
 
 | 维护 | 型号 | 配置文件 (TARGET_PROFILE) | 源 | 备注 |
 | :----: | :----: | :----: | :----: | :----: |
-| ✅ | [x86_64](./.github/workflows/AutoBuild-x86_64.yml) | [x86_64](./Configs/x86_64) | [lede](https://github.com/coolsnowwolf/lede) |  |
+| ✅ | [x86_64](./.github/workflows/AutoBuild-x86_64.yml) | [x86_64](./Configs/x86_64) | [immortalwrt](https://github.com/immortalwrt/immortalwrt) |  |
 | ❎ | [新路由3](./.github/workflows/AutoBuild-d-team_newifi-d2.yml) | [d-team_newifi-d2](./Configs/d-team_newifi-d2) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ❎ | [华硕 ACRH17](./.github/workflows/AutoBuild-asus_rt-ac42u.yml) | [asus_rt-ac42u](./Configs/asus_rt-ac42u) | [lede](https://github.com/coolsnowwolf/lede) |  |
 | ❎ | [竞斗云 2.0](./.github/workflows/AutoBuild-p2w_r619ac-128m.yml) | [p2w_r619ac-128m](./Configs/p2w_r619ac-128m) | [lede](https://github.com/coolsnowwolf/lede) |  |
