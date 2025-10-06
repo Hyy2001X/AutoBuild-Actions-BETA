@@ -188,11 +188,9 @@ EOF
 			rm -r ${WORK}/package/network/services/dnsmasq
 			Copy ${CustomFiles}/dnsmasq ${WORK}/package/network/services
 
-			find ${WORK}/package/ | grep Makefile | grep v2ray-geodata | xargs rm -f
 			find ${WORK}/package/ | grep Makefile | grep mosdns | xargs rm -f
 			
 			AddPackage other sbwml luci-app-mosdns v5
-			AddPackage other sbwml v2ray-geodata master
 		;;
 		esac
 	;;
