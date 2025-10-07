@@ -183,9 +183,11 @@ EOF
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m | jcg_q30)
 			AddPackage passwall xiaorouji openwrt-passwall main
-			rm -r ${FEEDS_LUCI}/luci-app-passwall
+			AddPackage passwall xiaorouji openwrt-passwall-packages main
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
-			rm -r ${WORK}/package/network/services/dnsmasq
+			rm -rf ${WORK}/feeds/luci/applications/luci-app-passwall
+			rm -rf ${WORK}/feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
+			rm -rf ${WORK}/package/network/services/dnsmasq
 			Copy ${CustomFiles}/dnsmasq ${WORK}/package/network/services
 
 			find ${WORK}/package/ | grep Makefile | grep mosdns | xargs rm -f
