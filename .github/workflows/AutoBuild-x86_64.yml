@@ -39,6 +39,7 @@ on:
           - 'AUTO'
           - 'Full'
           - 'AP'
+          - 'Test'
       Tempoary_IP:
         description: '固件 IP 地址 [可选]'
         default: ''
