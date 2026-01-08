@@ -148,6 +148,8 @@ EOF
 				AddPackage qosmate hudra0 luci-app-qosmate main
 				AddPackage passwall xiaorouji openwrt-passwall main
 			    AddPackage passwall xiaorouji openwrt-passwall-packages main
+				AddPackage fakehttp yingziwu luci-app-fakehttp main
+				AddPackage fakehttp yingziwu openwrt-fakehttp main
 				# AddPackage passwall xiaorouji openwrt-passwall2 main
 				rm -r ${FEEDS_LUCI}/luci-app-passwall
 				#AddPackage other WROIATE luci-app-socat main
