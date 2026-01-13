@@ -151,6 +151,7 @@ EOF
 				
 				AddPackage passwall xiaorouji openwrt-passwall main
 			    AddPackage passwall xiaorouji openwrt-passwall-packages main
+				sed -i 's/^local excluded_domain = {.*/local excluded_domain = {}/' package/passwall/openwrt-passwall/luci-app-passwall/root/usr/share/passwall/rule_update.lua
 				
 				rm -rf feeds/packages/lang/golang
 				git clone https://github.com/sbwml/packages_lang_golang -b 25.x feeds/packages/lang/golang
