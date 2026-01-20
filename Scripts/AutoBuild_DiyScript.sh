@@ -132,8 +132,8 @@ EOF
 			Copy ${CustomFiles}/${TARGET_PROFILE}_system ${BASE_FILES}/etc/config system
 		;;
 		xiaomi_redmi-router-ax6s)
-			AddPackage passwall-depends xiaorouji openwrt-passwall-packages main
-			AddPackage passwall-luci xiaorouji openwrt-passwall main
+			AddPackage passwall-depends Openwrt-Passwall openwrt-passwall-packages main
+			AddPackage passwall-luci Openwrt-Passwall openwrt-passwall main
 		;;
 		esac
 	;;
@@ -149,8 +149,8 @@ EOF
 				AddPackage fakehttp yingziwu luci-app-fakehttp main
 				AddPackage fakehttp yingziwu openwrt-fakehttp main
 				
-				AddPackage passwall xiaorouji openwrt-passwall main
-			    AddPackage passwall xiaorouji openwrt-passwall-packages main
+				AddPackage passwall Openwrt-Passwall openwrt-passwall main
+			    AddPackage passwall Openwrt-Passwall openwrt-passwall-packages main
 				sed -i 's/^local excluded_domain = {.*/local excluded_domain = {}/' package/passwall/openwrt-passwall/luci-app-passwall/root/usr/share/passwall/rule_update.lua
 				
 				rm -rf feeds/packages/lang/golang
@@ -176,16 +176,26 @@ EOF
 	hanwckf/immortalwrt-mt798x*)
 		case "${TARGET_PROFILE}" in
 		cmcc_rax3000m | jcg_q30)
-			AddPackage passwall xiaorouji openwrt-passwall main
-			AddPackage passwall xiaorouji openwrt-passwall-packages main
+			AddPackage fakehttp yingziwu luci-app-fakehttp main
+			AddPackage fakehttp yingziwu openwrt-fakehttp main
+				
+			rm -r ${FEEDS_LUCI}/luci-app-passwall
+			rm -rf ${FEEDS_PKG}/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
+
+			AddPackage passwall Openwrt-Passwall openwrt-passwall main
+			AddPackage passwall Openwrt-Passwall openwrt-passwall-packages main
+			sed -i 's/^local excluded_domain = {.*/local excluded_domain = {}/' package/passwall/openwrt-passwall/luci-app-passwall/root/usr/share/passwall/rule_update.lua
+				
 			patch < ${CustomFiles}/mt7981/0001-Add-iptables-socket.patch -p1 -d ${WORK}
-			rm -rf ${WORK}/feeds/luci/applications/luci-app-passwall
-			rm -rf ${WORK}/feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
+
 			rm -rf ${WORK}/package/network/services/dnsmasq
 			Copy ${CustomFiles}/dnsmasq ${WORK}/package/network/services
 
 			find ${WORK}/package/ | grep Makefile | grep mosdns | xargs rm -f
 			
+			rm -rf feeds/packages/lang/golang
+			git clone https://github.com/sbwml/packages_lang_golang -b 25.x feeds/packages/lang/golang
+				
 			AddPackage other sbwml luci-app-mosdns v5
 		;;
 		esac
@@ -196,7 +206,7 @@ EOF
 		Copy ${CustomFiles}/Depends/cpuset ${BASE_FILES}/bin
 		ReleaseDL https://api.github.com/repos/nxtrace/NTrace-core/releases/latest nexttrace_linux_amd64 ${BASE_FILES}/bin nexttrace
 
-		hysteria_version="2.6.5"
+		hysteria_version="2.7.0"
 		wstunnel_version="9.2.3"
 		wget --quiet --no-check-certificate -P /tmp \
 			https://github.com/apernet/hysteria/releases/download/app%2Fv${hysteria_version}/hysteria-linux-amd64
