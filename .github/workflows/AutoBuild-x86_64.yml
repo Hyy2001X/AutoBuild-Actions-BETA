@@ -101,18 +101,6 @@ jobs:
         npm_clean: "True"
         os_swap: "True"
 
-    - name: Free up disk space
-      if: env.DELETE_USELESS_FILES == 'true' && !cancelled()
-      uses: easimon/maximize-build-space@master
-      with: 
-        root-reserve-mb: 2048
-        swap-size-mb: 1
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-        remove-codeql: 'true'
-        remove-docker-images: 'true'
-
     - name: Checkout
       uses: actions/checkout@main
       with:
@@ -189,6 +177,18 @@ jobs:
         sudo -E systemctl daemon-reload
         sudo -E apt -y autoremove --purge
         sudo -E apt clean
+
+    - name: Free up disk space
+      if: env.DELETE_USELESS_FILES == 'true' && !cancelled()
+      uses: easimon/maximize-build-space@master
+      with: 
+        root-reserve-mb: 2048
+        swap-size-mb: 1
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+        remove-docker-images: 'true'
 
     - name: Clone Openwrt Source Code
       run: |
