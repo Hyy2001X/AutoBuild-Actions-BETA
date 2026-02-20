@@ -92,7 +92,6 @@ CONFIG_PACKAGE_luci-app-diskman=y
 CONFIG_PACKAGE_luci-app-ddns-go=y
 # CONFIG_PACKAGE_luci-app-dockerman is not set
 # CONFIG_PACKAGE_luci-app-docker is not set
-CONFIG_PACKAGE_luci-app-eqos=y
 CONFIG_PACKAGE_luci-app-fakehttp=y
 CONFIG_PACKAGE_luci-app-filebrowser=y
 CONFIG_PACKAGE_luci-app-filemanager=y
@@ -103,7 +102,6 @@ CONFIG_PACKAGE_luci-app-iperf3-server=y
 # CONFIG_PACKAGE_luci-app-mwan3 is not set
 CONFIG_PACKAGE_luci-app-msd_lite=y
 CONFIG_PACKAGE_luci-app-netdata=y
-CONFIG_PACKAGE_luci-app-nft-qos=y
 CONFIG_PACKAGE_luci-app-nfs=y
 CONFIG_PACKAGE_luci-app-npc=y
 # CONFIG_PACKAGE_luci-app-nut is not set
@@ -120,7 +118,6 @@ CONFIG_PACKAGE_luci-app-samba4=y
 CONFIG_PACKAGE_luci-app-smartdns=y
 CONFIG_PACKAGE_luci-app-shutdown=y
 CONFIG_PACKAGE_luci-app-softethervpn=y
-CONFIG_PACKAGE_luci-app-socat=y
 CONFIG_PACKAGE_luci-app-ttyd=y
 # CONFIG_PACKAGE_luci-app-turboacc is not set
 CONFIG_PACKAGE_luci-app-uhttpd=y
@@ -174,6 +171,7 @@ CONFIG_PACKAGE_e2fsprogs=y
 CONFIG_PACKAGE_exfat-mkfs=y
 CONFIG_PACKAGE_etherwake=y
 CONFIG_PACKAGE_fstrim=y
+CONFIG_PACKAGE_fping=y
 CONFIG_PACKAGE_git=y
 CONFIG_PACKAGE_git-http=y
 CONFIG_PACKAGE_httping=y
