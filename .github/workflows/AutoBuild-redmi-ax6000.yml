@@ -43,7 +43,7 @@ env:
 # 源码仓库:分支coolsnowwolf/lede:master 
   DEFAULT_SOURCE: hanwckf/immortalwrt-mt798x:openwrt-21.02
 # 上传固件到 Github Releases
-  UPLOAD_RELEASES: true
+  UPLOAD_RELEASES: false
 # 上传固件到 Github Artifacts
   UPLOAD_ARTIFACTS: true
 # 上传 bin 文件夹到 Github Artifacts
